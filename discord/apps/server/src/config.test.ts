@@ -15,11 +15,16 @@ describe('loadServerConfig', () => {
     expect(config.bindHost, 'bind padrão').toBe('0.0.0.0')
   })
 
-  it('respeita PORT e BIND_HOST informados', () => {
-    const config = loadServerConfig({ ...VALID_ENV, PORT: '4000', BIND_HOST: '26.186.21.58' })
+  it('respeita PORT, BIND_HOST e DATABASE_PATH informados', () => {
+    const config = loadServerConfig({ ...VALID_ENV, PORT: '4000', BIND_HOST: '26.186.21.58', DATABASE_PATH: 'x/y.db' })
 
     expect(config.port).toBe(4000)
     expect(config.bindHost).toBe('26.186.21.58')
+    expect(config.databasePath).toBe('x/y.db')
+  })
+
+  it('usa data/radcord.db como banco padrão', () => {
+    expect(loadServerConfig(VALID_ENV).databasePath).toBe('data/radcord.db')
   })
 
   it('falha mostrando o valor quando a porta é inválida', () => {

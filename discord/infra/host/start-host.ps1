@@ -57,6 +57,7 @@ Write-LiveKitConfig $radminIp $secret
 Start-Process -FilePath $livekitExe -ArgumentList @('--config', "`"$configPath`"") -WorkingDirectory $generatedDir
 
 $env:BIND_HOST = $radminIp
+$env:DATABASE_PATH = Join-Path $PSScriptRoot 'data\radcord.db'
 $env:LIVEKIT_API_KEY = $apiKey
 $env:LIVEKIT_API_SECRET = $secret
 $env:LIVEKIT_PUBLIC_URL = "ws://${radminIp}:7880"

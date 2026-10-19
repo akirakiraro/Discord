@@ -1,45 +1,43 @@
-import Fastify, { type FastifyInstance } from 'fastify'
+import Fastify, { type FastifyError, type FastifyInstance, type FastifyReply, type FastifyRequest } from 'fastify'
 import cors from '@fastify/cors'
-import {
-  voiceTokenRequestSchema,
-  type HostHealthResponse,
-  type VoiceTokenResponse,
-} from '@radcord/shared'
-import type { VoiceTokenIssuer } from './voiceTokenIssuer'
-
-export interface AppDependencies {
-  livekitPublicUrl: string
-  tokenIssuer: VoiceTokenIssuer
-  logger: boolean
-}
+import type { ApiErrorResponse, HostHealthResponse } from '@radcord/shared'
+import { registerAuthRoutes } from './auth/authRoutes'
+import { registerChannelRoutes } from './channels/channelRoutes'
+import { HttpError } from './http/httpError'
+import { registerMessageRoutes } from './messages/messageRoutes'
+import type { ServerContext } from './serverContext'
+import { registerMemberRoutes } from './users/memberRoutes'
+import { registerVoiceRoutes } from './voice/voiceRoutes'
 
 /**
- * Monta a API HTTP do host (health/ping e emissão de tokens de voz).
- * Exemplo: `const app = await buildApp({ livekitPublicUrl, tokenIssuer, logger: true })`
+ * Monta a API HTTP do host com todas as rotas.
+ * Exemplo: `const app = await buildApp(createServerContext(inputs), { logger: true })`
  */
-export async function buildApp(deps: AppDependencies): Promise<FastifyInstance> {
-  const app = Fastify({ logger: deps.logger })
+export async function buildApp(context: ServerContext, options: { logger: boolean }): Promise<FastifyInstance> {
+  const app = Fastify({ logger: options.logger })
   // O renderer do Electron empacotado roda em file://, que manda Origin "null".
-  await app.register(cors, { origin: true })
-  registerHealthRoute(app, deps.livekitPublicUrl)
-  registerVoiceTokenRoute(app, deps)
+  await app.register(cors, { origin: true, methods: ['GET', 'POST', 'PATCH', 'DELETE'] })
+  app.setErrorHandler(sendErrorResponse)
+  // O app faz ping a cada 3 s; logar cada um afogaria o log do host.
+  app.get('/health', { logLevel: 'warn' }, async (): Promise<HostHealthResponse> => ({
+    status: 'ok',
+    livekitUrl: context.livekitPublicUrl,
+  }))
+  registerAuthRoutes(app, context.auth)
+  registerChannelRoutes(app, context.auth, context.channels)
+  registerMessageRoutes(app, context.auth, context.messages)
+  registerMemberRoutes(app, context.auth, context.users, context.presence)
+  registerVoiceRoutes(app, context)
   return app
 }
 
-function registerHealthRoute(app: FastifyInstance, livekitUrl: string): void {
-  app.get('/health', async (): Promise<HostHealthResponse> => ({ status: 'ok', livekitUrl }))
-}
-
-function registerVoiceTokenRoute(app: FastifyInstance, deps: AppDependencies): void {
-  app.post('/voice/token', async (request, reply) => {
-    const parsed = voiceTokenRequestSchema.safeParse(request.body)
-    if (!parsed.success) {
-      const issues = parsed.error.issues.map((issue) => `${issue.path.join('.')}: ${issue.message}`)
-      return reply.code(400).send({ error: 'invalid_request', issues, received: request.body })
-    }
-    const token = await deps.tokenIssuer.issue(parsed.data)
-    request.log.info({ event: 'voice_token_issued', ...parsed.data })
-    const response: VoiceTokenResponse = { token, livekitUrl: deps.livekitPublicUrl }
-    return response
-  })
+function sendErrorResponse(error: FastifyError, request: FastifyRequest, reply: FastifyReply): FastifyReply {
+  if (error instanceof HttpError) {
+    return reply.code(error.statusCode).send({ error: error.code, message: error.message } satisfies ApiErrorResponse)
+  }
+  if (error.statusCode && error.statusCode < 500) {
+    return reply.code(error.statusCode).send({ error: error.code ?? 'bad_request', message: error.message })
+  }
+  request.log.error({ event: 'unhandled_error', err: error })
+  return reply.code(500).send({ error: 'internal_error', message: 'Erro inesperado no host' } satisfies ApiErrorResponse)
 }

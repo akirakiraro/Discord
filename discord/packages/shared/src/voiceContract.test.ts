@@ -2,21 +2,15 @@ import { describe, expect, it } from 'vitest'
 import { voiceTokenRequestSchema } from './voiceContract'
 
 describe('voiceTokenRequestSchema', () => {
-  it('aceita nome e sala válidos, removendo espaços', () => {
-    const parsed = voiceTokenRequestSchema.parse({ displayName: '  Akira ', roomName: 'geral' })
+  it('aceita o id de um canal', () => {
+    const channelId = '6f1c2b7e-1d1a-4c55-9b8e-3a2f4d5e6f70'
 
-    expect(parsed).toEqual({ displayName: 'Akira', roomName: 'geral' })
+    expect(voiceTokenRequestSchema.parse({ channelId })).toEqual({ channelId })
   })
 
-  it('rejeita nome vazio', () => {
-    const result = voiceTokenRequestSchema.safeParse({ displayName: '   ', roomName: 'geral' })
+  it('rejeita id que não é uuid', () => {
+    const result = voiceTokenRequestSchema.safeParse({ channelId: 'geral' })
 
-    expect(result.success, 'nome só com espaços deveria falhar').toBe(false)
-  })
-
-  it('rejeita sala com caracteres fora do padrão', () => {
-    const result = voiceTokenRequestSchema.safeParse({ displayName: 'Akira', roomName: 'Sala Geral!' })
-
-    expect(result.success, 'sala com maiúsculas/espaços deveria falhar').toBe(false)
+    expect(result.success, 'nome de sala no lugar do id deveria falhar').toBe(false)
   })
 })

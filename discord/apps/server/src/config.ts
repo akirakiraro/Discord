@@ -1,16 +1,25 @@
 import { SERVER_DEFAULT_PORT } from '@radcord/shared'
 
-type ServerEnvKey = 'PORT' | 'BIND_HOST' | 'LIVEKIT_API_KEY' | 'LIVEKIT_API_SECRET' | 'LIVEKIT_PUBLIC_URL'
+type ServerEnvKey =
+  | 'PORT'
+  | 'BIND_HOST'
+  | 'DATABASE_PATH'
+  | 'LIVEKIT_API_KEY'
+  | 'LIVEKIT_API_SECRET'
+  | 'LIVEKIT_PUBLIC_URL'
 
 export type ServerEnv = Readonly<Partial<Record<ServerEnvKey, string>>>
 
 export interface ServerConfig {
   port: number
   bindHost: string
+  databasePath: string
   livekitApiKey: string
   livekitApiSecret: string
   livekitPublicUrl: string
 }
+
+const DEFAULT_DATABASE_PATH = 'data/radcord.db'
 
 // LiveKit rejeita segredos menores que 32 caracteres ao assinar tokens.
 const MIN_SECRET_LENGTH = 32
@@ -23,6 +32,7 @@ export function loadServerConfig(env: ServerEnv): ServerConfig {
   return {
     port: parsePort(env.PORT),
     bindHost: env.BIND_HOST?.trim() || '0.0.0.0',
+    databasePath: env.DATABASE_PATH?.trim() || DEFAULT_DATABASE_PATH,
     livekitApiKey: requireEnv(env, 'LIVEKIT_API_KEY'),
     livekitApiSecret: requireSecret(env),
     livekitPublicUrl: requireWebSocketUrl(env),
