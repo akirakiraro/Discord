@@ -12,6 +12,10 @@ export class FakeHostFetch {
     this.calls.push({ url, init })
     return this.respond()
   }
+
+  lastHeaders(): Record<string, string> {
+    return (this.calls.at(-1)?.init?.headers ?? {}) as Record<string, string>
+  }
 }
 
 export class OfflineHostFetch {

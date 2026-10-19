@@ -1,26 +1,9 @@
-import type { VoiceTokenRequest, VoiceTokenResponse } from '@radcord/shared'
+import type { FetchFunction } from './api/apiClient'
 
-export type FetchFunction = (url: string, init?: RequestInit) => Promise<Response>
 export type ClockFunction = () => number
 
-const REQUEST_TIMEOUT_MS = 5000
-
-/**
- * Pede ao host um token para entrar na sala de voz.
- * Exemplo: `await requestVoiceToken('http://26.186.21.58:3000', { displayName: 'Akira', roomName: 'geral' })`
- */
-export async function requestVoiceToken(
-  baseUrl: string,
-  request: VoiceTokenRequest,
-  fetchFn: FetchFunction = fetch,
-): Promise<VoiceTokenResponse> {
-  const response = await fetchFromHost(fetchFn, `${baseUrl}/voice/token`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify(request),
-  })
-  return (await response.json()) as VoiceTokenResponse
-}
+const PING_TIMEOUT_MS = 5000
+const browserFetch: FetchFunction = (url, init) => fetch(url, init)
 
 /**
  * Mede o tempo de ida e volta até a API do host, útil para ver se o Radmin está em "relay".
@@ -28,22 +11,14 @@ export async function requestVoiceToken(
  */
 export async function measureHostPingMs(
   baseUrl: string,
-  fetchFn: FetchFunction = fetch,
+  fetchFn: FetchFunction = browserFetch,
   now: ClockFunction = () => performance.now(),
 ): Promise<number> {
+  const url = `${baseUrl}/health`
   const startedAt = now()
-  await fetchFromHost(fetchFn, `${baseUrl}/health`, { cache: 'no-store' })
-  return Math.round(now() - startedAt)
-}
-
-async function fetchFromHost(fetchFn: FetchFunction, url: string, init: RequestInit): Promise<Response> {
-  const response = await fetchFn(url, { ...init, signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) }).catch(
-    (error: unknown) => {
-      throw new Error(`Não foi possível falar com o host em ${url}: ${String(error)}. O host está ligado e no Radmin?`)
-    },
-  )
+  const response = await fetchFn(url, { cache: 'no-store', signal: AbortSignal.timeout(PING_TIMEOUT_MS) })
   if (!response.ok) {
-    throw new Error(`Host respondeu ${response.status} em ${url}: ${await response.text()}`)
+    throw new Error(`Host respondeu ${response.status} em ${url}; esperado 200`)
   }
-  return response
+  return Math.round(now() - startedAt)
 }

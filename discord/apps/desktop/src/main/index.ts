@@ -1,5 +1,5 @@
 import { join } from 'node:path'
-import { app, BrowserWindow } from 'electron'
+import { app, BrowserWindow, shell } from 'electron'
 import { allowMediaPermissions, handleScreenShareRequests } from './mediaPermissions'
 
 // O Chromium troca os IPs locais por nomes mDNS ".local" nos candidatos WebRTC;
@@ -17,7 +17,10 @@ function createMainWindow(): BrowserWindow {
     autoHideMenuBar: true,
     webPreferences: { contextIsolation: true, sandbox: true },
   })
-  window.webContents.setWindowOpenHandler(() => ({ action: 'deny' }))
+  window.webContents.setWindowOpenHandler(({ url }) => {
+    if (/^https?:\/\//.test(url)) void shell.openExternal(url)
+    return { action: 'deny' }
+  })
   loadRenderer(window)
   return window
 }

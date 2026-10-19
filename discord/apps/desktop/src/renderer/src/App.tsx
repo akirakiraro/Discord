@@ -1,19 +1,13 @@
-import { useState } from 'react'
-import { ConnectScreen } from './components/ConnectScreen'
-import { VoiceRoom } from './components/VoiceRoom'
-import type { VoiceSession } from './lib/voiceSession'
+import { AuthScreen } from './components/auth/AuthScreen'
+import { AppShell } from './components/layout/AppShell'
+import { useRestoreSession } from './hooks/useRestoreSession'
+import { useSessionStore } from './stores/sessionStore'
 
 export function App(): React.JSX.Element {
-  const [session, setSession] = useState<VoiceSession | null>(null)
-  const [lastError, setLastError] = useState<string | null>(null)
+  const restoring = useRestoreSession()
+  const session = useSessionStore((store) => store.session)
 
-  function leaveRoom(reason: string | null): void {
-    setLastError(reason)
-    setSession(null)
-  }
-
-  if (!session) {
-    return <ConnectScreen initialError={lastError} onConnected={setSession} />
-  }
-  return <VoiceRoom session={session} onLeave={leaveRoom} />
+  if (restoring) return <div className="splash-screen">Conectando ao host…</div>
+  if (!session) return <AuthScreen />
+  return <AppShell session={session} />
 }

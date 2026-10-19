@@ -1,0 +1,41 @@
+.member-list {
+  overflow-y: auto;
+  padding: 8px;
+  background: var(--bg-dark);
+}
+
+.member-list ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.member-list__title {
+  margin: 16px 8px 4px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.member {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 8px;
+  border-radius: 4px;
+}
+
+.member:hover {
+  background: var(--bg-hover);
+}
+
+.member--offline {
+  opacity: 0.4;
+}
+
+.member__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

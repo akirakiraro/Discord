@@ -1,0 +1,66 @@
+.auth-screen {
+  height: 100%;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, #404eed 0%, #23272a 100%);
+}
+
+.auth-card {
+  width: 440px;
+  padding: 32px;
+  border-radius: 8px;
+  background: var(--bg-main);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+.auth-card h1 {
+  margin: 0;
+  text-align: center;
+  color: var(--text-strong);
+}
+
+.auth-card__subtitle {
+  margin: -8px 0 8px;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.auth-card__error {
+  margin: 0;
+  color: var(--red);
+  font-size: 13px;
+}
+
+.auth-card__switch {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.field input {
+  padding: 10px;
+  border: none;
+  border-radius: 4px;
+  background: var(--bg-darkest);
+  color: var(--text-normal);
+  font-size: 15px;
+  text-transform: none;
+}
+
+.field__hint {
+  font-weight: 400;
+  text-transform: none;
+}

@@ -23,5 +23,12 @@ export function parseRequest<T>(schema: ZodType<T>, input: unknown): T {
   const parsed = schema.safeParse(input)
   if (parsed.success) return parsed.data
   const issues = parsed.error.issues.map((issue) => `${issue.path.join('.') || 'corpo'}: ${issue.message}`)
-  throw new HttpError(400, 'invalid_request', `Recebido ${JSON.stringify(input)}; problemas: ${issues.join('; ')}`)
+  throw new HttpError(400, 'invalid_request', `Recebido ${describeInput(input)}; problemas: ${issues.join('; ')}`)
+}
+
+const SENSITIVE_KEYS = new Set(['password'])
+
+/** O corpo volta na mensagem de erro; senhas nunca podem ecoar de volta nem cair em log. */
+export function describeInput(input: unknown): string {
+  return JSON.stringify(input, (key, value: unknown) => (SENSITIVE_KEYS.has(key) ? '***' : value)) ?? 'undefined'
 }
