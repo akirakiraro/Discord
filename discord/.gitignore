@@ -1,0 +1,10 @@
+node_modules/
+out/
+dist/
+release/
+*.log
+.env
+
+# Gerados pelos scripts do host (contêm o segredo do LiveKit)
+infra/host/bin/
+infra/host/generated/

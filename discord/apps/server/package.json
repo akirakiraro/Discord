@@ -1,0 +1,21 @@
+{
+  "name": "@radcord/server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "tsx src/index.ts",
+    "dev": "tsx watch src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@fastify/cors": "^11.3.1",
+    "@radcord/shared": "*",
+    "fastify": "^5.12.7",
+    "livekit-server-sdk": "^2.19.1"
+  },
+  "devDependencies": {
+    "tsx": "^4.23.15"
+  }
+}

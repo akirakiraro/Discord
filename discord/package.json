@@ -1,0 +1,24 @@
+{
+  "name": "radcord",
+  "private": true,
+  "description": "Discord caseiro para jogar com os amigos pela rede do Radmin VPN",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "host:install": "powershell -ExecutionPolicy Bypass -File infra/host/install-livekit.ps1",
+    "host:firewall": "powershell -ExecutionPolicy Bypass -File infra/host/open-firewall.ps1",
+    "host": "powershell -ExecutionPolicy Bypass -File infra/host/start-host.ps1",
+    "server": "npm run start -w @radcord/server",
+    "desktop": "npm run dev -w @radcord/desktop",
+    "desktop:dist": "npm run dist -w @radcord/desktop",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.5"
+  }
+}
