@@ -14,6 +14,21 @@ export function MicIcon({ off, size = 20 }: AudioIconProps): React.JSX.Element {
   )
 }
 
+/** Engrenagem das configurações do microfone na barra da call. */
+export function GearIcon({ size = 22 }: { size?: number }): React.JSX.Element {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.8" />
+      <path
+        d="M12 3.5v2.2M12 18.3v2.2M3.5 12h2.2M18.3 12h2.2M6.1 6.1l1.6 1.6M16.3 16.3l1.6 1.6M17.9 6.1l-1.6 1.6M7.7 16.3l-1.6 1.6"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+    </svg>
+  )
+}
+
 /** Fone no estilo do Discord, com risco quando o áudio está silenciado. */
 export function HeadsetIcon({ off, size = 20 }: AudioIconProps): React.JSX.Element {
   return (
