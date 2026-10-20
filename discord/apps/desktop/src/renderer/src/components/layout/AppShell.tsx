@@ -8,7 +8,6 @@ import { ChannelSidebar } from '../channels/ChannelSidebar'
 import { MemberList } from '../members/MemberList'
 import { RealtimeContext } from '../RealtimeContext'
 import { MainPanel } from './MainPanel'
-import { ServerRail } from './ServerRail'
 
 interface AppShellProps {
   session: AuthSession
@@ -24,7 +23,6 @@ export function AppShell({ session }: AppShellProps): React.JSX.Element {
     <RealtimeContext.Provider value={socket}>
       <RoomContext.Provider value={voiceRoom}>
         <div className="app-shell">
-          <ServerRail />
           <ChannelSidebar />
           <MainPanel />
           <MemberList />
