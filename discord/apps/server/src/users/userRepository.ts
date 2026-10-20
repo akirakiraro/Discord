@@ -5,7 +5,6 @@ export interface UserRecord {
   id: string
   username: string
   displayName: string
-  passwordHash: string
   createdAt: string
 }
 
@@ -20,19 +19,18 @@ interface UserRow {
   id: string
   username: string
   display_name: string
-  password_hash: string
   created_at: string
 }
 
-const USER_COLUMNS = 'id, username, display_name, password_hash, created_at'
+const USER_COLUMNS = 'id, username, display_name, created_at'
 
 export class SqliteUserRepository implements UserRepository {
   constructor(private readonly db: DatabaseSync) {}
 
   insert(user: UserRecord): void {
     this.db
-      .prepare(`INSERT INTO users (${USER_COLUMNS}) VALUES (?, ?, ?, ?, ?)`)
-      .run(user.id, user.username, user.displayName, user.passwordHash, user.createdAt)
+      .prepare(`INSERT INTO users (${USER_COLUMNS}) VALUES (?, ?, ?, ?)`)
+      .run(user.id, user.username, user.displayName, user.createdAt)
   }
 
   findById(id: string): UserRecord | undefined {
@@ -56,13 +54,12 @@ function toUserRecord(row: UserRow): UserRecord {
     id: row.id,
     username: row.username,
     displayName: row.display_name,
-    passwordHash: row.password_hash,
     createdAt: row.created_at,
   }
 }
 
 /**
- * Versão pública do usuário, sem o hash da senha.
+ * Versão pública do usuário, a que a API devolve.
  * Exemplo: `reply.send(toUserDto(user))`
  */
 export function toUserDto(user: UserRecord): UserDto {

@@ -7,7 +7,6 @@ function buildUser(overrides: Partial<UserRecord> = {}): UserRecord {
     id: 'u-1',
     username: 'akira',
     displayName: 'Akira',
-    passwordHash: 'hash',
     createdAt: '2026-10-19T12:00:00.000Z',
     ...overrides,
   }
@@ -48,7 +47,12 @@ describe('SqliteUserRepository', () => {
 })
 
 describe('toUserDto', () => {
-  it('remove o hash da senha', () => {
-    expect(toUserDto(buildUser())).not.toHaveProperty('passwordHash')
+  it('expõe só id, usuário, nome e data', () => {
+    expect(toUserDto(buildUser())).toEqual({
+      id: 'u-1',
+      username: 'akira',
+      displayName: 'Akira',
+      createdAt: '2026-10-19T12:00:00.000Z',
+    })
   })
 })

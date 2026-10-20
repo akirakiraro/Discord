@@ -12,7 +12,6 @@ describe('SqliteSessionRepository', () => {
       id: 'u-1',
       username: 'akira',
       displayName: 'Akira',
-      passwordHash: 'hash',
       createdAt: '2026-10-19T12:00:00.000Z',
     })
     sessions = new SqliteSessionRepository(db)

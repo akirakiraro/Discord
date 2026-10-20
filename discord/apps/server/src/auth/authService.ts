@@ -27,7 +27,6 @@ export class AuthService {
       id: this.deps.newId(),
       username: request.username,
       displayName: request.username,
-      passwordHash: '',
       createdAt: this.deps.clock().toISOString(),
     }
     this.deps.users.insert(user)

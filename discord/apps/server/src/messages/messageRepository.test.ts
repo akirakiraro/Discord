@@ -26,7 +26,7 @@ describe('SqliteMessageRepository', () => {
 
   beforeEach(() => {
     const db = openDatabase(IN_MEMORY_DATABASE)
-    new SqliteUserRepository(db).insert({ id: 'u-1', username: 'akira', displayName: 'Akira', passwordHash: 'h', createdAt: 'x' })
+    new SqliteUserRepository(db).insert({ id: 'u-1', username: 'akira', displayName: 'Akira', createdAt: 'x' })
     new SqliteChannelRepository(db).insert({ id: 'c-1', name: 'geral', kind: 'text', position: 0, createdAt: 'x' })
     messages = new SqliteMessageRepository(db)
     for (let index = 0; index < BULK_MESSAGE_COUNT; index++) messages.insert(buildMessage(index))

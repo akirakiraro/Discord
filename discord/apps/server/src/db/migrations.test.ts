@@ -8,12 +8,18 @@ function tableNames(db: DatabaseSync): string[] {
   return rows.map((row) => row.name)
 }
 
+function columnNames(db: DatabaseSync, table: string): string[] {
+  const rows = db.prepare(`PRAGMA table_info(${table})`).all() as { name: string }[]
+  return rows.map((row) => row.name)
+}
+
 describe('runMigrations', () => {
   it('cria as tabelas e grava a versão mais recente', () => {
     const db = openDatabase(IN_MEMORY_DATABASE)
 
     expect(readSchemaVersion(db)).toBe(LATEST_SCHEMA_VERSION)
     expect(tableNames(db)).toEqual(['channels', 'messages', 'sessions', 'users'])
+    expect(columnNames(db, 'users')).not.toContain('password_hash')
   })
 
   it('é idempotente quando rodada de novo', () => {

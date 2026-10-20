@@ -4,10 +4,10 @@ import { InMemoryUserRepository } from '../testing/fakes'
 import { listMembers } from './memberRoutes'
 
 describe('listMembers', () => {
-  it('marca quem está online e não expõe a senha', () => {
+  it('marca quem está online', () => {
     const users = new InMemoryUserRepository()
-    users.insert({ id: 'u-1', username: 'akira', displayName: 'Akira', passwordHash: 'h', createdAt: 'x' })
-    users.insert({ id: 'u-2', username: 'bia', displayName: 'Bia', passwordHash: 'h', createdAt: 'x' })
+    users.insert({ id: 'u-1', username: 'akira', displayName: 'Akira', createdAt: 'x' })
+    users.insert({ id: 'u-2', username: 'bia', displayName: 'Bia', createdAt: 'x' })
     const presence = new PresenceTracker()
     presence.connect('u-2')
 
@@ -17,6 +17,5 @@ describe('listMembers', () => {
       ['akira', false],
       ['bia', true],
     ])
-    expect(members[0]).not.toHaveProperty('passwordHash')
   })
 })
