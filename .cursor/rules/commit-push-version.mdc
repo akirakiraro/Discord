@@ -1,0 +1,16 @@
+---
+description: Após cada desenvolvimento, incrementar 0.1.xx, commitar e fazer push
+alwaysApply: true
+---
+
+# Commit, push e versão
+
+Pedido permanente do dono do repositório: vale em qualquer chat deste projeto.
+
+Quando uma tarefa alterar arquivos do repositório (código, config, docs, regras):
+
+1. Subir o patch em `0.1.xx` em todo `package.json` que já tenha `"version"` (`apps/*`, `packages/*` e a raiz, se existir). Exemplo: `0.1.3` vira `0.1.4`. Manter os pacotes no mesmo número.
+2. Commitar só o que a tarefa mudou. Não incluir `.env`, credenciais nem `package-lock.json` alheio à tarefa.
+3. `git push` na branch atual, sem force push e sem `--no-verify`.
+
+Não commitar nem dar push quando a resposta for só explicação, sem alteração de arquivo. Não criar commit vazio. Se o hook rejeitar, corrigir e criar um commit novo.
