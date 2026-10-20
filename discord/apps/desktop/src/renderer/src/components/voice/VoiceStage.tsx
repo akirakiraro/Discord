@@ -1,18 +1,19 @@
 import { VideoTrack, useIsSpeaking, useParticipants, useTracks } from '@livekit/components-react'
 import { Track, type Participant } from 'livekit-client'
 import { Avatar } from '../common/Avatar'
+import { useMemberFace } from './useMemberFace'
 import { VoiceControlBar } from './VoiceControlBar'
 
 function ParticipantTile({ participant }: { participant: Participant }): React.JSX.Element {
   const speaking = useIsSpeaking(participant)
-  const name = participant.name || participant.identity
+  const face = useMemberFace(participant.identity, participant.name || participant.identity)
 
   return (
     <div className={speaking ? 'participant-tile participant-tile--speaking' : 'participant-tile'}>
-      <Avatar name={name} seed={participant.identity} size={80} />
+      <Avatar name={face.name} seed={participant.identity} imageUrl={face.imageUrl} size={80} />
       <span className="participant-tile__name">
         {!participant.isMicrophoneEnabled && '🔇 '}
-        {name}
+        {face.name}
       </span>
     </div>
   )
