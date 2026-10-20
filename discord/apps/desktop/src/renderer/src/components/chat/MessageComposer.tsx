@@ -68,13 +68,13 @@ export function MessageComposer({ channel }: { channel: ChannelDto }): React.JSX
       {imageUrl && (
         <div className="composer__preview">
           <img src={imageUrl} alt="Print para enviar" />
-          <button type="button" onClick={() => setImageUrl(null)}>
+          <button type="button" className="link-button" onClick={() => setImageUrl(null)}>
             Remover
           </button>
         </div>
       )}
       <div className="composer__row">
-        <button type="button" className="composer__attach" title="Anexar print" onClick={() => fileInput.current?.click()}>
+        <button type="button" className="icon-button composer__attach" title="Anexar print" onClick={() => fileInput.current?.click()}>
           +
         </button>
         <textarea

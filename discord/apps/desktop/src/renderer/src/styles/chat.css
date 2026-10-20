@@ -156,23 +156,22 @@
 
 .composer__row {
   display: flex;
-  align-items: flex-end;
-  gap: 8px;
+  align-items: center;
+  gap: 4px;
 }
 
 .composer__attach {
   width: 40px;
   height: 40px;
-  border: none;
-  border-radius: 8px;
-  background: var(--bg-input);
-  color: var(--text-normal);
+  padding: 0;
   font-size: 22px;
-  cursor: pointer;
+  line-height: 1;
 }
 
 .composer__row textarea {
   flex: 1;
+  width: auto;
+  min-width: 0;
 }
 
 .message-editor textarea,
