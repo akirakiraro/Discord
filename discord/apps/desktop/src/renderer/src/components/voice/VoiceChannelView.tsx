@@ -2,6 +2,7 @@ import type { ChannelDto } from '@radcord/shared'
 import { voiceSession } from '../../lib/voice/voiceSession'
 import { useSessionStore } from '../../stores/sessionStore'
 import { useVoiceStore } from '../../stores/voiceStore'
+import { MemberListToggle } from '../members/MemberListToggle'
 import { VoiceStage } from './VoiceStage'
 
 function JoinPrompt({ channel }: { channel: ChannelDto }): React.JSX.Element {
@@ -27,7 +28,8 @@ export function VoiceChannelView({ channel }: { channel: ChannelDto }): React.JS
     <main className="main-panel voice-channel-view">
       <header className="panel-header">
         <span className="panel-header__icon">🔊</span>
-        {channel.name}
+        <span className="panel-header__title">{channel.name}</span>
+        <MemberListToggle />
       </header>
       {connectedHere ? <VoiceStage /> : <JoinPrompt channel={channel} />}
     </main>

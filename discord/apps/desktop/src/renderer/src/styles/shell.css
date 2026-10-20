@@ -4,6 +4,10 @@
   grid-template-columns: 240px minmax(0, 1fr) 240px;
 }
 
+.app-shell--no-members {
+  grid-template-columns: 240px minmax(0, 1fr);
+}
+
 /* Barra de canais */
 
 .channel-sidebar {
@@ -293,5 +297,21 @@
 
 .panel-header__icon {
   font-size: 22px;
+  color: var(--text-muted);
+}
+
+.panel-header__title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.member-toggle--open {
+  color: var(--text-strong);
+}
+
+.member-toggle:not(.member-toggle--open) {
   color: var(--text-muted);
 }
