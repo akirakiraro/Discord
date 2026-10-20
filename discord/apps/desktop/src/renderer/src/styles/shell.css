@@ -186,7 +186,13 @@
   border-radius: 4px;
   background: var(--bg-input);
   color: var(--text-strong);
-  font: inherit;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.profile-modal__file {
+  align-self: center;
+  width: fit-content;
 }
 
 .profile-modal__file input {
@@ -198,9 +204,10 @@
 .profile-modal__actions button {
   border: 0;
   border-radius: 4px;
-  padding: 8px 16px;
+  padding: 6px 12px;
   background: var(--bg-active);
   color: var(--text-strong);
+  font-size: 13px;
   font-weight: 600;
   cursor: pointer;
 }
