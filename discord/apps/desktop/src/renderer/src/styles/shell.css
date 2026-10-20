@@ -196,7 +196,19 @@
 .profile-modal__file,
 .profile-modal__text,
 .profile-modal__actions button {
+  border: 0;
+  border-radius: 4px;
+  padding: 8px 16px;
+  background: var(--bg-active);
+  color: var(--text-strong);
+  font-weight: 600;
   cursor: pointer;
+}
+
+.profile-modal__file:hover,
+.profile-modal__text:hover,
+.profile-modal__actions button:hover:not(:disabled) {
+  background: var(--bg-hover);
 }
 
 .profile-modal__username {
@@ -223,12 +235,14 @@
   gap: 8px;
 }
 
-.profile-modal__save {
+.profile-modal__save,
+.profile-modal__save:hover:not(:disabled) {
   background: var(--brand);
   color: white;
-  border: 0;
-  border-radius: 4px;
-  padding: 8px 16px;
+}
+
+.profile-modal__save:hover:not(:disabled) {
+  background: var(--brand-hover);
 }
 
 /* Painel principal */
