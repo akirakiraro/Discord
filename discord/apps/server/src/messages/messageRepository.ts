@@ -17,9 +17,10 @@ interface MessageRow {
   content: string
   created_at: string
   edited_at: string | null
+  image_url: string | null
 }
 
-const MESSAGE_COLUMNS = 'id, channel_id, author_id, content, created_at, edited_at'
+const MESSAGE_COLUMNS = 'id, channel_id, author_id, content, created_at, edited_at, image_url'
 
 // O cursor compara (created_at, id) para não pular mensagens criadas no mesmo milissegundo.
 const LIST_BEFORE_CURSOR = `
@@ -35,8 +36,16 @@ export class SqliteMessageRepository implements MessageRepository {
 
   insert(message: MessageDto): void {
     this.db
-      .prepare(`INSERT INTO messages (${MESSAGE_COLUMNS}) VALUES (?, ?, ?, ?, ?, ?)`)
-      .run(message.id, message.channelId, message.authorId, message.content, message.createdAt, message.editedAt)
+      .prepare(`INSERT INTO messages (${MESSAGE_COLUMNS}) VALUES (?, ?, ?, ?, ?, ?, ?)`)
+      .run(
+        message.id,
+        message.channelId,
+        message.authorId,
+        message.content,
+        message.createdAt,
+        message.editedAt,
+        message.imageUrl ?? null,
+      )
   }
 
   findById(id: string): MessageDto | undefined {
@@ -68,5 +77,6 @@ function toMessageDto(row: MessageRow): MessageDto {
     content: row.content,
     createdAt: row.created_at,
     editedAt: row.edited_at,
+    imageUrl: row.image_url,
   }
 }

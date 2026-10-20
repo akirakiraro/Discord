@@ -3,17 +3,26 @@ import { splitLinks } from '../../lib/chat/linkify'
 
 export function MessageContent({ message }: { message: MessageDto }): React.JSX.Element {
   return (
-    <p className="message__content">
-      {splitLinks(message.content).map((segment, index) =>
-        segment.kind === 'link' ? (
-          <a key={index} href={segment.value} target="_blank" rel="noreferrer">
-            {segment.value}
-          </a>
-        ) : (
-          <span key={index}>{segment.value}</span>
-        ),
+    <>
+      {message.content.length > 0 && (
+        <p className="message__content">
+          {splitLinks(message.content).map((segment, index) =>
+            segment.kind === 'link' ? (
+              <a key={index} href={segment.value} target="_blank" rel="noreferrer">
+                {segment.value}
+              </a>
+            ) : (
+              <span key={index}>{segment.value}</span>
+            ),
+          )}
+          {message.editedAt && <span className="message__edited"> (editado)</span>}
+        </p>
       )}
-      {message.editedAt && <span className="message__edited"> (editado)</span>}
-    </p>
+      {message.imageUrl?.startsWith('data:image/jpeg') && (
+        <a className="message__print" href={message.imageUrl} target="_blank" rel="noreferrer">
+          <img src={message.imageUrl} alt="Print" />
+        </a>
+      )}
+    </>
   )
 }

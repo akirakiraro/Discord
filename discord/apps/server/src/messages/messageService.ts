@@ -15,7 +15,7 @@ export interface MessageServiceDependencies {
 
 /**
  * Histórico, envio, edição e remoção de mensagens em canais de texto.
- * Exemplo: `messageService.send(user.id, channelId, 'bora jogar?')`
+ * Exemplo: `messageService.send(user.id, channelId, 'bora jogar?', null)`
  */
 export class MessageService {
   constructor(private readonly deps: MessageServiceDependencies) {}
@@ -27,7 +27,7 @@ export class MessageService {
     return { messages: hasMore ? rows.slice(1) : rows, hasMore }
   }
 
-  send(authorId: string, channelId: string, content: string): MessageDto {
+  send(authorId: string, channelId: string, content: string, imageUrl: string | null): MessageDto {
     this.deps.channels.requireChannel(channelId, 'text')
     const message: MessageDto = {
       id: this.deps.newId(),
@@ -36,6 +36,7 @@ export class MessageService {
       content,
       createdAt: this.deps.clock().toISOString(),
       editedAt: null,
+      imageUrl,
     }
     this.deps.messages.insert(message)
     this.deps.broadcaster.emit('message:created', message)
@@ -44,6 +45,9 @@ export class MessageService {
 
   edit(authorId: string, messageId: string, content: string): MessageDto {
     const original = this.requireOwnMessage(authorId, messageId)
+    if (!content && !original.imageUrl) {
+      throw new HttpError(400, 'empty_message', 'A mensagem "content" ficou vazia e não há print para manter')
+    }
     const editedAt = this.deps.clock().toISOString()
     this.deps.messages.updateContent(messageId, content, editedAt)
     const updated: MessageDto = { ...original, content, editedAt }

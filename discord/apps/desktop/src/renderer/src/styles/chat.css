@@ -138,6 +138,43 @@
   background: var(--bg-hover);
 }
 
+.message__print img,
+.composer__preview img {
+  display: block;
+  max-width: min(480px, 100%);
+  max-height: 320px;
+  margin-top: 6px;
+  border-radius: 8px;
+}
+
+.composer__preview {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.composer__row {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.composer__attach {
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 8px;
+  background: var(--bg-input);
+  color: var(--text-normal);
+  font-size: 22px;
+  cursor: pointer;
+}
+
+.composer__row textarea {
+  flex: 1;
+}
+
 .message-editor textarea,
 .composer textarea {
   width: 100%;

@@ -25,9 +25,9 @@ export function registerMessageRoutes(app: FastifyInstance, auth: AuthService, m
 
   app.post<{ Params: ChannelParams }>('/channels/:channelId/messages', async (request, reply): Promise<MessageDto> => {
     const user = requireCurrentUser(request, auth)
-    const { content } = parseRequest(messageContentSchema, request.body)
+    const { content, imageUrl } = parseRequest(messageContentSchema, request.body)
     reply.code(201)
-    return messages.send(user.id, request.params.channelId, content)
+    return messages.send(user.id, request.params.channelId, content, imageUrl ?? null)
   })
 
   app.patch<{ Params: MessageParams }>('/messages/:messageId', async (request): Promise<MessageDto> => {

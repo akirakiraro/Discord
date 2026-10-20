@@ -55,6 +55,12 @@ describe('SqliteMessageRepository', () => {
     expect(messages.listBefore('c-1', 'm-zzz', 1).map((message) => message.id)).toEqual(['m-aaa'])
   })
 
+  it('persiste o print e devolve no histórico', () => {
+    messages.insert(buildMessage(200, { id: 'm-img', imageUrl: 'data:image/jpeg;base64,YQ==' }))
+
+    expect(messages.findById('m-img')?.imageUrl).toBe('data:image/jpeg;base64,YQ==')
+  })
+
   it('edita e apaga', () => {
     messages.updateContent('m-001', 'editada', '2026-10-19T14:00:00.000Z')
     messages.delete('m-002')

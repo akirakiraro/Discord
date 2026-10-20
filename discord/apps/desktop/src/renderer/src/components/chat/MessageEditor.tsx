@@ -15,8 +15,9 @@ export function MessageEditor({ message, onDone }: MessageEditorProps): React.JS
   async function save(): Promise<void> {
     const content = draft.trim()
     if (!api || content === message.content) return onDone()
+    if (!content && !message.imageUrl) return onDone()
     try {
-      await api.editMessage(message.id, content)
+      await api.editMessage(message.id, content, message.imageUrl)
       onDone()
     } catch (failure) {
       setError(failure instanceof Error ? failure.message : String(failure))

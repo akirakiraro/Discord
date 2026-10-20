@@ -73,12 +73,14 @@ export class RadcordApiClient {
     return this.request('GET', `/channels/${channelId}/messages${query}`)
   }
 
-  sendMessage(channelId: string, content: string): Promise<MessageDto> {
-    return this.request('POST', `/channels/${channelId}/messages`, { content })
+  sendMessage(channelId: string, content: string, imageUrl?: string | null): Promise<MessageDto> {
+    const body = imageUrl ? { content, imageUrl } : { content }
+    return this.request('POST', `/channels/${channelId}/messages`, body)
   }
 
-  editMessage(messageId: string, content: string): Promise<MessageDto> {
-    return this.request('PATCH', `/messages/${messageId}`, { content })
+  editMessage(messageId: string, content: string, imageUrl?: string | null): Promise<MessageDto> {
+    const body = imageUrl ? { content, imageUrl } : { content }
+    return this.request('PATCH', `/messages/${messageId}`, body)
   }
 
   deleteMessage(messageId: string): Promise<void> {

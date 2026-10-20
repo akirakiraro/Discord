@@ -5,6 +5,9 @@ export type ChannelKind = (typeof CHANNEL_KINDS)[number]
 
 export const MESSAGE_MAX_LENGTH = 2000
 export const MESSAGE_PAGE_SIZE = 50
+export const MESSAGE_IMAGE_MAX_LENGTH = 650_000
+
+const MESSAGE_IMAGE_DATA_URL = /^data:image\/jpeg;base64,[A-Za-z0-9+/]+=*$/
 
 export const createChannelRequestSchema = z.object({
   name: z
@@ -15,9 +18,15 @@ export const createChannelRequestSchema = z.object({
   kind: z.enum(CHANNEL_KINDS),
 })
 
-export const messageContentSchema = z.object({
-  content: z.string().trim().min(1, 'a mensagem está vazia').max(MESSAGE_MAX_LENGTH),
-})
+export const messageContentSchema = z
+  .object({
+    content: z.string().trim().max(MESSAGE_MAX_LENGTH).default(''),
+    imageUrl: z.string().regex(MESSAGE_IMAGE_DATA_URL).max(MESSAGE_IMAGE_MAX_LENGTH).nullable().optional(),
+  })
+  .refine((body) => body.content.length > 0 || Boolean(body.imageUrl), {
+    message: 'a mensagem está vazia',
+    path: ['content'],
+  })
 
 export const messageHistoryQuerySchema = z.object({
   before: z.uuid().optional(),
@@ -42,6 +51,8 @@ export interface MessageDto {
   content: string
   createdAt: string
   editedAt: string | null
+  /** JPEG em data URL, quando a mensagem inclui um print. */
+  imageUrl?: string | null
 }
 
 export interface MessagePageDto {

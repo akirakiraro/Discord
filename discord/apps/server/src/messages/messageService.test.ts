@@ -33,18 +33,18 @@ describe('MessageService', () => {
   })
 
   it('envia mensagem e transmite para todos', () => {
-    const message = service.send('u-1', textChannelId, 'bora jogar?')
+    const message = service.send('u-1', textChannelId, 'bora jogar?', null)
 
     expect(message).toMatchObject({ id: 'msg-1', authorId: 'u-1', content: 'bora jogar?', editedAt: null })
     expect(broadcaster.events).toEqual([{ event: 'message:created', payload: message }])
   })
 
   it('recusa mensagem em canal de voz', () => {
-    expect(() => service.send('u-1', voiceChannelId, 'oi')).toThrow(/esperado text/)
+    expect(() => service.send('u-1', voiceChannelId, 'oi', null)).toThrow(/esperado text/)
   })
 
   it('pagina o histórico com 60 mensagens e informa se há mais', () => {
-    for (let index = 0; index < BULK_MESSAGE_COUNT; index++) service.send('u-1', textChannelId, `m${index}`)
+    for (let index = 0; index < BULK_MESSAGE_COUNT; index++) service.send('u-1', textChannelId, `m${index}`, null)
 
     const latest = service.history(textChannelId, { limit: 50 })
     const older = service.history(textChannelId, { limit: 50, before: latest.messages[0]?.id })
@@ -56,7 +56,7 @@ describe('MessageService', () => {
   })
 
   it('autor edita e apaga a própria mensagem, avisando os outros', () => {
-    const message = service.send('u-1', textChannelId, 'oi')
+    const message = service.send('u-1', textChannelId, 'oi', null)
 
     const edited = service.edit('u-1', message.id, 'olá')
     service.remove('u-1', message.id)
@@ -67,10 +67,18 @@ describe('MessageService', () => {
   })
 
   it('impede outro usuário de editar ou apagar', () => {
-    const message = service.send('u-1', textChannelId, 'oi')
+    const message = service.send('u-1', textChannelId, 'oi', null)
 
     expect(() => service.edit('u-2', message.id, 'hack')).toThrow(/só o autor/)
     expect(() => service.remove('u-2', message.id)).toThrow(/só o autor/)
+  })
+
+  it('guarda o print junto da mensagem', () => {
+    const imageUrl = 'data:image/jpeg;base64,YQ=='
+    const message = service.send('u-1', textChannelId, '', imageUrl)
+
+    expect(message.imageUrl).toBe(imageUrl)
+    expect(service.history(textChannelId, { limit: 50 }).messages[0]?.imageUrl).toBe(imageUrl)
   })
 
   it('responde 404 para mensagem inexistente', () => {

@@ -36,6 +36,7 @@ const MIGRATIONS: readonly string[] = [
   `,
   `ALTER TABLE users DROP COLUMN password_hash;`,
   `ALTER TABLE users ADD COLUMN avatar_url TEXT;`,
+  `ALTER TABLE messages ADD COLUMN image_url TEXT;`,
 ]
 
 /**

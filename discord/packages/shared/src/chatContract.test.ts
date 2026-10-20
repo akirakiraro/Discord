@@ -19,6 +19,15 @@ describe('messageContentSchema', () => {
   it('rejeita mensagem acima de 2000 caracteres', () => {
     expect(messageContentSchema.safeParse({ content: 'a'.repeat(2001) }).success).toBe(false)
   })
+
+  it('aceita print sem texto', () => {
+    const imageUrl = 'data:image/jpeg;base64,YQ=='
+    expect(messageContentSchema.parse({ content: '', imageUrl })).toEqual({ content: '', imageUrl })
+  })
+
+  it('rejeita print que não é jpeg em data URL', () => {
+    expect(messageContentSchema.safeParse({ content: 'oi', imageUrl: 'https://x/a.png' }).success).toBe(false)
+  })
 })
 
 describe('messageHistoryQuerySchema', () => {
