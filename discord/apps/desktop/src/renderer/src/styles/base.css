@@ -29,8 +29,22 @@ body {
   overflow: hidden;
 }
 
+/* Faixa da barra nativa (Window Controls Overlay). Em navegador a altura é 0. */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 20;
+  height: env(titlebar-area-height, 0px);
+  width: env(titlebar-area-width, 100%);
+  background: var(--bg-darkest);
+  -webkit-app-region: drag;
+}
+
 #root {
-  height: 100vh;
+  height: calc(100vh - env(titlebar-area-height, 0px));
+  margin-top: env(titlebar-area-height, 0px);
 }
 
 button {

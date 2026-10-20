@@ -3,6 +3,7 @@ import { join } from 'node:path'
 import { app, BrowserWindow, ipcMain, shell } from 'electron'
 import { allowMediaPermissions, handleScreenShareRequests } from './mediaPermissions'
 import { findRadminIpv4 } from './radminAddress'
+import { windowChrome } from './windowChrome'
 
 // O Chromium troca os IPs locais por nomes mDNS ".local" nos candidatos WebRTC;
 // pela LAN virtual do Radmin esses nomes não resolvem e a mídia pode não conectar.
@@ -14,7 +15,9 @@ function createMainWindow(): BrowserWindow {
     height: 760,
     minWidth: 900,
     minHeight: 560,
-    backgroundColor: '#313338',
+    backgroundColor: windowChrome.backgroundColor,
+    titleBarStyle: windowChrome.titleBarStyle,
+    titleBarOverlay: windowChrome.titleBarOverlay,
     title: 'Radcord',
     autoHideMenuBar: true,
     webPreferences: {
