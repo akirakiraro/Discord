@@ -5,6 +5,7 @@ import {
   withChannelAdded,
   withHistoryPrepended,
   withInitialData,
+  withMemberProfile,
   withMemberUpserted,
   withMessageRemoved,
   withMessageUpserted,
@@ -47,6 +48,15 @@ describe('chatState', () => {
 
     expect(withPresence(state, { userId: 'u-1', online: true }).members['u-1']?.online).toBe(true)
     expect(withPresence(state, { userId: 'fantasma', online: true })).toBe(state)
+  })
+
+  it('withMemberProfile troca nome e foto e mantém o online', () => {
+    const state = withPresence(withInitialData(EMPTY_CHAT_STATE, [], [AKIRA]), { userId: 'u-1', online: true })
+
+    const next = withMemberProfile(state, { ...AKIRA, displayName: 'Novo', online: false })
+
+    expect(next.members['u-1']?.displayName).toBe('Novo')
+    expect(next.members['u-1']?.online).toBe(true)
   })
 
   it('withMemberUpserted adiciona quem acabou de se cadastrar', () => {

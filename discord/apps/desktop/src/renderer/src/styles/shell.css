@@ -125,7 +125,13 @@
   flex: 1;
   min-width: 0;
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
 }
 
 .user-panel__name {
@@ -137,9 +143,92 @@
   white-space: nowrap;
 }
 
-.user-panel__username {
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  background: rgb(0 0 0 / 70%);
+}
+
+.profile-modal {
+  width: 360px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 24px;
+  border-radius: 8px;
+  background: var(--bg-dark);
+  color: var(--text-normal);
+}
+
+.profile-modal h2 {
+  margin: 0;
+  align-self: stretch;
+}
+
+.profile-modal label {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
   font-size: 12px;
+  font-weight: 700;
   color: var(--text-muted);
+}
+
+.profile-modal input[type='text'],
+.profile-modal input:not([type='file']) {
+  padding: 10px;
+  border: 0;
+  border-radius: 4px;
+  background: var(--bg-input);
+  color: var(--text-strong);
+  font: inherit;
+}
+
+.profile-modal__file input {
+  display: none;
+}
+
+.profile-modal__file,
+.profile-modal__text,
+.profile-modal__actions button {
+  cursor: pointer;
+}
+
+.profile-modal__username {
+  margin: 0;
+  align-self: stretch;
+  color: var(--text-muted);
+}
+
+.profile-modal__username strong {
+  color: var(--text-strong);
+}
+
+.profile-modal__error {
+  margin: 0;
+  align-self: stretch;
+  color: var(--red);
+  font-size: 13px;
+}
+
+.profile-modal__actions {
+  align-self: stretch;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.profile-modal__save {
+  background: var(--brand);
+  color: white;
+  border: 0;
+  border-radius: 4px;
+  padding: 8px 16px;
 }
 
 /* Painel principal */

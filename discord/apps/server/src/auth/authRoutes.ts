@@ -1,5 +1,5 @@
 import type { FastifyInstance } from 'fastify'
-import { joinRequestSchema, type AuthResponse, type UserDto } from '@radcord/shared'
+import { joinRequestSchema, profileUpdateSchema, type AuthResponse, type UserDto } from '@radcord/shared'
 import { readBearerToken, requireCurrentUser } from '../http/currentUser'
 import { parseRequest } from '../http/httpError'
 import { toUserDto } from '../users/userRepository'
@@ -12,6 +12,11 @@ export function registerAuthRoutes(app: FastifyInstance, auth: AuthService): voi
   app.post('/auth/join', async (request): Promise<AuthResponse> => auth.join(parseRequest(joinRequestSchema, request.body)))
 
   app.get('/auth/me', async (request): Promise<UserDto> => toUserDto(requireCurrentUser(request, auth)))
+
+  app.patch('/auth/me', async (request): Promise<UserDto> => {
+    const user = requireCurrentUser(request, auth)
+    return auth.updateProfile(user.id, parseRequest(profileUpdateSchema, request.body))
+  })
 
   app.post('/auth/logout', async (request, reply) => {
     requireCurrentUser(request, auth)

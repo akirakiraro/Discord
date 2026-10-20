@@ -5,6 +5,7 @@ import type {
   CreateChannelRequest,
   JoinRequest,
   MemberDto,
+  ProfileUpdate,
   MessageDto,
   MessagePageDto,
   UserDto,
@@ -49,6 +50,10 @@ export class RadcordApiClient {
 
   me(): Promise<UserDto> {
     return this.request('GET', '/auth/me')
+  }
+
+  updateProfile(patch: ProfileUpdate): Promise<UserDto> {
+    return this.request('PATCH', '/auth/me', patch)
   }
 
   logout(): Promise<void> {

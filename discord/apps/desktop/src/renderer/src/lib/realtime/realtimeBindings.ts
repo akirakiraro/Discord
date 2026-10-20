@@ -1,6 +1,7 @@
 import type { ServerToClientEvents } from '@radcord/shared'
 import {
   withChannelAdded,
+  withMemberProfile,
   withMemberUpserted,
   withMessageRemoved,
   withMessageUpserted,
@@ -35,6 +36,7 @@ export function bindRealtimeEvents(source: RealtimeEventSource, sinks: RealtimeS
   source.on('message:deleted', (payload) => applyChat((state) => withMessageRemoved(state, payload)))
   source.on('channel:created', (channel) => applyChat((state) => withChannelAdded(state, channel)))
   source.on('member:joined', (member) => applyChat((state) => withMemberUpserted(state, member)))
+  source.on('member:updated', (member) => applyChat((state) => withMemberProfile(state, member)))
   source.on('presence:changed', (payload) => applyChat((state) => withPresence(state, payload)))
   source.on('typing:started', (payload) => applyTyping((state) => withTypingStarted(state, payload, sinks.nowMs())))
 }

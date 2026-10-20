@@ -22,6 +22,7 @@ export interface ServerToClientEvents {
   'message:deleted': (payload: MessageDeletedPayload) => void
   'channel:created': (channel: ChannelDto) => void
   'member:joined': (member: MemberDto) => void
+  'member:updated': (member: MemberDto) => void
   'presence:changed': (payload: PresenceChangedPayload) => void
   'typing:started': (payload: TypingPayload) => void
 }

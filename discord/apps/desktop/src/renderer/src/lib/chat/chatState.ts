@@ -38,6 +38,12 @@ export function withMemberUpserted(state: ChatState, member: MemberDto): ChatSta
   return { ...state, members: { ...state.members, [member.id]: member } }
 }
 
+/** Atualiza nome e foto sem apagar o status online que o cliente já conhece. */
+export function withMemberProfile(state: ChatState, member: MemberDto): ChatState {
+  const online = state.members[member.id]?.online ?? member.online
+  return withMemberUpserted(state, { ...member, online })
+}
+
 export function withPresence(state: ChatState, { userId, online }: PresenceChangedPayload): ChatState {
   const member = state.members[userId]
   if (!member) return state

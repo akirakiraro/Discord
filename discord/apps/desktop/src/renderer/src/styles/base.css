@@ -131,6 +131,13 @@ a {
   transition: outline-color 80ms;
 }
 
+.avatar__image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
 .avatar--speaking {
   outline-color: var(--green);
 }

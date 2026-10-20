@@ -35,6 +35,7 @@ const MIGRATIONS: readonly string[] = [
   CREATE INDEX messages_by_channel_time ON messages (channel_id, created_at, id);
   `,
   `ALTER TABLE users DROP COLUMN password_hash;`,
+  `ALTER TABLE users ADD COLUMN avatar_url TEXT;`,
 ]
 
 /**

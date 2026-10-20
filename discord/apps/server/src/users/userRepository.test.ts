@@ -44,15 +44,24 @@ describe('SqliteUserRepository', () => {
 
     expect(users.listAll().map((user) => user.displayName)).toEqual(['Ana', 'Zeca'])
   })
+
+  it('atualiza nome e foto de quem já existe', () => {
+    users.insert(buildUser())
+    users.update({ ...buildUser(), displayName: 'Akira K', avatarUrl: 'data:image/jpeg;base64,YQ==' })
+
+    expect(users.findById('u-1')?.displayName).toBe('Akira K')
+    expect(users.findById('u-1')?.avatarUrl).toBe('data:image/jpeg;base64,YQ==')
+  })
 })
 
 describe('toUserDto', () => {
-  it('expõe só id, usuário, nome e data', () => {
+  it('expõe id, usuário, nome, data e foto', () => {
     expect(toUserDto(buildUser())).toEqual({
       id: 'u-1',
       username: 'akira',
       displayName: 'Akira',
       createdAt: '2026-10-19T12:00:00.000Z',
+      avatarUrl: null,
     })
   })
 })

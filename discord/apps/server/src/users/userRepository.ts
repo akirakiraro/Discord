@@ -6,6 +6,7 @@ export interface UserRecord {
   username: string
   displayName: string
   createdAt: string
+  avatarUrl?: string | null
 }
 
 export interface UserRepository {
@@ -13,6 +14,7 @@ export interface UserRepository {
   findById(id: string): UserRecord | undefined
   findByUsername(username: string): UserRecord | undefined
   listAll(): UserRecord[]
+  update(user: UserRecord): void
 }
 
 interface UserRow {
@@ -20,17 +22,25 @@ interface UserRow {
   username: string
   display_name: string
   created_at: string
+  avatar_url: string | null
 }
 
-const USER_COLUMNS = 'id, username, display_name, created_at'
+const USER_COLUMNS = 'id, username, display_name, created_at, avatar_url'
 
 export class SqliteUserRepository implements UserRepository {
   constructor(private readonly db: DatabaseSync) {}
 
   insert(user: UserRecord): void {
     this.db
-      .prepare(`INSERT INTO users (${USER_COLUMNS}) VALUES (?, ?, ?, ?)`)
-      .run(user.id, user.username, user.displayName, user.createdAt)
+      .prepare(`INSERT INTO users (${USER_COLUMNS}) VALUES (?, ?, ?, ?, ?)`)
+      .run(user.id, user.username, user.displayName, user.createdAt, user.avatarUrl ?? null)
+  }
+
+  update(user: UserRecord): void {
+    const result = this.db
+      .prepare('UPDATE users SET display_name = ?, avatar_url = ? WHERE id = ?')
+      .run(user.displayName, user.avatarUrl ?? null, user.id)
+    if (result.changes !== 1) throw new Error(`Usuário "${user.id}" não existe para atualizar o perfil`)
   }
 
   findById(id: string): UserRecord | undefined {
@@ -55,6 +65,7 @@ function toUserRecord(row: UserRow): UserRecord {
     username: row.username,
     displayName: row.display_name,
     createdAt: row.created_at,
+    avatarUrl: row.avatar_url,
   }
 }
 
@@ -63,5 +74,11 @@ function toUserRecord(row: UserRow): UserRecord {
  * Exemplo: `reply.send(toUserDto(user))`
  */
 export function toUserDto(user: UserRecord): UserDto {
-  return { id: user.id, username: user.username, displayName: user.displayName, createdAt: user.createdAt }
+  return {
+    id: user.id,
+    username: user.username,
+    displayName: user.displayName,
+    createdAt: user.createdAt,
+    avatarUrl: user.avatarUrl ?? null,
+  }
 }

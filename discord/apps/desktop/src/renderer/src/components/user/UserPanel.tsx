@@ -1,21 +1,23 @@
+import { useState } from 'react'
 import { logout } from '../../lib/auth/logout'
 import { useSessionStore } from '../../stores/sessionStore'
 import { useVoiceStore } from '../../stores/voiceStore'
 import { Avatar } from '../common/Avatar'
+import { ProfileModal } from './ProfileModal'
 
 export function UserPanel(): React.JSX.Element | null {
   const session = useSessionStore((store) => store.session)
   const { micMuted, deafened, toggleMic, toggleDeafen } = useVoiceStore()
+  const [profileOpen, setProfileOpen] = useState(false)
   if (!session) return null
   const { user } = session
 
   return (
     <div className="user-panel">
-      <Avatar name={user.displayName} seed={user.id} online />
-      <div className="user-panel__identity">
+      <button type="button" className="user-panel__identity" title="Abrir perfil" onClick={() => setProfileOpen(true)}>
+        <Avatar name={user.displayName} seed={user.id} imageUrl={user.avatarUrl} online />
         <span className="user-panel__name">{user.displayName}</span>
-        <span className="user-panel__username">@{user.username}</span>
-      </div>
+      </button>
       <button className={micMuted ? 'icon-button icon-button--off' : 'icon-button'} title="Mutar" onClick={toggleMic}>
         {micMuted ? '🔇' : '🎙️'}
       </button>
@@ -25,6 +27,7 @@ export function UserPanel(): React.JSX.Element | null {
       <button className="icon-button" title="Sair da conta" onClick={() => void logout(session)}>
         ⏏️
       </button>
+      {profileOpen && <ProfileModal user={user} onClose={() => setProfileOpen(false)} />}
     </div>
   )
 }

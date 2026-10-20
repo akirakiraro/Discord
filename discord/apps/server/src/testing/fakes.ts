@@ -34,6 +34,11 @@ export class InMemoryUserRepository implements UserRepository {
   listAll(): UserRecord[] {
     return [...this.users.values()]
   }
+
+  update(user: UserRecord): void {
+    if (!this.users.has(user.id)) throw new Error(`Usuário "${user.id}" não existe para atualizar o perfil`)
+    this.users.set(user.id, user)
+  }
 }
 
 export class InMemorySessionRepository implements SessionRepository {

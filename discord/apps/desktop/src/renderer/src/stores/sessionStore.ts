@@ -14,6 +14,7 @@ interface SessionStore {
   signOutReason: string | null
   signIn: (session: AuthSession) => void
   signOut: (reason?: string) => void
+  updateUser: (user: UserDto) => void
 }
 
 export const useSessionStore = create<SessionStore>((set) => ({
@@ -21,4 +22,6 @@ export const useSessionStore = create<SessionStore>((set) => ({
   signOutReason: null,
   signIn: (session) => set({ session, signOutReason: null }),
   signOut: (reason) => set({ session: null, signOutReason: reason ?? null }),
+  updateUser: (user) =>
+    set((store) => (store.session ? { session: { ...store.session, user } } : store)),
 }))

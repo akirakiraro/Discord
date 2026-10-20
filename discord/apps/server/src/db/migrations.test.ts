@@ -20,6 +20,7 @@ describe('runMigrations', () => {
     expect(readSchemaVersion(db)).toBe(LATEST_SCHEMA_VERSION)
     expect(tableNames(db)).toEqual(['channels', 'messages', 'sessions', 'users'])
     expect(columnNames(db, 'users')).not.toContain('password_hash')
+    expect(columnNames(db, 'users')).toContain('avatar_url')
   })
 
   it('é idempotente quando rodada de novo', () => {

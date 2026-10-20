@@ -14,7 +14,7 @@ function MemberSection({ title, members }: { title: string; members: MemberDto[]
       <ul>
         {members.map((member) => (
           <li key={member.id} className={member.online ? 'member' : 'member member--offline'}>
-            <Avatar name={member.displayName} seed={member.id} online={member.online} />
+            <Avatar name={member.displayName} seed={member.id} imageUrl={member.avatarUrl} online={member.online} />
             <span className="member__name">{member.displayName}</span>
           </li>
         ))}

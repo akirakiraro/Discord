@@ -24,7 +24,13 @@ describe('AuthService', () => {
   it('cria a conta, devolve token e avisa os outros membros', () => {
     const response = auth.join(AKIRA)
 
-    expect(response.user).toEqual({ id: 'user-1', username: 'akira', displayName: 'akira', createdAt: '2026-10-19T12:00:00.000Z' })
+    expect(response.user).toEqual({
+      id: 'user-1',
+      username: 'akira',
+      displayName: 'akira',
+      createdAt: '2026-10-19T12:00:00.000Z',
+      avatarUrl: null,
+    })
     expect(response.token.length, 'token não vazio').toBeGreaterThan(20)
     expect(broadcaster.events).toEqual([{ event: 'member:joined', payload: { ...response.user, online: false } }])
   })
@@ -38,6 +44,16 @@ describe('AuthService', () => {
     expect(users.listAll()).toHaveLength(1)
     expect(broadcaster.events).toHaveLength(1)
     expect(auth.authenticate(second.token)?.id).toBe(first.user.id)
+  })
+
+  it('atualiza nome e foto e avisa os conectados', () => {
+    const { user } = auth.join(AKIRA)
+
+    const updated = auth.updateProfile(user.id, { displayName: 'Akira', avatarUrl: null })
+
+    expect(updated.displayName).toBe('Akira')
+    expect(users.findById(user.id)?.displayName).toBe('Akira')
+    expect(broadcaster.events.at(-1)).toEqual({ event: 'member:updated', payload: { ...updated, online: false } })
   })
 
   it('não autentica token ausente, desconhecido ou depois do logout', () => {

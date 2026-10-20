@@ -30,7 +30,7 @@ export function MessageItem({ message, compact }: MessageItemProps): React.JSX.E
         {compact ? (
           <time className="message__short-time">{formatShortTime(message.createdAt)}</time>
         ) : (
-          <Avatar name={authorName} seed={message.authorId} size={40} />
+          <Avatar name={authorName} seed={message.authorId} imageUrl={author?.avatarUrl} size={40} />
         )}
       </div>
       <div className="message__body">

@@ -1,4 +1,4 @@
-import type { AuthResponse, JoinRequest } from '@radcord/shared'
+import type { AuthResponse, JoinRequest, ProfileUpdate, UserDto } from '@radcord/shared'
 import type { Clock, IdGenerator } from '../platform/runtime'
 import type { RealtimeBroadcaster } from '../realtime/realtimeBroadcaster'
 import { toUserDto, type UserRecord, type UserRepository } from '../users/userRepository'
@@ -42,6 +42,20 @@ export class AuthService {
 
   logout(token: string): void {
     this.deps.sessions.delete(hashSessionToken(token))
+  }
+
+  /**
+   * Grava nome e foto e avisa quem está conectado.
+   * Exemplo: `auth.updateProfile(user.id, { displayName: 'Akira', avatarUrl: null })`
+   */
+  updateProfile(userId: string, patch: ProfileUpdate): UserDto {
+    const current = this.deps.users.findById(userId)
+    if (!current) throw new Error(`Usuário "${userId}" não existe para atualizar o perfil`)
+    const next: UserRecord = { ...current, displayName: patch.displayName, avatarUrl: patch.avatarUrl }
+    this.deps.users.update(next)
+    const dto = toUserDto(next)
+    this.deps.broadcaster.emit('member:updated', { ...dto, online: false })
+    return dto
   }
 
   private openSession(user: UserRecord): AuthResponse {
