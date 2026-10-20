@@ -6,19 +6,11 @@ export const usernameSchema = z
   .toLowerCase()
   .regex(/^[a-z0-9_.]{3,20}$/, 'use de 3 a 20 caracteres: letras, números, "_" ou "."')
 
-export const registerRequestSchema = z.object({
+export const joinRequestSchema = z.object({
   username: usernameSchema,
-  displayName: z.string().trim().min(1).max(32),
-  password: z.string().min(6, 'a senha precisa de pelo menos 6 caracteres').max(128),
 })
 
-export const loginRequestSchema = z.object({
-  username: usernameSchema,
-  password: z.string().min(1).max(128),
-})
-
-export type RegisterRequest = z.infer<typeof registerRequestSchema>
-export type LoginRequest = z.infer<typeof loginRequestSchema>
+export type JoinRequest = z.infer<typeof joinRequestSchema>
 
 export interface UserDto {
   id: string

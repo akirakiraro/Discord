@@ -21,7 +21,7 @@ export function readBearerToken(header: string | undefined): string | undefined 
 export function requireCurrentUser(request: FastifyRequest, auth: AuthService): UserRecord {
   const user = auth.authenticate(readBearerToken(request.headers.authorization))
   if (!user) {
-    throw new HttpError(401, 'unauthorized', 'Sessão inválida ou expirada; faça login de novo')
+    throw new HttpError(401, 'unauthorized', 'Sessão inválida ou expirada; entre de novo')
   }
   return user
 }

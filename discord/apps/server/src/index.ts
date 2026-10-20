@@ -1,5 +1,4 @@
 import { buildApp } from './app'
-import { ScryptPasswordHasher } from './auth/passwordHasher'
 import { loadServerConfig, type ServerEnv } from './config'
 import { openDatabase } from './db/database'
 import { randomIdGenerator, systemClock } from './platform/runtime'
@@ -11,7 +10,6 @@ async function startServer(env: ServerEnv): Promise<void> {
   const config = loadServerConfig(env)
   const context = createServerContext({
     db: openDatabase(config.databasePath),
-    hasher: new ScryptPasswordHasher(),
     tokenIssuer: new LiveKitTokenIssuer(config.livekitApiKey, config.livekitApiSecret),
     livekitPublicUrl: config.livekitPublicUrl,
     clock: systemClock,

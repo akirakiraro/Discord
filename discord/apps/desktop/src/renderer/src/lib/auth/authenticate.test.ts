@@ -1,35 +1,25 @@
 import { describe, expect, it } from 'vitest'
 import { FakeHostFetch, OfflineHostFetch } from '../testing/fakeHostFetch'
-import { authenticate, restoreSession, type AuthForm } from './authenticate'
+import { authenticate, restoreSession } from './authenticate'
 
-const USER = { id: 'u-1', username: 'akira', displayName: 'Akira', createdAt: 'x' }
-const FORM: AuthForm = { hostAddress: '26.186.21.58', username: ' Akira ', displayName: 'Akira', password: 'segredo' }
+const USER = { id: 'u-1', username: 'akira', displayName: 'akira', createdAt: 'x' }
 
 describe('authenticate', () => {
-  it('faz login normalizando o usuário e devolve sessão autenticada', async () => {
+  it('entra normalizando o usuário e devolve sessão autenticada', async () => {
     const host = new FakeHostFetch(() => Response.json({ token: 'tok', user: USER }))
 
-    const session = await authenticate(FORM, 'login', host.fetch)
+    const session = await authenticate('26.186.21.58', ' Akira ', host.fetch)
 
-    expect(host.calls[0]?.url).toBe('http://26.186.21.58:3000/auth/login')
-    expect(JSON.parse(String(host.calls[0]?.init?.body))).toEqual({ username: 'akira', password: 'segredo' })
+    expect(host.calls[0]?.url).toBe('http://26.186.21.58:3000/auth/join')
+    expect(JSON.parse(String(host.calls[0]?.init?.body))).toEqual({ username: 'akira' })
     expect(session).toMatchObject({ token: 'tok', user: USER })
     expect(session.api.baseUrl).toBe('http://26.186.21.58:3000')
-  })
-
-  it('cadastro envia o nome de exibição', async () => {
-    const host = new FakeHostFetch(() => Response.json({ token: 'tok', user: USER }, { status: 201 }))
-
-    await authenticate(FORM, 'register', host.fetch)
-
-    expect(host.calls[0]?.url).toMatch(/\/auth\/register$/)
-    expect(JSON.parse(String(host.calls[0]?.init?.body))).toMatchObject({ displayName: 'Akira' })
   })
 
   it('valida no app antes de chamar o host, com o nome do campo', async () => {
     const host = new FakeHostFetch(() => Response.json({}))
 
-    await expect(authenticate({ ...FORM, password: '123' }, 'register', host.fetch)).rejects.toThrow(/^Senha:/)
+    await expect(authenticate('26.186.21.58', 'ab', host.fetch)).rejects.toThrow(/^Usuário:/)
     expect(host.calls, 'nada deve ir para a rede').toHaveLength(0)
   })
 })

@@ -1,19 +1,10 @@
-import { loginRequestSchema, registerRequestSchema, type AuthResponse } from '@radcord/shared'
+import { joinRequestSchema } from '@radcord/shared'
 import type { ZodType } from 'zod'
 import type { AuthSession } from '../../stores/sessionStore'
 import { ApiRequestError, RadcordApiClient, type FetchFunction } from '../api/apiClient'
 import { buildHostBaseUrl } from '../hostAddress'
 
-export type AuthMode = 'login' | 'register'
-
-export interface AuthForm {
-  hostAddress: string
-  username: string
-  displayName: string
-  password: string
-}
-
-const FIELD_LABELS: Record<string, string> = { username: 'Usuário', displayName: 'Nome de exibição', password: 'Senha' }
+const FIELD_LABELS: Record<string, string> = { username: 'Usuário' }
 
 function validateLocally<T>(schema: ZodType<T>, input: unknown): T {
   const parsed = schema.safeParse(input)
@@ -24,18 +15,13 @@ function validateLocally<T>(schema: ZodType<T>, input: unknown): T {
 }
 
 /**
- * Valida o formulário no próprio app e faz login ou cadastro no host.
- * Exemplo: `const session = await authenticate(form, 'login')`
+ * Valida o nome no próprio app e entra no host (cria a conta se ela não existe).
+ * Exemplo: `const session = await authenticate('26.186.21.58', 'akira')`
  */
-export async function authenticate(form: AuthForm, mode: AuthMode, fetchFn?: FetchFunction): Promise<AuthSession> {
-  const api = new RadcordApiClient(buildHostBaseUrl(form.hostAddress), null, fetchFn)
-  const response = await sendCredentials(api, form, mode)
+export async function authenticate(hostAddress: string, username: string, fetchFn?: FetchFunction): Promise<AuthSession> {
+  const api = new RadcordApiClient(buildHostBaseUrl(hostAddress), null, fetchFn)
+  const response = await api.join(validateLocally(joinRequestSchema, { username }))
   return { api: api.withToken(response.token), token: response.token, user: response.user }
-}
-
-function sendCredentials(api: RadcordApiClient, form: AuthForm, mode: AuthMode): Promise<AuthResponse> {
-  if (mode === 'register') return api.register(validateLocally(registerRequestSchema, form))
-  return api.login(validateLocally(loginRequestSchema, form))
 }
 
 /**

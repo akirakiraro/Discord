@@ -1,69 +1,47 @@
 import { beforeEach, describe, expect, it } from 'vitest'
-import { HttpError } from '../http/httpError'
-import {
-  InMemorySessionRepository,
-  InMemoryUserRepository,
-  PlainTextPasswordHasher,
-  RecordingBroadcaster,
-  fixedClock,
-  sequentialIds,
-} from '../testing/fakes'
+import { InMemorySessionRepository, InMemoryUserRepository, RecordingBroadcaster, fixedClock, sequentialIds } from '../testing/fakes'
 import { AuthService } from './authService'
 
-const AKIRA = { username: 'akira', displayName: 'Akira', password: 'segredo' }
+const AKIRA = { username: 'akira' }
 
 describe('AuthService', () => {
   let auth: AuthService
   let broadcaster: RecordingBroadcaster
+  let users: InMemoryUserRepository
 
   beforeEach(() => {
     broadcaster = new RecordingBroadcaster()
+    users = new InMemoryUserRepository()
     auth = new AuthService({
-      users: new InMemoryUserRepository(),
+      users,
       sessions: new InMemorySessionRepository(),
-      hasher: new PlainTextPasswordHasher(),
       broadcaster,
       clock: fixedClock(),
       newId: sequentialIds('user'),
     })
   })
 
-  it('cadastra, devolve token e avisa os outros membros', async () => {
-    const response = await auth.register(AKIRA)
+  it('cria a conta, devolve token e avisa os outros membros', () => {
+    const response = auth.join(AKIRA)
 
-    expect(response.user).toEqual({ id: 'user-1', username: 'akira', displayName: 'Akira', createdAt: '2026-10-19T12:00:00.000Z' })
+    expect(response.user).toEqual({ id: 'user-1', username: 'akira', displayName: 'akira', createdAt: '2026-10-19T12:00:00.000Z' })
     expect(response.token.length, 'token não vazio').toBeGreaterThan(20)
     expect(broadcaster.events).toEqual([{ event: 'member:joined', payload: { ...response.user, online: false } }])
   })
 
-  it('recusa username repetido com 409', async () => {
-    await auth.register(AKIRA)
+  it('nome que já existe entra como a mesma pessoa, sem criar outra', () => {
+    const first = auth.join(AKIRA)
 
-    await expect(auth.register(AKIRA)).rejects.toMatchObject({ statusCode: 409, code: 'username_taken' })
+    const second = auth.join(AKIRA)
+
+    expect(second.user.id).toBe(first.user.id)
+    expect(users.listAll()).toHaveLength(1)
+    expect(broadcaster.events).toHaveLength(1)
+    expect(auth.authenticate(second.token)?.id).toBe(first.user.id)
   })
 
-  it('faz login com a senha certa e o token autentica o usuário', async () => {
-    await auth.register(AKIRA)
-
-    const { token, user } = await auth.login({ username: 'akira', password: 'segredo' })
-
-    expect(auth.authenticate(token)?.id).toBe(user.id)
-  })
-
-  it.each([
-    ['senha errada', { username: 'akira', password: 'errada' }],
-    ['usuário inexistente', { username: 'ninguem', password: 'segredo' }],
-  ])('recusa login com %s', async (_case, credentials) => {
-    await auth.register(AKIRA)
-
-    const attempt = auth.login(credentials)
-
-    await expect(attempt).rejects.toBeInstanceOf(HttpError)
-    await expect(attempt).rejects.toMatchObject({ statusCode: 401 })
-  })
-
-  it('não autentica token ausente, desconhecido ou depois do logout', async () => {
-    const { token } = await auth.register(AKIRA)
+  it('não autentica token ausente, desconhecido ou depois do logout', () => {
+    const { token } = auth.join(AKIRA)
     auth.logout(token)
 
     expect(auth.authenticate(undefined)).toBeUndefined()

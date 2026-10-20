@@ -1,5 +1,4 @@
 import type { DatabaseSync } from 'node:sqlite'
-import type { PasswordHasher } from './auth/passwordHasher'
 import { AuthService } from './auth/authService'
 import { SqliteSessionRepository } from './auth/sessionRepository'
 import { SqliteChannelRepository } from './channels/channelRepository'
@@ -14,7 +13,6 @@ import type { VoiceTokenIssuer } from './voice/voiceTokenIssuer'
 
 export interface ServerContextInputs {
   db: DatabaseSync
-  hasher: PasswordHasher
   tokenIssuer: VoiceTokenIssuer
   livekitPublicUrl: string
   clock: Clock
@@ -34,14 +32,14 @@ export interface ServerContext {
 
 /**
  * Raiz de composição: liga repositórios SQLite, serviços e o broadcaster.
- * Exemplo: `const context = createServerContext({ db, hasher, tokenIssuer, livekitPublicUrl, clock, newId })`
+ * Exemplo: `const context = createServerContext({ db, tokenIssuer, livekitPublicUrl, clock, newId })`
  */
 export function createServerContext(inputs: ServerContextInputs): ServerContext {
   const { db, clock, newId } = inputs
   const broadcaster = new SocketIoBroadcaster()
   const users = new SqliteUserRepository(db)
   const sessions = new SqliteSessionRepository(db)
-  const auth = new AuthService({ users, sessions, hasher: inputs.hasher, broadcaster, clock, newId })
+  const auth = new AuthService({ users, sessions, broadcaster, clock, newId })
   const channels = new ChannelService({ channels: new SqliteChannelRepository(db), broadcaster, clock, newId })
   const messages = new MessageService({ messages: new SqliteMessageRepository(db), channels, broadcaster, clock, newId })
   channels.ensureDefaultChannels()

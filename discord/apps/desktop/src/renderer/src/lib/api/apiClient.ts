@@ -3,11 +3,10 @@ import type {
   AuthResponse,
   ChannelDto,
   CreateChannelRequest,
-  LoginRequest,
+  JoinRequest,
   MemberDto,
   MessageDto,
   MessagePageDto,
-  RegisterRequest,
   UserDto,
   VoiceTokenResponse,
 } from '@radcord/shared'
@@ -30,7 +29,7 @@ export class ApiRequestError extends Error {
 }
 
 /**
- * Cliente da API do host. Sem token serve só para cadastro/login.
+ * Cliente da API do host. Sem token serve só para entrar pelo nome.
  * Exemplo: `const api = new RadcordApiClient('http://26.186.21.58:3000', token); await api.listChannels()`
  */
 export class RadcordApiClient {
@@ -44,12 +43,8 @@ export class RadcordApiClient {
     return new RadcordApiClient(this.baseUrl, token, this.fetchFn)
   }
 
-  register(request: RegisterRequest): Promise<AuthResponse> {
-    return this.request('POST', '/auth/register', request)
-  }
-
-  login(request: LoginRequest): Promise<AuthResponse> {
-    return this.request('POST', '/auth/login', request)
+  join(request: JoinRequest): Promise<AuthResponse> {
+    return this.request('POST', '/auth/join', request)
   }
 
   me(): Promise<UserDto> {

@@ -5,7 +5,6 @@ import { buildApp } from './app'
 import { IN_MEMORY_DATABASE, openDatabase } from './db/database'
 import { randomIdGenerator, systemClock } from './platform/runtime'
 import { createServerContext } from './serverContext'
-import { PlainTextPasswordHasher } from './testing/fakes'
 import type { VoiceGrantRequest, VoiceTokenIssuer } from './voice/voiceTokenIssuer'
 
 class FakeVoiceTokenIssuer implements VoiceTokenIssuer {
@@ -27,7 +26,6 @@ describe('API do host', () => {
     issuer = new FakeVoiceTokenIssuer()
     const context = createServerContext({
       db: openDatabase(IN_MEMORY_DATABASE),
-      hasher: new PlainTextPasswordHasher(),
       tokenIssuer: issuer,
       livekitPublicUrl: LIVEKIT_URL,
       clock: systemClock,
@@ -40,11 +38,11 @@ describe('API do host', () => {
     await app.close()
   })
 
-  async function register(username: string): Promise<AuthResponse> {
+  async function join(username: string): Promise<AuthResponse> {
     const response = await app.inject({
       method: 'POST',
-      url: '/auth/register',
-      payload: { username, displayName: username.toUpperCase(), password: 'segredo' },
+      url: '/auth/join',
+      payload: { username },
     })
     return response.json<AuthResponse>()
   }
@@ -67,15 +65,15 @@ describe('API do host', () => {
     expect(response.json().error).toBe('unauthorized')
   })
 
-  it('cadastro inválido responde 400 citando o valor recebido', async () => {
-    const response = await app.inject({ method: 'POST', url: '/auth/register', payload: { username: 'a' } })
+  it('entrada inválida responde 400 citando o valor recebido', async () => {
+    const response = await app.inject({ method: 'POST', url: '/auth/join', payload: { username: 'a' } })
 
     expect(response.statusCode).toBe(400)
     expect(response.json().message).toContain('"username":"a"')
   })
 
   it('fluxo completo: cadastro, canais padrão, mensagem, histórico e membros', async () => {
-    const { token, user } = await register('akira')
+    const { token, user } = await join('akira')
     const headers = { authorization: `Bearer ${token}` }
     const textChannel = (await listChannels(token)).find((channel) => channel.kind === 'text')
 
@@ -89,8 +87,8 @@ describe('API do host', () => {
   })
 
   it('outro usuário não consegue apagar a mensagem', async () => {
-    const author = await register('akira')
-    const intruder = await register('bia')
+    const author = await join('akira')
+    const intruder = await join('bia')
     const textChannel = (await listChannels(author.token)).find((channel) => channel.kind === 'text')
     const sent = await app.inject({
       method: 'POST',
@@ -109,7 +107,7 @@ describe('API do host', () => {
   })
 
   it('POST /voice/token emite token para o canal de voz com o usuário logado', async () => {
-    const { token, user } = await register('akira')
+    const { token, user } = await join('akira')
     const voiceChannel = (await listChannels(token)).find((channel) => channel.kind === 'voice')
 
     const response = await app.inject({
@@ -120,6 +118,6 @@ describe('API do host', () => {
     })
 
     expect(response.json()).toEqual({ token: `fake-token-${user.id}`, livekitUrl: LIVEKIT_URL })
-    expect(issuer.grants).toEqual([{ roomName: voiceChannel?.id, identity: user.id, displayName: 'AKIRA' }])
+    expect(issuer.grants).toEqual([{ roomName: voiceChannel?.id, identity: user.id, displayName: 'akira' }])
   })
 })

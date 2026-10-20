@@ -1,4 +1,3 @@
-import type { PasswordHasher } from '../auth/passwordHasher'
 import type { SessionRepository } from '../auth/sessionRepository'
 import type { Clock, IdGenerator } from '../platform/runtime'
 import type { RealtimeBroadcaster, ServerEventName, ServerEventPayload } from '../realtime/realtimeBroadcaster'
@@ -40,7 +39,7 @@ export class InMemoryUserRepository implements UserRepository {
 export class InMemorySessionRepository implements SessionRepository {
   readonly sessions = new Map<string, string>()
 
-  insert(tokenHash: string, userId: string): void {
+  insert(tokenHash: string, userId: string, _createdAt: string): void {
     this.sessions.set(tokenHash, userId)
   }
 
@@ -50,17 +49,6 @@ export class InMemorySessionRepository implements SessionRepository {
 
   delete(tokenHash: string): void {
     this.sessions.delete(tokenHash)
-  }
-}
-
-/** Hash reversível e instantâneo: os testes de serviço não precisam pagar o custo do scrypt. */
-export class PlainTextPasswordHasher implements PasswordHasher {
-  async hash(password: string): Promise<string> {
-    return `plain:${password}`
-  }
-
-  async verify(password: string, storedHash: string): Promise<boolean> {
-    return storedHash === `plain:${password}`
   }
 }
 

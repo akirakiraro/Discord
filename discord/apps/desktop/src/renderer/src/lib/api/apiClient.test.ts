@@ -44,7 +44,7 @@ describe('RadcordApiClient', () => {
   it('converte o erro do host em ApiRequestError com código e mensagem', async () => {
     const host = new FakeHostFetch(() => Response.json({ error: 'invalid_credentials', message: 'senha errada' }, { status: 401 }))
 
-    const attempt = new RadcordApiClient(BASE_URL, null, host.fetch).login({ username: 'akira', password: 'x' })
+    const attempt = new RadcordApiClient(BASE_URL, null, host.fetch).join({ username: 'akira' })
 
     await expect(attempt).rejects.toBeInstanceOf(ApiRequestError)
     await expect(attempt).rejects.toMatchObject({ status: 401, code: 'invalid_credentials', message: 'senha errada' })
