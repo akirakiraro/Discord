@@ -197,7 +197,10 @@
   border: none;
   border-radius: 50%;
   background: var(--bg-active);
+  color: var(--text-strong);
   font-size: 22px;
+  display: grid;
+  place-items: center;
   cursor: pointer;
 }
 
@@ -206,7 +209,8 @@
 }
 
 .round-button--off {
-  background: rgba(242, 63, 67, 0.35);
+  color: var(--red);
+  background: rgba(242, 63, 67, 0.2);
 }
 
 .round-button--live {

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { logout } from '../../lib/auth/logout'
 import { useSessionStore } from '../../stores/sessionStore'
 import { useVoiceStore } from '../../stores/voiceStore'
+import { HeadsetIcon, MicIcon } from '../common/AudioIcons'
 import { Avatar } from '../common/Avatar'
 import { ProfileModal } from './ProfileModal'
 
@@ -19,10 +20,10 @@ export function UserPanel(): React.JSX.Element | null {
         <span className="user-panel__name">{user.displayName}</span>
       </button>
       <button className={micMuted ? 'icon-button icon-button--off' : 'icon-button'} title="Mutar" onClick={toggleMic}>
-        {micMuted ? '🔇' : '🎙️'}
+        <MicIcon off={micMuted} />
       </button>
       <button className={deafened ? 'icon-button icon-button--off' : 'icon-button'} title="Ensurdecer" onClick={toggleDeafen}>
-        {deafened ? '🔕' : '🎧'}
+        <HeadsetIcon off={deafened} />
       </button>
       <button className="icon-button" title="Sair da conta" onClick={() => void logout(session)}>
         ⏏️
