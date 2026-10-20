@@ -25,7 +25,11 @@ export const useVoiceStore = create<VoiceStore>((set) => ({
   join: (connection) => set({ connection, lastError: null }),
   leave: (error) => set({ connection: null, lastError: error ?? null }),
   toggleMic: () => set((store) => ({ micMuted: !store.micMuted })),
-  toggleDeafen: () => set((store) => ({ deafened: !store.deafened })),
+  toggleDeafen: () =>
+    set((store) => {
+      const deafened = !store.deafened
+      return { deafened, micMuted: deafened || store.micMuted }
+    }),
 }))
 
 /** Ensurdecer também corta o microfone, como no Discord. */

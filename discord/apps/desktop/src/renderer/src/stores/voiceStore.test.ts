@@ -24,6 +24,12 @@ describe('voiceStore', () => {
 
     expect(useVoiceStore.getState()).toMatchObject({ micMuted: true, deafened: true })
   })
+
+  it('ensurdecer também muta o microfone', () => {
+    useVoiceStore.getState().toggleDeafen()
+
+    expect(useVoiceStore.getState()).toMatchObject({ micMuted: true, deafened: true })
+  })
 })
 
 describe('isMicrophoneLive', () => {
