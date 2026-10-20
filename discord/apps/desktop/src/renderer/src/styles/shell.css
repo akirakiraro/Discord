@@ -275,22 +275,124 @@
 }
 
 .settings-modal {
-  width: 400px;
+  width: min(760px, calc(100vw - 48px));
+  height: min(520px, calc(100vh - 48px));
   display: flex;
-  flex-direction: column;
-  gap: 14px;
-  padding: 24px;
   border-radius: 8px;
-  background: var(--bg-dark);
+  overflow: hidden;
+  background: var(--bg-main);
   color: var(--text-normal);
 }
 
-.settings-modal h2 {
+.settings-nav {
+  width: 220px;
+  flex-shrink: 0;
+  padding: 48px 8px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: var(--bg-darkest);
+}
+
+.settings-nav__label {
+  margin: 0 8px 8px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.settings-nav__item {
+  border: 0;
+  border-radius: 4px;
+  padding: 8px 10px;
+  background: transparent;
+  color: var(--text-normal);
+  font-size: 14px;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+}
+
+.settings-nav__item:hover {
+  background: var(--bg-hover);
+  color: var(--text-strong);
+}
+
+.settings-nav__item--active,
+.settings-nav__item--active:hover {
+  background: var(--bg-active);
+  color: var(--text-strong);
+}
+
+.settings-modal__content {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  padding: 48px 40px 24px;
+  overflow: auto;
+}
+
+.settings-modal__close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 28px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.settings-modal__close:hover {
+  color: var(--text-strong);
+  background: var(--bg-hover);
+}
+
+.settings-pane {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+  max-width: 420px;
+}
+
+.settings-pane h2 {
   margin: 0;
+  color: var(--text-strong);
+}
+
+.settings-account {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  border-radius: 8px;
+  background: var(--bg-dark);
+}
+
+.settings-account__name,
+.settings-account__username {
+  margin: 0;
+}
+
+.settings-account__name {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+.settings-account__username {
+  color: var(--text-muted);
 }
 
 .settings-modal__field,
 .settings-modal__row {
+  align-self: stretch;
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -328,31 +430,19 @@
   font-size: 13px;
 }
 
-.settings-modal__actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-}
-
-.settings-modal__actions button {
+.settings-modal__logout {
   border: 0;
   border-radius: 4px;
   padding: 8px 12px;
-  background: var(--bg-active);
-  color: var(--text-strong);
+  background: transparent;
+  color: var(--red);
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
 }
 
-.settings-modal__actions .settings-modal__logout {
-  margin-right: auto;
-  background: transparent;
-  color: var(--red);
-}
-
-.settings-modal__actions button:hover {
-  background: var(--bg-hover);
+.settings-modal__logout:hover {
+  background: rgba(242, 63, 67, 0.16);
 }
 
 /* Painel principal */

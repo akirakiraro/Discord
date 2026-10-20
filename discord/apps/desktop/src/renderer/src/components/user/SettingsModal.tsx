@@ -1,124 +1,78 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { logout } from '../../lib/auth/logout'
-import { audioInputLabel, browserAudioInputs, listAudioInputs, type AudioInputDevice } from '../../lib/voice/audioInputs'
-import { useMicPrefsStore } from '../../stores/micPrefsStore'
 import { useSessionStore } from '../../stores/sessionStore'
+import { Avatar } from '../common/Avatar'
+import { VoiceSettings } from './VoiceSettings'
+
+type SettingsTab = 'conta' | 'voz'
+
+const TABS: { id: SettingsTab; label: string }[] = [
+  { id: 'conta', label: 'Minha conta' },
+  { id: 'voz', label: 'Voz' },
+]
 
 interface SettingsModalProps {
   onClose: () => void
 }
 
 export function SettingsModal({ onClose }: SettingsModalProps): React.JSX.Element {
-  const session = useSessionStore((store) => store.session)
-  const { devices, error } = useAudioInputs()
-  const prefs = useMicPrefsStore()
+  const [tab, setTab] = useState<SettingsTab>('conta')
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
-      <div className="settings-modal" role="dialog" aria-labelledby="settings-title" onClick={(event) => event.stopPropagation()}>
-        <h2 id="settings-title">Configurações</h2>
-        <MicrophoneSelect devices={devices} deviceId={prefs.deviceId} onChange={prefs.setDeviceId} />
-        <NoiseToggle enabled={prefs.noiseSuppression} onChange={prefs.setNoiseSuppression} />
-        <SensitivitySlider value={prefs.inputGain} onChange={prefs.setInputGain} />
-        {error && <p className="settings-modal__error">{error}</p>}
-        <div className="settings-modal__actions">
-          {session && (
-            <button type="button" className="settings-modal__logout" onClick={() => void logout(session)}>
-              Sair da conta
-            </button>
-          )}
-          <button type="button" onClick={onClose}>
-            Fechar
+      <div className="settings-modal" role="dialog" aria-label="Configurações" onClick={(event) => event.stopPropagation()}>
+        <SettingsNav tab={tab} onSelect={setTab} />
+        <div className="settings-modal__content">
+          <button type="button" className="settings-modal__close" title="Fechar" onClick={onClose}>
+            ×
           </button>
+          {tab === 'conta' ? <AccountSettings /> : <VoiceSettings />}
         </div>
       </div>
     </div>
   )
 }
 
-function NoiseToggle({ enabled, onChange }: { enabled: boolean; onChange: (enabled: boolean) => void }): React.JSX.Element {
+function SettingsNav({ tab, onSelect }: { tab: SettingsTab; onSelect: (tab: SettingsTab) => void }): React.JSX.Element {
   return (
-    <label className="settings-modal__row">
-      <input type="checkbox" checked={enabled} onChange={(event) => onChange(event.target.checked)} />
-      Supressão de ruído
-    </label>
+    <nav className="settings-nav" aria-label="Seções">
+      <p className="settings-nav__label">Configurações do usuário</p>
+      {TABS.map((item) => (
+        <button
+          key={item.id}
+          type="button"
+          className={tab === item.id ? 'settings-nav__item settings-nav__item--active' : 'settings-nav__item'}
+          aria-current={tab === item.id ? 'page' : undefined}
+          onClick={() => onSelect(item.id)}
+        >
+          {item.label}
+        </button>
+      ))}
+    </nav>
   )
 }
 
-function SensitivitySlider({ value, onChange }: { value: number; onChange: (value: number) => void }): React.JSX.Element {
+function AccountSettings(): React.JSX.Element {
+  const session = useSessionStore((store) => store.session)
+  const user = session?.user
+
   return (
-    <label className="settings-modal__field">
-      Sensibilidade
-      <input type="range" min={0} max={2} step={0.05} value={value} onChange={(event) => onChange(Number(event.target.value))} />
-    </label>
+    <div className="settings-pane">
+      <h2>Minha conta</h2>
+      {user && (
+        <div className="settings-account">
+          <Avatar name={user.displayName} seed={user.id} imageUrl={user.avatarUrl} size={64} />
+          <div>
+            <p className="settings-account__name">{user.displayName}</p>
+            <p className="settings-account__username">{user.username}</p>
+          </div>
+        </div>
+      )}
+      {session && (
+        <button type="button" className="settings-modal__logout" onClick={() => void logout(session)}>
+          Sair da conta
+        </button>
+      )}
+    </div>
   )
-}
-
-function MicrophoneSelect({
-  devices,
-  deviceId,
-  onChange,
-}: {
-  devices: readonly AudioInputDevice[]
-  deviceId: string
-  onChange: (deviceId: string) => void
-}): React.JSX.Element {
-  const inputs = devices.filter((device) => device.deviceId !== 'default')
-  return (
-    <label className="settings-modal__field">
-      Microfone
-      <select value={deviceId} onChange={(event) => onChange(event.target.value)}>
-        <option value="default">Padrão do sistema</option>
-        {inputs.map((device, index) => (
-          <option key={device.deviceId} value={device.deviceId}>
-            {audioInputLabel(device, index)}
-          </option>
-        ))}
-      </select>
-    </label>
-  )
-}
-
-function useAudioInputs(): { devices: AudioInputDevice[]; error: string | null } {
-  const [devices, setDevices] = useState<AudioInputDevice[]>([])
-  const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    let cancelled = false
-    const refresh = () => {
-      void loadInputs(
-        () => cancelled,
-        (list) => {
-          setDevices(list)
-          setError(null)
-        },
-        setError,
-      )
-    }
-    refresh()
-    navigator.mediaDevices.addEventListener('devicechange', refresh)
-    return () => {
-      cancelled = true
-      navigator.mediaDevices.removeEventListener('devicechange', refresh)
-    }
-  }, [])
-
-  return { devices, error }
-}
-
-async function loadInputs(
-  isCancelled: () => boolean,
-  apply: (list: AudioInputDevice[]) => void,
-  fail: (message: string) => void,
-): Promise<void> {
-  try {
-    const list = await listAudioInputs(browserAudioInputs())
-    if (isCancelled()) return
-    useMicPrefsStore.getState().alignDevice(list.map((device) => device.deviceId))
-    apply(list)
-  } catch (error) {
-    if (isCancelled()) return
-    const message = error instanceof Error ? error.message : String(error)
-    fail(`Não foi possível listar os microfones: ${message}`)
-  }
 }
