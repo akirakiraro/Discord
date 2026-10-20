@@ -1,15 +1,16 @@
 import { useState } from 'react'
-import { logout } from '../../lib/auth/logout'
 import { useSessionStore } from '../../stores/sessionStore'
 import { useVoiceStore } from '../../stores/voiceStore'
-import { HeadsetIcon, MicIcon } from '../common/AudioIcons'
+import { GearIcon, HeadsetIcon, MicIcon } from '../common/AudioIcons'
 import { Avatar } from '../common/Avatar'
 import { ProfileModal } from './ProfileModal'
+import { SettingsModal } from './SettingsModal'
 
 export function UserPanel(): React.JSX.Element | null {
   const session = useSessionStore((store) => store.session)
   const { micMuted, deafened, toggleMic, toggleDeafen } = useVoiceStore()
   const [profileOpen, setProfileOpen] = useState(false)
+  const [settingsOpen, setSettingsOpen] = useState(false)
   if (!session) return null
   const { user } = session
 
@@ -25,10 +26,11 @@ export function UserPanel(): React.JSX.Element | null {
       <button className={deafened ? 'icon-button icon-button--off' : 'icon-button'} title="Ensurdecer" onClick={toggleDeafen}>
         <HeadsetIcon off={deafened} />
       </button>
-      <button className="icon-button" title="Sair da conta" onClick={() => void logout(session)}>
-        ⏏️
+      <button className="icon-button" title="Configurações" onClick={() => setSettingsOpen(true)}>
+        <GearIcon size={20} />
       </button>
       {profileOpen && <ProfileModal user={user} onClose={() => setProfileOpen(false)} />}
+      {settingsOpen && <SettingsModal onClose={() => setSettingsOpen(false)} />}
     </div>
   )
 }

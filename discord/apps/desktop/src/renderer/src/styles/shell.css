@@ -274,6 +274,87 @@
   background: var(--brand-hover);
 }
 
+.settings-modal {
+  width: 400px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 24px;
+  border-radius: 8px;
+  background: var(--bg-dark);
+  color: var(--text-normal);
+}
+
+.settings-modal h2 {
+  margin: 0;
+}
+
+.settings-modal__field,
+.settings-modal__row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.settings-modal__row {
+  flex-direction: row;
+  align-items: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-strong);
+}
+
+.settings-modal select,
+.settings-modal input[type='range'] {
+  width: 100%;
+}
+
+.settings-modal select {
+  padding: 10px;
+  border: 0;
+  border-radius: 4px;
+  background: var(--bg-input);
+  color: var(--text-strong);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.settings-modal__error {
+  margin: 0;
+  color: var(--red);
+  font-size: 13px;
+}
+
+.settings-modal__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.settings-modal__actions button {
+  border: 0;
+  border-radius: 4px;
+  padding: 8px 12px;
+  background: var(--bg-active);
+  color: var(--text-strong);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.settings-modal__actions .settings-modal__logout {
+  margin-right: auto;
+  background: transparent;
+  color: var(--red);
+}
+
+.settings-modal__actions button:hover {
+  background: var(--bg-hover);
+}
+
 /* Painel principal */
 
 .main-panel {

@@ -1,7 +1,6 @@
 import { useLocalParticipant } from '@livekit/components-react'
 import type { ScreenShareCaptureOptions } from 'livekit-client'
 import { HeadsetIcon, MicIcon } from '../common/AudioIcons'
-import { MicSettingsButton } from './MicSettingsButton'
 import { voiceSession } from '../../lib/voice/voiceSession'
 import { useVoiceStore } from '../../stores/voiceStore'
 
@@ -30,7 +29,6 @@ export function VoiceControlBar(): React.JSX.Element {
       <button className={micMuted ? 'round-button round-button--off' : 'round-button'} title="Mutar" onClick={toggleMic}>
         <MicIcon off={micMuted} size={22} />
       </button>
-      <MicSettingsButton />
       <button className={deafened ? 'round-button round-button--off' : 'round-button'} title="Ensurdecer" onClick={toggleDeafen}>
         <HeadsetIcon off={deafened} size={22} />
       </button>
