@@ -233,6 +233,13 @@
   background: var(--bg-hover);
 }
 
+.profile-modal__display-name {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
 .profile-modal__username {
   margin: 0;
   align-self: stretch;

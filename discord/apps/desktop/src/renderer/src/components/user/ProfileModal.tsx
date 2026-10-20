@@ -12,6 +12,32 @@ interface ProfileModalProps {
 }
 
 export function ProfileModal({ user, onClose }: ProfileModalProps): React.JSX.Element {
+  const session = useSessionStore((store) => store.session)
+  if (session?.user.id !== user.id) return <ProfileView user={user} onClose={onClose} />
+  return <OwnProfile user={user} onClose={onClose} />
+}
+
+function ProfileView({ user, onClose }: ProfileModalProps): React.JSX.Element {
+  return (
+    <div className="modal-backdrop" onClick={onClose}>
+      <div className="profile-modal" role="dialog" aria-labelledby="profile-title" onClick={(event) => event.stopPropagation()}>
+        <h2 id="profile-title">Perfil</h2>
+        <Avatar name={user.displayName} seed={user.id} imageUrl={user.avatarUrl} size={80} />
+        <p className="profile-modal__display-name">{user.displayName}</p>
+        <p className="profile-modal__username">
+          Usuário <strong>{user.username}</strong>
+        </p>
+        <div className="profile-modal__actions">
+          <button type="button" onClick={onClose}>
+            Fechar
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function OwnProfile({ user, onClose }: ProfileModalProps): React.JSX.Element {
   const updateUser = useSessionStore((store) => store.updateUser)
   const applyChat = useChatStore((store) => store.applyChat)
   const session = useSessionStore((store) => store.session)
