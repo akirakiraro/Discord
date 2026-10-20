@@ -40,7 +40,7 @@ export class SqliteUserRepository implements UserRepository {
     const result = this.db
       .prepare('UPDATE users SET display_name = ?, avatar_url = ? WHERE id = ?')
       .run(user.displayName, user.avatarUrl ?? null, user.id)
-    if (result.changes !== 1) throw new Error(`Usuário "${user.id}" não existe para atualizar o perfil`)
+    if (Number(result.changes) !== 1) throw new Error(`Usuário "${user.id}" não existe para atualizar o perfil`)
   }
 
   findById(id: string): UserRecord | undefined {
