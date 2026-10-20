@@ -7,7 +7,6 @@ import { MessageItem } from './MessageItem'
 function ChannelWelcome({ name }: { name: string }): React.JSX.Element {
   return (
     <div className="channel-welcome">
-      <div className="channel-welcome__icon">#</div>
       <h2>Boas-vindas a #{name}!</h2>
       <p>Este é o começo do canal #{name}.</p>
     </div>

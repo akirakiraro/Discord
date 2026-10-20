@@ -28,16 +28,6 @@
   padding: 16px;
 }
 
-.channel-welcome__icon {
-  width: 68px;
-  height: 68px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  font-size: 40px;
-  background: var(--bg-active);
-}
-
 .channel-welcome h2 {
   margin: 8px 0 4px;
   color: var(--text-strong);
