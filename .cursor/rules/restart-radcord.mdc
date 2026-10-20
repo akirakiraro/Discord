@@ -1,0 +1,17 @@
+---
+description: Reiniciar o Radcord sozinho quando a mudança exigir
+alwaysApply: true
+---
+
+# Reiniciar o Radcord
+
+Pedido permanente do dono: vale em qualquer chat deste projeto.
+
+Quando uma mudança no desktop só passa a valer depois de reabrir o app (processo principal do Electron, preload, janela, barra, permissões), reinicie o Radcord na hora. Não peça para o usuário fechar ou abrir.
+
+No Windows, a partir de `discord/`:
+
+1. Encerre a árvore do `npm run desktop` / `electron-vite` que já estiver rodando.
+2. Suba de novo com `npm run desktop`.
+
+CSS e HTML do renderer que o Vite já recarregou sozinho não precisam de reinício. Não mate o servidor da API só para reiniciar o app.
