@@ -179,6 +179,13 @@
   color: var(--text-muted);
 }
 
+.profile-modal__photo-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
 .profile-modal input[type='text'],
 .profile-modal input:not([type='file']) {
   padding: 10px;
@@ -190,9 +197,13 @@
   font-weight: 500;
 }
 
-.profile-modal__file {
-  align-self: center;
-  width: fit-content;
+.profile-modal label.profile-modal__file {
+  align-self: auto;
+  width: auto;
+  flex-direction: row;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-strong);
 }
 
 .profile-modal__file input {

@@ -54,15 +54,17 @@ export function ProfileModal({ user, onClose }: ProfileModalProps): React.JSX.El
       <div className="profile-modal" role="dialog" aria-labelledby="profile-title" onClick={(event) => event.stopPropagation()}>
         <h2 id="profile-title">Perfil</h2>
         <Avatar name={displayName || user.displayName} seed={user.id} imageUrl={avatarUrl} size={80} />
-        <label className="profile-modal__file">
-          Escolher foto
-          <input type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => void onFile(event.target.files?.[0])} />
-        </label>
-        {avatarUrl && (
-          <button type="button" className="profile-modal__text" onClick={() => setAvatarUrl(null)}>
-            Remover foto
-          </button>
-        )}
+        <div className="profile-modal__photo-actions">
+          <label className="profile-modal__file">
+            Escolher foto
+            <input type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => void onFile(event.target.files?.[0])} />
+          </label>
+          {avatarUrl && (
+            <button type="button" className="profile-modal__text" onClick={() => setAvatarUrl(null)}>
+              Remover foto
+            </button>
+          )}
+        </div>
         <label>
           Nome
           <input value={displayName} maxLength={32} onChange={(event) => setDisplayName(event.target.value)} />
