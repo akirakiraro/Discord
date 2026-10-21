@@ -33,10 +33,17 @@
   height: 8px;
 }
 
-*::-webkit-scrollbar-button {
+*::-webkit-scrollbar-button,
+*::-webkit-scrollbar-button:single-button,
+*::-webkit-scrollbar-button:double-button,
+*::-webkit-scrollbar-button:vertical:start:decrement,
+*::-webkit-scrollbar-button:vertical:end:increment,
+*::-webkit-scrollbar-button:vertical:start:increment,
+*::-webkit-scrollbar-button:vertical:end:decrement {
   display: none;
   width: 0;
   height: 0;
+  background: transparent;
 }
 
 *::-webkit-scrollbar-track {
