@@ -1,7 +1,8 @@
-import { useConnectionQualityIndicator, useIsSpeaking } from '@livekit/components-react'
+import { useConnectionQualityIndicator } from '@livekit/components-react'
 import { ConnectionQuality, type Participant } from 'livekit-client'
 import { Avatar } from '../common/Avatar'
 import { useMemberFace } from './useMemberFace'
+import { useSpeaking } from './useSpeaking'
 
 const QUALITY_LABEL: Record<ConnectionQuality, string> = {
   [ConnectionQuality.Excellent]: 'Conexão excelente',
@@ -12,7 +13,7 @@ const QUALITY_LABEL: Record<ConnectionQuality, string> = {
 }
 
 export function ParticipantRow({ participant }: { participant: Participant }): React.JSX.Element {
-  const speaking = useIsSpeaking(participant)
+  const speaking = useSpeaking(participant)
   const { quality } = useConnectionQualityIndicator({ participant })
   const face = useMemberFace(participant.identity, participant.name || participant.identity)
 

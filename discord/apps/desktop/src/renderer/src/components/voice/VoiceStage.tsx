@@ -1,13 +1,14 @@
-import { AudioTrack, VideoTrack, useIsSpeaking, useParticipants, useTracks } from '@livekit/components-react'
+import { AudioTrack, VideoTrack, useParticipants, useTracks } from '@livekit/components-react'
 import { Track, type Participant } from 'livekit-client'
 import { visibleScreenShares } from '../../lib/voice/visibleScreenShares'
 import { useVoiceStore } from '../../stores/voiceStore'
 import { Avatar } from '../common/Avatar'
 import { useMemberFace } from './useMemberFace'
+import { useSpeaking } from './useSpeaking'
 import { VoiceControlBar } from './VoiceControlBar'
 
 function ParticipantTile({ participant }: { participant: Participant }): React.JSX.Element {
-  const speaking = useIsSpeaking(participant)
+  const speaking = useSpeaking(participant)
   const face = useMemberFace(participant.identity, participant.name || participant.identity)
 
   return (
