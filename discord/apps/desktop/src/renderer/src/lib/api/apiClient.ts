@@ -91,8 +91,9 @@ export class RadcordApiClient {
     return this.request('GET', '/members')
   }
 
-  requestVoiceToken(channelId: string): Promise<VoiceTokenResponse> {
-    return this.request('POST', '/voice/token', { channelId })
+  requestVoiceToken(channelId: string, monitor = false): Promise<VoiceTokenResponse> {
+    const body = monitor ? { channelId, monitor: true } : { channelId }
+    return this.request('POST', '/voice/token', body)
   }
 
   private async request<T>(method: string, path: string, body?: object): Promise<T> {

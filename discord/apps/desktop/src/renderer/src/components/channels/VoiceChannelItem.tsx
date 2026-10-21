@@ -1,5 +1,5 @@
 import { useParticipants } from '@livekit/components-react'
-import type { ChannelDto } from '@radcord/shared'
+import { isMonitorIdentity, type ChannelDto } from '@radcord/shared'
 import { voiceSession } from '../../lib/voice/voiceSession'
 import { useNavigationStore } from '../../stores/navigationStore'
 import { useSessionStore } from '../../stores/sessionStore'
@@ -10,7 +10,7 @@ function ConnectedParticipants(): React.JSX.Element {
   const participants = useParticipants()
   return (
     <ul className="voice-participants">
-      {participants.map((participant) => (
+      {participants.filter((participant) => !isMonitorIdentity(participant.identity)).map((participant) => (
         <ParticipantRow key={participant.identity} participant={participant} />
       ))}
     </ul>

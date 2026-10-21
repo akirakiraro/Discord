@@ -22,7 +22,7 @@ export function rmsLevel(samples: ArrayLike<number>): number {
   if (samples.length === 0) return 0
   let sum = 0
   for (let index = 0; index < samples.length; index += 1) {
-    const centered = (samples[index] - 128) / 128
+    const centered = ((samples[index] ?? 128) - 128) / 128
     sum += centered * centered
   }
   return Math.sqrt(sum / samples.length)

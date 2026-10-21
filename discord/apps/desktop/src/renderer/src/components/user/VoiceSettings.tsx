@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react'
 import { audioInputLabel, browserAudioInputs, listAudioInputs, type AudioInputDevice } from '../../lib/voice/audioInputs'
 import { useMicPrefsStore } from '../../stores/micPrefsStore'
+import { useVoiceStore } from '../../stores/voiceStore'
+import { HearMyself } from './HearMyself'
+import { useMicLevel } from './useMicLevel'
 
 export function VoiceSettings(): React.JSX.Element {
   const { devices, error } = useAudioInputs()
@@ -12,6 +15,8 @@ export function VoiceSettings(): React.JSX.Element {
       <MicrophoneSelect devices={devices} deviceId={prefs.deviceId} onChange={prefs.setDeviceId} />
       <NoiseToggle enabled={prefs.noiseSuppression} onChange={prefs.setNoiseSuppression} />
       <SensitivitySlider value={prefs.inputGain} onChange={prefs.setInputGain} />
+      <MicLevel prefs={prefs} />
+      <HearMyself />
       {error && <p className="settings-modal__error">{error}</p>}
     </div>
   )
@@ -32,6 +37,19 @@ function SensitivitySlider({ value, onChange }: { value: number; onChange: (valu
       Sensibilidade
       <input type="range" min={0} max={2} step={0.05} value={value} onChange={(event) => onChange(Number(event.target.value))} />
     </label>
+  )
+}
+
+function MicLevel({ prefs }: { prefs: ReturnType<typeof useMicPrefsStore.getState> }): React.JSX.Element {
+  const inCall = useVoiceStore((store) => store.connection !== null)
+  const level = useMicLevel(prefs, inCall)
+  return (
+    <div className="settings-modal__field">
+      Nível
+      <div className="mic-level" role="meter" aria-valuemin={0} aria-valuemax={100} aria-valuenow={level} aria-label="Nível do microfone">
+        <span className="mic-level__fill" style={{ width: `${level}%` }} />
+      </div>
+    </div>
   )
 }
 

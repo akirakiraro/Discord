@@ -1,5 +1,5 @@
 import type { FastifyInstance } from 'fastify'
-import { voiceTokenRequestSchema, type VoiceTokenResponse } from '@radcord/shared'
+import { monitorIdentity, voiceTokenRequestSchema, type VoiceTokenResponse } from '@radcord/shared'
 import type { AuthService } from '../auth/authService'
 import type { ChannelService } from '../channels/channelService'
 import { requireCurrentUser } from '../http/currentUser'
@@ -19,10 +19,17 @@ export interface VoiceRouteDependencies {
 export function registerVoiceRoutes(app: FastifyInstance, deps: VoiceRouteDependencies): void {
   app.post('/voice/token', async (request): Promise<VoiceTokenResponse> => {
     const user = requireCurrentUser(request, deps.auth)
-    const { channelId } = parseRequest(voiceTokenRequestSchema, request.body)
+    const { channelId, monitor } = parseRequest(voiceTokenRequestSchema, request.body)
     const channel = deps.channels.requireChannel(channelId, 'voice')
-    const token = await deps.tokenIssuer.issue({ roomName: channel.id, identity: user.id, displayName: user.displayName })
-    request.log.info({ event: 'voice_token_issued', userId: user.id, channelId: channel.id })
+    const listening = monitor === true
+    const token = await deps.tokenIssuer.issue({
+      roomName: channel.id,
+      identity: listening ? monitorIdentity(user.id) : user.id,
+      displayName: user.displayName,
+      canPublish: !listening,
+      hidden: listening,
+    })
+    request.log.info({ event: 'voice_token_issued', userId: user.id, channelId: channel.id, monitor: listening })
     return { token, livekitUrl: deps.livekitPublicUrl }
   })
 }

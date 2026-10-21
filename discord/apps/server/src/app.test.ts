@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import type { FastifyInstance } from 'fastify'
-import type { AuthResponse, ChannelDto } from '@radcord/shared'
+import { monitorIdentity, type AuthResponse, type ChannelDto } from '@radcord/shared'
 import { buildApp } from './app'
 import { IN_MEMORY_DATABASE, openDatabase } from './db/database'
 import { randomIdGenerator, systemClock } from './platform/runtime'
@@ -118,6 +118,21 @@ describe('API do host', () => {
     })
 
     expect(response.json()).toEqual({ token: `fake-token-${user.id}`, livekitUrl: LIVEKIT_URL })
-    expect(issuer.grants).toEqual([{ roomName: voiceChannel?.id, identity: user.id, displayName: 'akira' }])
+    expect(issuer.grants).toEqual([{ roomName: voiceChannel?.id, identity: user.id, displayName: 'akira', canPublish: true, hidden: false }])
+  })
+
+  it('POST /voice/token com monitor emite escuta invisível e sem publicar', async () => {
+    const { token, user } = await join('akira')
+    const voiceChannel = (await listChannels(token)).find((channel) => channel.kind === 'voice')
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/voice/token',
+      headers: { authorization: `Bearer ${token}` },
+      payload: { channelId: voiceChannel?.id, monitor: true },
+    })
+
+    expect(response.json()).toEqual({ token: `fake-token-${monitorIdentity(user.id)}`, livekitUrl: LIVEKIT_URL })
+    expect(issuer.grants[0]).toMatchObject({ identity: monitorIdentity(user.id), canPublish: false, hidden: true })
   })
 })

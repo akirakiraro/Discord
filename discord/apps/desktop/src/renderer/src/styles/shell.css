@@ -424,6 +424,51 @@
   font-weight: 500;
 }
 
+.mic-level {
+  height: 10px;
+  border-radius: 5px;
+  background: var(--bg-input);
+  overflow: hidden;
+}
+
+.mic-level__fill {
+  display: block;
+  height: 100%;
+  background: var(--green);
+}
+
+.settings-modal__hint {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.settings-modal__action {
+  align-self: flex-start;
+  border: 0;
+  border-radius: 4px;
+  padding: 8px 12px;
+  background: var(--brand);
+  color: white;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.settings-modal__action:hover {
+  background: var(--brand-hover);
+}
+
+.settings-modal__action:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.settings-modal__action--on {
+  background: var(--green);
+}
+
 .settings-modal__error {
   margin: 0;
   color: var(--red);

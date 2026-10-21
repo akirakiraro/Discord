@@ -1,4 +1,5 @@
 import { AudioTrack, VideoTrack, useParticipants, useTracks } from '@livekit/components-react'
+import { isMonitorIdentity } from '@radcord/shared'
 import { Track, type Participant } from 'livekit-client'
 import { visibleScreenShares } from '../../lib/voice/visibleScreenShares'
 import { useVoiceStore } from '../../stores/voiceStore'
@@ -57,7 +58,7 @@ function ScreenShares(): React.JSX.Element | null {
 }
 
 export function VoiceStage(): React.JSX.Element {
-  const participants = useParticipants()
+  const participants = useParticipants().filter((participant) => !isMonitorIdentity(participant.identity))
 
   return (
     <div className="voice-stage">

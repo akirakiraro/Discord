@@ -4,6 +4,8 @@ export interface VoiceGrantRequest {
   roomName: string
   identity: string
   displayName: string
+  canPublish: boolean
+  hidden: boolean
 }
 
 export interface VoiceTokenIssuer {
@@ -15,7 +17,7 @@ const TOKEN_TTL = '6h'
 /**
  * Assina tokens de acesso às salas de voz do LiveKit.
  * A identidade é o id do usuário: entrar de outro PC derruba a sessão de voz antiga, como no Discord.
- * Exemplo: `await issuer.issue({ roomName: channel.id, identity: user.id, displayName: user.displayName })`
+ * Exemplo: `await issuer.issue({ roomName: channel.id, identity: user.id, displayName: user.displayName, canPublish: true, hidden: false })`
  */
 export class LiveKitTokenIssuer implements VoiceTokenIssuer {
   constructor(
@@ -29,7 +31,14 @@ export class LiveKitTokenIssuer implements VoiceTokenIssuer {
       name: request.displayName,
       ttl: TOKEN_TTL,
     })
-    accessToken.addGrant({ room: request.roomName, roomJoin: true, canPublish: true, canSubscribe: true })
+    accessToken.addGrant({
+      room: request.roomName,
+      roomJoin: true,
+      canPublish: request.canPublish,
+      canSubscribe: true,
+      canPublishData: request.canPublish,
+      hidden: request.hidden,
+    })
     return accessToken.toJwt()
   }
 }
