@@ -11,12 +11,14 @@ export interface VoiceStore {
   micMuted: boolean
   deafened: boolean
   showOwnShare: boolean
+  showOwnTile: boolean
   lastError: string | null
   join: (connection: VoiceConnection) => void
   leave: (error?: string) => void
   toggleMic: () => void
   toggleDeafen: () => void
   toggleOwnShare: () => void
+  toggleOwnTile: () => void
 }
 
 export const useVoiceStore = create<VoiceStore>((set) => ({
@@ -24,6 +26,7 @@ export const useVoiceStore = create<VoiceStore>((set) => ({
   micMuted: false,
   deafened: false,
   showOwnShare: true,
+  showOwnTile: true,
   lastError: null,
   join: (connection) => set({ connection, lastError: null }),
   leave: (error) => set({ connection: null, lastError: error ?? null }),
@@ -34,6 +37,7 @@ export const useVoiceStore = create<VoiceStore>((set) => ({
       return { deafened, micMuted: deafened || store.micMuted }
     }),
   toggleOwnShare: () => set((store) => ({ showOwnShare: !store.showOwnShare })),
+  toggleOwnTile: () => set((store) => ({ showOwnTile: !store.showOwnTile })),
 }))
 
 /** Ensurdecer também corta o microfone, como no Discord. */

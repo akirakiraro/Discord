@@ -58,17 +58,22 @@ function ScreenShares(): React.JSX.Element | null {
 }
 
 export function VoiceStage(): React.JSX.Element {
-  const participants = useParticipants().filter((participant) => !isMonitorIdentity(participant.identity))
+  const showOwnTile = useVoiceStore((store) => store.showOwnTile)
+  const participants = useParticipants()
+    .filter((participant) => !isMonitorIdentity(participant.identity))
+    .filter((participant) => showOwnTile || !participant.isLocal)
 
   return (
     <div className="voice-stage">
       <ScreenShares />
       <RemoteScreenAudio />
-      <div className="participant-grid">
-        {participants.map((participant) => (
-          <ParticipantTile key={participant.identity} participant={participant} />
-        ))}
-      </div>
+      {participants.length > 0 && (
+        <div className="participant-grid">
+          {participants.map((participant) => (
+            <ParticipantTile key={participant.identity} participant={participant} />
+          ))}
+        </div>
+      )}
       <VoiceControlBar />
     </div>
   )
