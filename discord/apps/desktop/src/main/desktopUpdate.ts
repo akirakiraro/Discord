@@ -1,7 +1,18 @@
-const HOST_BASE = /^http:\/\/[a-z0-9.-]+(?::\d{1,5})?$/i
+export interface GithubUpdateFeed {
+  provider: 'github'
+  owner: string
+  repo: string
+}
+
+/** Releases públicos de akirakiraro/Discord. O dev não consulta isso porque o app não está empacotado. */
+export const GITHUB_UPDATE_FEED: GithubUpdateFeed = {
+  provider: 'github',
+  owner: 'akirakiraro',
+  repo: 'Discord',
+}
 
 export interface BlockUpdateClient {
-  setFeedURL(url: string): void
+  setFeed(feed: GithubUpdateFeed): void
   checkForUpdates(): Promise<{ version: string } | null>
   downloadUpdate(): Promise<void>
   quitAndInstall(): void
@@ -9,26 +20,13 @@ export interface BlockUpdateClient {
 
 export interface BlockUpdateRequest {
   packaged: boolean
-  baseUrl: string
   confirm: (version: string) => Promise<boolean>
   client: BlockUpdateClient
 }
 
 /**
- * Monta a URL do feed genérico que o electron-updater lê (`latest.yml` e o blockmap).
- * Exemplo: `updatesFeedUrl('http://26.186.21.58:3000')` → `'http://26.186.21.58:3000/updates'`
- */
-export function updatesFeedUrl(baseUrl: string): string {
-  const trimmed = baseUrl.trim().replace(/\/+$/, '')
-  if (!HOST_BASE.test(trimmed)) {
-    throw new Error(`Host da atualização inválido: recebido ${JSON.stringify(baseUrl)}, esperado http://IP:porta`)
-  }
-  return `${trimmed}/updates`
-}
-
-/**
- * No app instalado, pergunta ao host e baixa só os blocos novos antes de reiniciar.
- * Exemplo: `await installBlockUpdate({ packaged: true, baseUrl, confirm, client })`
+ * No app instalado, pergunta aos releases do GitHub e baixa só os blocos novos.
+ * Exemplo: `await installBlockUpdate({ packaged: true, confirm, client })`
  */
 export async function installBlockUpdate(input: BlockUpdateRequest): Promise<string> {
   if (!input.packaged) return 'skipped'
@@ -42,7 +40,7 @@ export async function installBlockUpdate(input: BlockUpdateRequest): Promise<str
 
 async function readOffer(input: BlockUpdateRequest): Promise<{ version: string } | null> {
   try {
-    input.client.setFeedURL(updatesFeedUrl(input.baseUrl))
+    input.client.setFeed(GITHUB_UPDATE_FEED)
     return await input.client.checkForUpdates()
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error)

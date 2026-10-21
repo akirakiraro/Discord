@@ -51,11 +51,10 @@ function exposeRadminIp(): void {
 }
 
 function exposeDesktopUpdate(): void {
-  ipcMain.handle('radcord:check-update', async (_event, baseUrl: unknown) => {
+  ipcMain.handle('radcord:check-update', async () => {
     try {
       return await installBlockUpdate({
         packaged: app.isPackaged,
-        baseUrl: typeof baseUrl === 'string' ? baseUrl : '',
         confirm: confirmDesktopUpdate,
         client: blockUpdateClient(),
       })
@@ -70,8 +69,8 @@ function blockUpdateClient(): BlockUpdateClient {
   autoUpdater.autoDownload = false
   autoUpdater.autoInstallOnAppQuit = false
   return {
-    setFeedURL(url: string) {
-      autoUpdater.setFeedURL({ provider: 'generic', url })
+    setFeed(feed) {
+      autoUpdater.setFeedURL(feed)
     },
     async checkForUpdates() {
       return availableVersion(await autoUpdater.checkForUpdates())

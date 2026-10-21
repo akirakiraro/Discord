@@ -1,0 +1,40 @@
+name: QA desktop
+
+on:
+  push:
+    branches:
+      - qa
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: discord/package-lock.json
+
+      - name: Instalar dependências
+        working-directory: discord
+        run: npm ci
+
+      - name: Versão da execução
+        working-directory: discord
+        run: node -e "const fs=require('fs'); const p='apps/desktop/package.json'; const j=JSON.parse(fs.readFileSync(p,'utf8')); j.version='0.1.${{ github.run_number }}'; fs.writeFileSync(p, JSON.stringify(j,null,2)+'\n');"
+
+      - name: Compilar
+        working-directory: discord
+        run: npm run build -w @radcord/desktop
+
+      - name: Publicar instalador e blockmap
+        working-directory: discord/apps/desktop
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+        run: npx electron-builder --win nsis --publish always

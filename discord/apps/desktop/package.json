@@ -1,7 +1,7 @@
 {
   "name": "@radcord/desktop",
   "productName": "Radcord",
-  "version": "0.1.38",
+  "version": "0.1.39",
   "private": true,
   "description": "Radcord - voz, vídeo e tela pela rede do Radmin",
   "author": "Akira",
@@ -29,6 +29,11 @@
       "oneClick": true,
       "perMachine": false,
       "allowToChangeInstallationDirectory": false
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "akirakiraro",
+      "repo": "Discord"
     }
   },
   "devDependencies": {
