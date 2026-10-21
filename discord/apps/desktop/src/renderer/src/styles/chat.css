@@ -146,9 +146,9 @@
 
 .composer__row {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   min-height: 44px;
-  padding: 0 16px;
+  padding: 0 8px 0 16px;
   border-radius: 8px;
   background: var(--bg-input);
 }
@@ -156,13 +156,43 @@
 .composer__attach {
   width: 24px;
   height: 24px;
-  margin: 0 16px 10px 0;
+  margin-right: 16px;
+  flex-shrink: 0;
+  border: 0;
   border-radius: 50%;
   background: #dbdee1;
   color: #313338;
   font-size: 18px;
-  font-weight: 600;
+  font-weight: 500;
   line-height: 1;
+  cursor: pointer;
+}
+
+.composer__tools {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  margin-left: 4px;
+  color: #b5bac1;
+}
+
+.composer__tool {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+}
+
+.composer__tool svg {
+  width: 22px;
+  height: 22px;
+  fill: currentColor;
+}
+
+.composer__tool--gif {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
 }
 
 .composer__attach:hover {

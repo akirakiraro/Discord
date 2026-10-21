@@ -14,8 +14,8 @@ export function TextChannelView({ channel }: { channel: ChannelDto }): React.JSX
       </header>
       <MessageList channel={channel} />
       <div className="text-channel__footer">
-        <MessageComposer channel={channel} />
         <TypingIndicator channelId={channel.id} />
+        <MessageComposer channel={channel} />
       </div>
     </main>
   )
