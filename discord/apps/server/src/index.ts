@@ -15,7 +15,7 @@ async function startServer(env: ServerEnv): Promise<void> {
     clock: systemClock,
     newId: randomIdGenerator,
   })
-  const app = await buildApp(context, { logger: true })
+  const app = await buildApp(context, { logger: true, updatesDir: config.updatesDir })
   context.broadcaster.attach(attachRealtimeGateway(app.server, context))
   await app.listen({ host: config.bindHost, port: config.port })
   app.log.info({ event: 'database_opened', path: config.databasePath })

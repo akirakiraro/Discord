@@ -11,4 +11,7 @@ infra/host/generated/
 
 # Banco SQLite com contas e mensagens
 infra/host/data/
+
+# Executável publicado para os clientes baixarem
+infra/host/updates/
 apps/server/data/

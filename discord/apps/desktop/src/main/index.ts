@@ -1,6 +1,7 @@
 import { networkInterfaces } from 'node:os'
 import { join } from 'node:path'
-import { app, BrowserWindow, ipcMain, shell } from 'electron'
+import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron'
+import { checkAndInstallUpdate, launchPortableSwap } from './desktopUpdate'
 import { allowMediaPermissions, handleScreenShareRequests } from './mediaPermissions'
 import { findRadminIpv4 } from './radminAddress'
 import { exposeScreenShareIpc } from './screenShareSources'
@@ -48,10 +49,45 @@ function exposeRadminIp(): void {
   ipcMain.handle('radcord:radmin-ip', () => findRadminIpv4(networkInterfaces()))
 }
 
+function exposeDesktopUpdate(): void {
+  ipcMain.handle('radcord:check-update', async (_event, baseUrl: unknown) => {
+    try {
+      return await checkAndInstallUpdate({
+        packaged: app.isPackaged,
+        portablePath: process.env.PORTABLE_EXECUTABLE_FILE ?? null,
+        baseUrl: typeof baseUrl === 'string' ? baseUrl : '',
+        currentVersion: app.getVersion(),
+        downloadPath: join(app.getPath('temp'), 'Radcord-update.exe'),
+        pid: process.pid,
+        fetchFn: fetch,
+        confirm: confirmDesktopUpdate,
+        launchSwap: launchPortableSwap,
+        quit: () => app.quit(),
+      })
+    } catch (error: unknown) {
+      dialog.showErrorBox('Atualização do Radcord', error instanceof Error ? error.message : String(error))
+      return 'failed'
+    }
+  })
+}
+
+function confirmDesktopUpdate(version: string): Promise<boolean> {
+  return dialog.showMessageBox({
+    type: 'info',
+    buttons: ['Agora não', 'Baixar e reiniciar'],
+    defaultId: 1,
+    cancelId: 0,
+    title: 'Atualização do Radcord',
+    message: `A versão ${version} está no host`,
+    detail: 'O app baixa o arquivo, fecha e abre de novo. Quem estiver na chamada cai nesse intervalo.',
+  }).then((choice) => choice.response === 1)
+}
+
 app.whenReady().then(() => {
   allowMediaPermissions()
   handleScreenShareRequests()
   exposeRadminIp()
+  exposeDesktopUpdate()
   exposeScreenShareIpc()
   createMainWindow()
 })

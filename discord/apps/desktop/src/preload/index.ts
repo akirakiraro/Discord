@@ -2,6 +2,7 @@ import { contextBridge, ipcRenderer } from 'electron'
 
 contextBridge.exposeInMainWorld('radcord', {
   radminIp: (): Promise<string | null> => ipcRenderer.invoke('radcord:radmin-ip'),
+  checkForUpdate: (baseUrl: string): Promise<string> => ipcRenderer.invoke('radcord:check-update', baseUrl),
   listScreenSources: (): Promise<ScreenSourceOption[]> => ipcRenderer.invoke('radcord:screen-sources'),
   chooseScreenSource: (sourceId: string): Promise<void> => ipcRenderer.invoke('radcord:screen-source-choice', sourceId),
 })

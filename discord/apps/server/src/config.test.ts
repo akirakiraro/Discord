@@ -27,6 +27,13 @@ describe('loadServerConfig', () => {
     expect(loadServerConfig(VALID_ENV).databasePath).toBe('data/radcord.db')
   })
 
+  it('aponta a pasta de atualização do host e respeita UPDATES_DIR', () => {
+    const dir = loadServerConfig(VALID_ENV).updatesDir.replaceAll('\\', '/')
+
+    expect(dir, 'pasta padrão').toMatch(/infra\/host\/updates$/)
+    expect(loadServerConfig({ ...VALID_ENV, UPDATES_DIR: 'D:/updates' }).updatesDir).toBe('D:/updates')
+  })
+
   it('falha mostrando o valor quando a porta é inválida', () => {
     expect(() => loadServerConfig({ ...VALID_ENV, PORT: 'abc' })).toThrow(/"abc"/)
   })

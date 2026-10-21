@@ -1,3 +1,5 @@
+import { dirname, resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { SERVER_DEFAULT_PORT } from '@radcord/shared'
 
 type ServerEnvKey =
@@ -7,6 +9,7 @@ type ServerEnvKey =
   | 'LIVEKIT_API_KEY'
   | 'LIVEKIT_API_SECRET'
   | 'LIVEKIT_PUBLIC_URL'
+  | 'UPDATES_DIR'
 
 export type ServerEnv = Readonly<Partial<Record<ServerEnvKey, string>>>
 
@@ -17,9 +20,13 @@ export interface ServerConfig {
   livekitApiKey: string
   livekitApiSecret: string
   livekitPublicUrl: string
+  updatesDir: string
 }
 
 const DEFAULT_DATABASE_PATH = 'data/radcord.db'
+
+// tsx roda este arquivo em apps/server/src; a pasta publicada fica ao lado dos scripts do host.
+const DEFAULT_UPDATES_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '../../../infra/host/updates')
 
 // LiveKit rejeita segredos menores que 32 caracteres ao assinar tokens.
 const MIN_SECRET_LENGTH = 32
@@ -36,6 +43,7 @@ export function loadServerConfig(env: ServerEnv): ServerConfig {
     livekitApiKey: requireEnv(env, 'LIVEKIT_API_KEY'),
     livekitApiSecret: requireSecret(env),
     livekitPublicUrl: requireWebSocketUrl(env),
+    updatesDir: env.UPDATES_DIR?.trim() || DEFAULT_UPDATES_DIR,
   }
 }
 

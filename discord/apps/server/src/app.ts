@@ -7,13 +7,14 @@ import { HttpError } from './http/httpError'
 import { registerMessageRoutes } from './messages/messageRoutes'
 import type { ServerContext } from './serverContext'
 import { registerMemberRoutes } from './users/memberRoutes'
+import { registerUpdateRoutes } from './updates/updateRoutes'
 import { registerVoiceRoutes } from './voice/voiceRoutes'
 
 /**
  * Monta a API HTTP do host com todas as rotas.
  * Exemplo: `const app = await buildApp(createServerContext(inputs), { logger: true })`
  */
-export async function buildApp(context: ServerContext, options: { logger: boolean }): Promise<FastifyInstance> {
+export async function buildApp(context: ServerContext, options: { logger: boolean; updatesDir?: string }): Promise<FastifyInstance> {
   const app = Fastify({ logger: options.logger })
   // O renderer do Electron empacotado roda em file://, que manda Origin "null".
   await app.register(cors, { origin: true, methods: ['GET', 'POST', 'PATCH', 'DELETE'] })
@@ -28,6 +29,7 @@ export async function buildApp(context: ServerContext, options: { logger: boolea
   registerMessageRoutes(app, context.auth, context.messages)
   registerMemberRoutes(app, context.auth, context.users, context.presence)
   registerVoiceRoutes(app, context)
+  registerUpdateRoutes(app, options.updatesDir ?? '')
   return app
 }
 
