@@ -32,9 +32,25 @@ jobs:
         working-directory: discord
         run: npm run build -w @radcord/desktop
 
-      - name: Publicar instalador e blockmap
+      - name: Gerar instalador
+        working-directory: discord/apps/desktop
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+        run: npx electron-builder --win nsis --publish never
+
+      - name: Publicar release
         working-directory: discord/apps/desktop
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          CSC_IDENTITY_AUTO_DISCOVERY: false
-        run: npx electron-builder --win nsis --publish always
+        shell: pwsh
+        run: |
+          $version = (Get-Content package.json -Raw | ConvertFrom-Json).version
+          $stage = Join-Path $env:RUNNER_TEMP "radcord-release"
+          New-Item -ItemType Directory -Force -Path $stage | Out-Null
+          $setup = Get-ChildItem release -Filter "*Setup*$version*.exe" | Where-Object { $_.Extension -eq ".exe" } | Select-Object -First 1
+          $block = Get-ChildItem release -Filter "*$version*.blockmap" | Select-Object -First 1
+          if (-not $setup -or -not $block -or -not (Test-Path "release\latest.yml")) { throw "Pacote $version incompleto em release/" }
+          Copy-Item -LiteralPath $setup.FullName -Destination (Join-Path $stage "Radcord-Setup-$version.exe")
+          Copy-Item -LiteralPath $block.FullName -Destination (Join-Path $stage "Radcord-Setup-$version.exe.blockmap")
+          Copy-Item -LiteralPath "release\latest.yml" -Destination (Join-Path $stage "latest.yml")
+          gh release create "v$version" --repo akirakiraro/Discord --title "Radcord $version" --notes "Atualização $version" (Join-Path $stage "latest.yml") (Join-Path $stage "Radcord-Setup-$version.exe") (Join-Path $stage "Radcord-Setup-$version.exe.blockmap")
