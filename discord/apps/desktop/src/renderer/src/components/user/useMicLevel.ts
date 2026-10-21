@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { captureOptions, type MicPreferences } from '../../lib/voice/micPreferences'
 import { METER_MIN_DB, rmsToDb } from '../../lib/voice/micLevel'
 import { rmsLevel } from '../../lib/voice/speakingLevel'
@@ -7,16 +7,18 @@ import { voiceSession } from '../../lib/voice/voiceSession'
 const METER_MS = 32
 
 /**
- * Nível do microfone em dB, medido antes do portão.
+ * Nível em dB depois do volume e antes do portão.
  * Na chamada lê o processador; fora dela abre o microfone só para a barra.
  * Exemplo: `const levelDb = useMicLevel(prefs, inCall)`
  */
 export function useMicLevel(prefs: MicPreferences, inCall: boolean): number {
   const [levelDb, setLevelDb] = useState(METER_MIN_DB)
+  const gainRef = useRef(prefs.inputGain)
+  gainRef.current = prefs.inputGain
 
   useEffect(() => {
     if (inCall) return pollCallLevel(setLevelDb)
-    return pollPreview(prefs, setLevelDb)
+    return pollPreview(prefs, gainRef, setLevelDb)
   }, [prefs.deviceId, prefs.noiseSuppression, prefs.echoCancellation, prefs.autoGainControl, inCall])
 
   return levelDb
@@ -29,10 +31,10 @@ function pollCallLevel(setLevelDb: (db: number) => void): () => void {
   return () => window.clearInterval(timer)
 }
 
-function pollPreview(prefs: MicPreferences, setLevelDb: (db: number) => void): () => void {
+function pollPreview(prefs: MicPreferences, gainRef: { current: number }, setLevelDb: (db: number) => void): () => void {
   let closed = false
   let tap: PreviewTap | undefined
-  void openPreview(prefs).then((opened) => {
+  void openPreview(prefs, gainRef).then((opened) => {
     if (closed) opened.close()
     else tap = opened
   }).catch(() => setLevelDb(METER_MIN_DB))
@@ -46,14 +48,14 @@ function pollPreview(prefs: MicPreferences, setLevelDb: (db: number) => void): (
   }
 }
 
-async function openPreview(prefs: MicPreferences): Promise<PreviewTap> {
+async function openPreview(prefs: MicPreferences, gainRef: { current: number }): Promise<PreviewTap> {
   const stream = await navigator.mediaDevices.getUserMedia({ audio: previewConstraints(prefs) })
   const track = stream.getAudioTracks()[0]
   if (!track) {
     stream.getTracks().forEach((item) => item.stop())
     throw new Error('getUserMedia devolveu stream sem faixa de áudio; esperado um microfone')
   }
-  return tapTrack(track)
+  return tapTrack(track, gainRef)
 }
 
 function previewConstraints(prefs: MicPreferences): MediaTrackConstraints {
@@ -67,16 +69,20 @@ function previewConstraints(prefs: MicPreferences): MediaTrackConstraints {
   }
 }
 
-function tapTrack(track: MediaStreamTrack): PreviewTap {
+function tapTrack(track: MediaStreamTrack, gainRef: { current: number }): PreviewTap {
   const context = new AudioContext()
   const source = context.createMediaStreamSource(new MediaStream([track]))
+  const gain = context.createGain()
   const analyser = context.createAnalyser()
   analyser.fftSize = 512
-  source.connect(analyser)
+  gain.gain.value = gainRef.current
+  source.connect(gain)
+  gain.connect(analyser)
   void context.resume()
   const samples = new Uint8Array(analyser.fftSize)
   return {
     readDb: () => {
+      gain.gain.value = gainRef.current
       analyser.getByteTimeDomainData(samples)
       return rmsToDb(rmsLevel(samples))
     },

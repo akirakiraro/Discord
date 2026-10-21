@@ -19,8 +19,8 @@ interface GateNodes {
 /**
  * Portão do microfone: abaixo do limite em dB o som não segue para a chamada.
  * O nível lido aqui é o de antes do portão, para a barra mostrar ruído e voz.
- * O volume vem depois e só multiplica o que passou.
- * Exemplo: `gate.setVolume(1.5)` deixa a voz 50% mais alta.
+ * O volume vem antes do portão: subir o som também ajuda a voz a passar do limite.
+ * Exemplo: `gate.setVolume(2)` deixa a voz duas vezes mais alta.
  */
 export class SensitivityGate implements TrackProcessor<Track.Kind.Audio, AudioProcessorOptions> {
   name = 'radcord-sensitivity-gate'
@@ -58,7 +58,7 @@ export class SensitivityGate implements TrackProcessor<Track.Kind.Audio, AudioPr
     this.thresholdDb = clampGateDb(value)
   }
 
-  /** Ajusta o volume do que já passou pelo portão, sem recapturar. */
+  /** Ajusta o volume antes do portão, sem recapturar. */
   setVolume(value: number): void {
     this.inputGain = clampInputGain(value)
     if (this.nodes) this.nodes.volume.gain.value = this.inputGain
@@ -104,17 +104,17 @@ function audioContextOf(opts: AudioProcessorOptions): AudioContext {
 
 function connectGate(context: AudioContext, track: MediaStreamTrack, volume: number): GateNodes {
   const source = context.createMediaStreamSource(new MediaStream([track]))
-  const gain = context.createGain()
   const level = context.createGain()
+  const gain = context.createGain()
   const analyser = context.createAnalyser()
   const destination = context.createMediaStreamDestination()
   analyser.fftSize = 512
-  gain.gain.value = 0
   level.gain.value = volume
-  source.connect(analyser)
-  source.connect(gain)
-  gain.connect(level)
-  level.connect(destination)
+  gain.gain.value = 0
+  source.connect(level)
+  level.connect(analyser)
+  level.connect(gain)
+  gain.connect(destination)
   const samples = new Uint8Array(new ArrayBuffer(analyser.fftSize))
   return { source, gain, volume: level, analyser, destination, context, samples, state: CLOSED_GATE }
 }

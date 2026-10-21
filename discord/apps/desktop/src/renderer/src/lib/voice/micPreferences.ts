@@ -4,7 +4,7 @@ import { clampGateDb, DEFAULT_GATE_DB } from './micLevel'
 
 const STORAGE_KEY = 'radcord.mic'
 const MIN_GAIN = 0
-const MAX_GAIN = 2
+const MAX_GAIN = 4
 
 export interface MicPreferences {
   deviceId: string
@@ -25,8 +25,8 @@ export const DEFAULT_MIC_PREFERENCES: MicPreferences = {
 }
 
 /**
- * Volume enviado depois do portão: 0 é mudo, 1 é o microfone, 2 é o dobro.
- * Exemplo: `clampInputGain(3)` devolve `2`.
+ * Volume aplicado antes do portão: 0 é mudo, 1 é o microfone, 4 é o quádruplo.
+ * Exemplo: `clampInputGain(9)` devolve `4`.
  */
 export function clampInputGain(value: number): number {
   if (!Number.isFinite(value)) return DEFAULT_MIC_PREFERENCES.inputGain

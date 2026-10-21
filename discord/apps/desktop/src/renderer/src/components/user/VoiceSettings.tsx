@@ -53,12 +53,12 @@ function VolumeSlider({ value, onChange }: { value: number; onChange: (value: nu
   return (
     <label className="settings-modal__field">
       Volume · {percent}%
-      <input type="range" min={0} max={2} step={0.05} value={value} onChange={(event) => onChange(Number(event.target.value))} />
+      <input type="range" min={0} max={4} step={0.05} value={value} onChange={(event) => onChange(Number(event.target.value))} />
       <span className="settings-modal__scale">
         <span>Esquerda: mais baixo</span>
         <span>Direita: mais alto</span>
       </span>
-      <p className="settings-modal__hint">100% é o volume do microfone. Na direita chega ao dobro. Na esquerda chega a mudo. Isso não mexe no portão.</p>
+      <p className="settings-modal__hint">100% é o microfone. Na direita chega a 400%. A barra verde sobe junto. O traço branco continua sendo o portão.</p>
     </label>
   )
 }
@@ -93,10 +93,10 @@ function AudioPath(): React.JSX.Element {
       <ol className="audio-flow">
         <li>O microfone entra no navegador.</li>
         <li>Cancelamento de eco, ganho automático e supressão de ruído entram só se a caixa correspondente estiver marcada.</li>
-        <li>A sensibilidade é um portão em decibéis. O que fica abaixo do traço branco não é enviado.</li>
-        <li>O volume multiplica o que passou pelo portão. 100% é o microfone; 200% é o dobro.</li>
+        <li>O volume multiplica o microfone antes de qualquer corte. 100% é o original; 400% é quatro vezes mais alto.</li>
+        <li>A sensibilidade é o portão. O que fica à esquerda do traço branco, já com o volume aplicado, não é enviado.</li>
         <li>O servidor comprime e entrega para quem está na chamada. Me ouvir toca essa volta.</li>
-        <li>A barra verde mede o volume antes do portão. O traço branco é o limite.</li>
+        <li>A barra verde é o volume já amplificado. O traço branco é o limite do portão.</li>
       </ol>
     </div>
   )

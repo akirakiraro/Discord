@@ -7,10 +7,10 @@ describe('SensitivityGate', () => {
     const gate = new SensitivityGate(() => -45, () => 1)
 
     gate.setThreshold(-5)
-    gate.setVolume(4)
+    gate.setVolume(9)
 
     expect(gate.thresholdDb).toBe(-10)
-    expect(gate.inputGain).toBe(2)
+    expect(gate.inputGain).toBe(4)
   })
 
   it('recusa ligar sem AudioContext', async () => {

@@ -34,7 +34,7 @@ describe('micPreferences', () => {
       echoCancellation: false,
       autoGainControl: true,
       gateDb: -5,
-      inputGain: 3,
+      inputGain: 9,
     })
 
     expect(loadMicPreferences(storage)).toEqual({
@@ -43,7 +43,7 @@ describe('micPreferences', () => {
       echoCancellation: false,
       autoGainControl: true,
       gateDb: -10,
-      inputGain: 2,
+      inputGain: 4,
     })
   })
 
