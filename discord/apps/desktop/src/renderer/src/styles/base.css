@@ -16,7 +16,7 @@
   --red: #f23f43;
   --link: #00a8fc;
   --border-focus: #5c5f66;
-  --scrollbar: #1a1b1e;
+  --scrollbar: #2a2c31;
   font-family: 'gg sans', 'Segoe UI', 'Noto Sans', sans-serif;
   color: var(--text-normal);
   background: var(--bg-main);
@@ -33,6 +33,12 @@
   height: 8px;
 }
 
+*::-webkit-scrollbar-button {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
 *::-webkit-scrollbar-track {
   background: transparent;
 }
@@ -45,7 +51,7 @@
 }
 
 *::-webkit-scrollbar-thumb:hover {
-  background: #111214;
+  background: #232428;
   background-clip: padding-box;
 }
 
