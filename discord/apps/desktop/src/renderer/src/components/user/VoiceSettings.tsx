@@ -16,6 +16,7 @@ export function VoiceSettings(): React.JSX.Element {
       <NoiseToggle enabled={prefs.noiseSuppression} onChange={prefs.setNoiseSuppression} />
       <SensitivitySlider value={prefs.inputGain} onChange={prefs.setInputGain} />
       <MicLevel prefs={prefs} />
+      <AudioPath />
       <HearMyself />
       {error && <p className="settings-modal__error">{error}</p>}
     </div>
@@ -36,7 +37,27 @@ function SensitivitySlider({ value, onChange }: { value: number; onChange: (valu
     <label className="settings-modal__field">
       Sensibilidade
       <input type="range" min={0} max={2} step={0.05} value={value} onChange={(event) => onChange(Number(event.target.value))} />
+      <span className="settings-modal__scale">
+        <span>Esquerda: mais baixo</span>
+        <span>Direita: mais alto</span>
+      </span>
+      <p className="settings-modal__hint">No meio, o volume segue o microfone. Na direita chega ao dobro. Na esquerda chega a mudo.</p>
     </label>
+  )
+}
+
+function AudioPath(): React.JSX.Element {
+  return (
+    <div className="settings-modal__field">
+      Caminho do áudio
+      <ol className="audio-flow">
+        <li>O microfone entra no navegador.</li>
+        <li>Cancelamento de eco e ganho automático ficam sempre ligados. A supressão de ruído só entra se a caixa estiver marcada.</li>
+        <li>A sensibilidade multiplica esse volume, de mudo até o dobro, e esse é o som enviado.</li>
+        <li>O servidor comprime e entrega para quem está na chamada. Me ouvir toca essa volta.</li>
+        <li>A barra de nível só mede. Ela não muda o que os outros escutam.</li>
+      </ol>
+    </div>
   )
 }
 
