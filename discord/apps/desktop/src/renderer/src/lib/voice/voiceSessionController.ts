@@ -7,6 +7,7 @@ import { describeVoiceDisconnect } from './describeVoiceDisconnect'
 import { SensitivityGate } from './sensitivityGate'
 import { captureOptions, type MicPreferences } from './micPreferences'
 import type { MicrophonePort } from './liveKitMicrophone'
+import { reportAppError } from '../report/reportAppError'
 
 /** O pedaço da `Room` do LiveKit que o controlador usa (permite um fake nos testes). */
 export interface VoiceRoomPort {
@@ -51,14 +52,9 @@ export class VoiceSessionController {
   async join(tokens: VoiceTokenSource, channelId: string): Promise<void> {
     if (this.store.getState().connection?.channelId === channelId) return
     try {
-      const { token, livekitUrl } = await tokens.requestVoiceToken(channelId)
-      if (this.room.state !== ConnectionState.Disconnected) await this.room.disconnect()
-      await this.room.connect(livekitUrl, token)
-      this.store.getState().join({ channelId, token, livekitUrl })
-      await this.syncMicrophone()
+      await this.enterChannel(tokens, channelId)
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error)
-      this.store.getState().leave(`Não foi possível entrar na call: ${message}`)
+      this.failJoin(error, undefined)
     }
   }
 
@@ -67,9 +63,31 @@ export class VoiceSessionController {
     await this.room.disconnect()
   }
 
+  private async enterChannel(tokens: VoiceTokenSource, channelId: string): Promise<void> {
+    const { token, livekitUrl } = await tokens.requestVoiceToken(channelId)
+    if (this.room.state !== ConnectionState.Disconnected) await this.room.disconnect()
+    try {
+      await this.room.connect(livekitUrl, token)
+    } catch (error) {
+      this.failJoin(error, livekitUrl)
+      return
+    }
+    this.store.getState().join({ channelId, token, livekitUrl })
+    await this.syncMicrophone()
+  }
+
+  private failJoin(error: unknown, livekitUrl: string | undefined): void {
+    const message = error instanceof Error ? error.message : String(error)
+    const shown = `Não foi possível entrar na call: ${message}`
+    reportAppError(shown, livekitUrl)
+    this.store.getState().leave(shown)
+  }
+
   private handleDisconnected(reason: DisconnectReason | undefined): void {
     const message = describeVoiceDisconnect(reason)
-    if (message) this.store.getState().leave(message)
+    if (!message) return
+    reportAppError(message)
+    this.store.getState().leave(message)
   }
 
   /** Nível em dB antes do portão, só enquanto o microfone da chamada está ligado. */

@@ -2,6 +2,7 @@ import { networkInterfaces } from 'node:os'
 import { join } from 'node:path'
 import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron'
 import { autoUpdater, type UpdateCheckResult } from 'electron-updater'
+import { bindClientReports } from './clientReportBridge'
 import { installBlockUpdate, type BlockUpdateClient } from './desktopUpdate'
 import { allowMediaPermissions, handleScreenShareRequests } from './mediaPermissions'
 import { findRadminIpv4 } from './radminAddress'
@@ -107,7 +108,7 @@ app.whenReady().then(() => {
   exposeRadminIp()
   exposeDesktopUpdate()
   exposeScreenShareIpc()
-  createMainWindow()
+  bindClientReports(createMainWindow(), join(app.getPath('userData'), 'pending-reports.json'))
 })
 
 app.on('window-all-closed', () => app.quit())

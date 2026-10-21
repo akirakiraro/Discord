@@ -7,6 +7,7 @@ import type {
   MemberDto,
   ProfileUpdate,
   MessageDto,
+  ClientReportRequest,
   MessagePageDto,
   UserDto,
   VoiceTokenResponse,
@@ -94,6 +95,10 @@ export class RadcordApiClient {
   requestVoiceToken(channelId: string, monitor = false): Promise<VoiceTokenResponse> {
     const body = monitor ? { channelId, monitor: true } : { channelId }
     return this.request('POST', '/voice/token', body)
+  }
+
+  reportClient(report: ClientReportRequest): Promise<void> {
+    return this.request('POST', '/client-reports', report)
   }
 
   private async request<T>(method: string, path: string, body?: object): Promise<T> {
