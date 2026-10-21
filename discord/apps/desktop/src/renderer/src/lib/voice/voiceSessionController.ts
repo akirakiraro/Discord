@@ -37,7 +37,10 @@ export class VoiceSessionController {
     private readonly store: VoiceStoreApi,
     private readonly prefs: MicPrefsApi,
   ) {
-    this.gate = new SensitivityGate(() => this.prefs.getState().gateDb)
+    this.gate = new SensitivityGate(
+      () => this.prefs.getState().gateDb,
+      () => this.prefs.getState().inputGain,
+    )
     room.on(RoomEvent.Disconnected, (reason) => this.handleDisconnected(reason))
     store.subscribe((state, previous) => {
       if (isMicrophoneLive(state) !== isMicrophoneLive(previous)) void this.syncMicrophone()
@@ -77,6 +80,7 @@ export class VoiceSessionController {
 
   private onPrefsChange(state: MicPreferences, previous: MicPreferences): void {
     if (state.gateDb !== previous.gateDb) this.gate.setThreshold(state.gateDb)
+    if (state.inputGain !== previous.inputGain) this.gate.setVolume(state.inputGain)
     const captureChanged =
       state.deviceId !== previous.deviceId ||
       state.noiseSuppression !== previous.noiseSuppression ||

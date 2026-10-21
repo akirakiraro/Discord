@@ -17,6 +17,7 @@ export function VoiceSettings(): React.JSX.Element {
       <NoiseToggle enabled={prefs.noiseSuppression} onChange={prefs.setNoiseSuppression} />
       <CaptureToggle label="Cancelamento de eco" enabled={prefs.echoCancellation} onChange={prefs.setEchoCancellation} />
       <CaptureToggle label="Ganho automático" enabled={prefs.autoGainControl} onChange={prefs.setAutoGainControl} />
+      <VolumeSlider value={prefs.inputGain} onChange={prefs.setInputGain} />
       <SensitivitySlider value={prefs.gateDb} onChange={prefs.setGateDb} />
       <MicLevel prefs={prefs} />
       <AudioPath />
@@ -43,6 +44,21 @@ function CaptureToggle({
     <label className="settings-modal__row">
       <input type="checkbox" checked={enabled} onChange={(event) => onChange(event.target.checked)} />
       {label}
+    </label>
+  )
+}
+
+function VolumeSlider({ value, onChange }: { value: number; onChange: (value: number) => void }): React.JSX.Element {
+  const percent = Math.round(value * 100)
+  return (
+    <label className="settings-modal__field">
+      Volume · {percent}%
+      <input type="range" min={0} max={2} step={0.05} value={value} onChange={(event) => onChange(Number(event.target.value))} />
+      <span className="settings-modal__scale">
+        <span>Esquerda: mais baixo</span>
+        <span>Direita: mais alto</span>
+      </span>
+      <p className="settings-modal__hint">100% é o volume do microfone. Na direita chega ao dobro. Na esquerda chega a mudo. Isso não mexe no portão.</p>
     </label>
   )
 }
@@ -78,6 +94,7 @@ function AudioPath(): React.JSX.Element {
         <li>O microfone entra no navegador.</li>
         <li>Cancelamento de eco, ganho automático e supressão de ruído entram só se a caixa correspondente estiver marcada.</li>
         <li>A sensibilidade é um portão em decibéis. O que fica abaixo do traço branco não é enviado.</li>
+        <li>O volume multiplica o que passou pelo portão. 100% é o microfone; 200% é o dobro.</li>
         <li>O servidor comprime e entrega para quem está na chamada. Me ouvir toca essa volta.</li>
         <li>A barra verde mede o volume antes do portão. O traço branco é o limite.</li>
       </ol>

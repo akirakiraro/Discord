@@ -1,4 +1,5 @@
 import { Track, type AudioProcessorOptions, type TrackProcessor } from 'livekit-client'
+import { clampInputGain } from './micPreferences'
 import { CLOSED_GATE, clampGateDb, rmsToDb, stepGate, type GateState } from './micLevel'
 import { rmsLevel } from './speakingLevel'
 
@@ -7,6 +8,7 @@ const TICK_MS = 32
 interface GateNodes {
   source: MediaStreamAudioSourceNode
   gain: GainNode
+  volume: GainNode
   analyser: AnalyserNode
   destination: MediaStreamAudioDestinationNode
   context: AudioContext
@@ -17,18 +19,24 @@ interface GateNodes {
 /**
  * Portão do microfone: abaixo do limite em dB o som não segue para a chamada.
  * O nível lido aqui é o de antes do portão, para a barra mostrar ruído e voz.
- * Exemplo: `gate.setThreshold(-50)` barra o que estiver mais baixo que −50 dB.
+ * O volume vem depois e só multiplica o que passou.
+ * Exemplo: `gate.setVolume(1.5)` deixa a voz 50% mais alta.
  */
 export class SensitivityGate implements TrackProcessor<Track.Kind.Audio, AudioProcessorOptions> {
   name = 'radcord-sensitivity-gate'
   processedTrack?: MediaStreamTrack
   thresholdDb: number
+  inputGain: number
   levelDb = -80
   private nodes?: GateNodes
   private timer?: number
 
-  constructor(private readonly readThreshold: () => number) {
+  constructor(
+    private readonly readThreshold: () => number,
+    private readonly readGain: () => number,
+  ) {
     this.thresholdDb = clampGateDb(readThreshold())
+    this.inputGain = clampInputGain(readGain())
   }
 
   get listening(): boolean {
@@ -50,10 +58,17 @@ export class SensitivityGate implements TrackProcessor<Track.Kind.Audio, AudioPr
     this.thresholdDb = clampGateDb(value)
   }
 
+  /** Ajusta o volume do que já passou pelo portão, sem recapturar. */
+  setVolume(value: number): void {
+    this.inputGain = clampInputGain(value)
+    if (this.nodes) this.nodes.volume.gain.value = this.inputGain
+  }
+
   async destroy(): Promise<void> {
     if (this.timer !== undefined) window.clearInterval(this.timer)
     this.nodes?.source.disconnect()
     this.nodes?.gain.disconnect()
+    this.nodes?.volume.disconnect()
     this.processedTrack?.stop()
     this.timer = undefined
     this.nodes = undefined
@@ -61,8 +76,10 @@ export class SensitivityGate implements TrackProcessor<Track.Kind.Audio, AudioPr
   }
 
   private wire(opts: AudioProcessorOptions): void {
-    this.nodes = connectGate(audioContextOf(opts), opts.track)
+    this.nodes = connectGate(audioContextOf(opts), opts.track, this.inputGain)
     this.thresholdDb = clampGateDb(this.readThreshold())
+    this.inputGain = clampInputGain(this.readGain())
+    this.nodes.volume.gain.value = this.inputGain
     this.processedTrack = outputTrack(this.nodes.destination)
     this.timer = window.setInterval(() => this.tick(), TICK_MS)
   }
@@ -85,18 +102,21 @@ function audioContextOf(opts: AudioProcessorOptions): AudioContext {
   return opts.audioContext
 }
 
-function connectGate(context: AudioContext, track: MediaStreamTrack): GateNodes {
+function connectGate(context: AudioContext, track: MediaStreamTrack, volume: number): GateNodes {
   const source = context.createMediaStreamSource(new MediaStream([track]))
   const gain = context.createGain()
+  const level = context.createGain()
   const analyser = context.createAnalyser()
   const destination = context.createMediaStreamDestination()
   analyser.fftSize = 512
   gain.gain.value = 0
+  level.gain.value = volume
   source.connect(analyser)
   source.connect(gain)
-  gain.connect(destination)
+  gain.connect(level)
+  level.connect(destination)
   const samples = new Uint8Array(new ArrayBuffer(analyser.fftSize))
-  return { source, gain, analyser, destination, context, samples, state: CLOSED_GATE }
+  return { source, gain, volume: level, analyser, destination, context, samples, state: CLOSED_GATE }
 }
 
 function outputTrack(destination: MediaStreamAudioDestinationNode): MediaStreamTrack {

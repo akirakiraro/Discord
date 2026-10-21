@@ -34,6 +34,7 @@ describe('micPreferences', () => {
       echoCancellation: false,
       autoGainControl: true,
       gateDb: -5,
+      inputGain: 3,
     })
 
     expect(loadMicPreferences(storage)).toEqual({
@@ -42,6 +43,7 @@ describe('micPreferences', () => {
       echoCancellation: false,
       autoGainControl: true,
       gateDb: -10,
+      inputGain: 2,
     })
   })
 
@@ -59,6 +61,7 @@ describe('micPreferences', () => {
       echoCancellation: false,
       autoGainControl: true,
       gateDb: -45,
+      inputGain: 1,
     })).toEqual({
       deviceId: 'headset',
       noiseSuppression: false,
@@ -71,7 +74,7 @@ describe('micPreferences', () => {
     const storage = new InMemoryStorage()
     storage.setItem('radcord.mic', JSON.stringify({ deviceId: 'headset', noiseSuppression: true, inputGain: 2 }))
 
-    expect(loadMicPreferences(storage)).toMatchObject({ echoCancellation: true, autoGainControl: true, gateDb: -45 })
+    expect(loadMicPreferences(storage)).toMatchObject({ echoCancellation: true, autoGainControl: true, gateDb: -45, inputGain: 2 })
   })
 
   it('resolveDeviceId volta ao padrão se o aparelho sumiu', () => {

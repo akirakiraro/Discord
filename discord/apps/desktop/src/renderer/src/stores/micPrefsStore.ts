@@ -13,6 +13,7 @@ export interface MicPrefsStore extends MicPreferences {
   setEchoCancellation: (echoCancellation: boolean) => void
   setAutoGainControl: (autoGainControl: boolean) => void
   setGateDb: (gateDb: number) => void
+  setInputGain: (inputGain: number) => void
   alignDevice: (knownIds: readonly string[]) => void
 }
 
@@ -28,6 +29,7 @@ export function createMicPrefsStore(storage: KeyValueStorage): UseBoundStore<Sto
     setEchoCancellation: (echoCancellation) => writePrefs(set, storage, { ...snapshot(get()), echoCancellation }),
     setAutoGainControl: (autoGainControl) => writePrefs(set, storage, { ...snapshot(get()), autoGainControl }),
     setGateDb: (gateDb) => writePrefs(set, storage, { ...snapshot(get()), gateDb }),
+    setInputGain: (inputGain) => writePrefs(set, storage, { ...snapshot(get()), inputGain }),
     alignDevice: (knownIds) => alignSavedDevice(set, get, storage, knownIds),
   }))
 }
@@ -48,6 +50,7 @@ function snapshot(state: MicPrefsStore): MicPreferences {
     echoCancellation: state.echoCancellation,
     autoGainControl: state.autoGainControl,
     gateDb: state.gateDb,
+    inputGain: state.inputGain,
   }
 }
 

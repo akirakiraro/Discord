@@ -3,6 +3,8 @@ import type { KeyValueStorage } from '../savedLogin'
 import { clampGateDb, DEFAULT_GATE_DB } from './micLevel'
 
 const STORAGE_KEY = 'radcord.mic'
+const MIN_GAIN = 0
+const MAX_GAIN = 2
 
 export interface MicPreferences {
   deviceId: string
@@ -10,6 +12,7 @@ export interface MicPreferences {
   echoCancellation: boolean
   autoGainControl: boolean
   gateDb: number
+  inputGain: number
 }
 
 export const DEFAULT_MIC_PREFERENCES: MicPreferences = {
@@ -18,6 +21,16 @@ export const DEFAULT_MIC_PREFERENCES: MicPreferences = {
   echoCancellation: true,
   autoGainControl: true,
   gateDb: DEFAULT_GATE_DB,
+  inputGain: 1,
+}
+
+/**
+ * Volume enviado depois do portão: 0 é mudo, 1 é o microfone, 2 é o dobro.
+ * Exemplo: `clampInputGain(3)` devolve `2`.
+ */
+export function clampInputGain(value: number): number {
+  if (!Number.isFinite(value)) return DEFAULT_MIC_PREFERENCES.inputGain
+  return Math.min(MAX_GAIN, Math.max(MIN_GAIN, value))
 }
 
 /**
@@ -71,5 +84,6 @@ function sanitizeMicPreferences(raw: Partial<MicPreferences>): MicPreferences {
     echoCancellation: raw.echoCancellation !== false,
     autoGainControl: raw.autoGainControl !== false,
     gateDb: clampGateDb(typeof raw.gateDb === 'number' ? raw.gateDb : DEFAULT_GATE_DB),
+    inputGain: clampInputGain(typeof raw.inputGain === 'number' ? raw.inputGain : 1),
   }
 }
