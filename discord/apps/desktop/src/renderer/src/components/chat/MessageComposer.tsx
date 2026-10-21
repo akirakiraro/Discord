@@ -75,7 +75,9 @@ export function MessageComposer({ channel }: { channel: ChannelDto }): React.JSX
       )}
       <div className="composer__row">
         <button type="button" className="composer__attach" title="Anexar print" onClick={() => fileInput.current?.click()}>
-          +
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M11 4h2v7h7v2h-7v7h-2v-7H4v-2h7V4z" />
+          </svg>
         </button>
         <textarea
           rows={1}
