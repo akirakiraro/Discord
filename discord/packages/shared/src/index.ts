@@ -1,5 +1,4 @@
 export * from './authContract'
-export * from './desktopUpdateContract'
 export * from './chatContract'
 export * from './realtimeContract'
 export * from './voiceContract'

@@ -1,7 +1,8 @@
 import { networkInterfaces } from 'node:os'
 import { join } from 'node:path'
 import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron'
-import { checkAndInstallUpdate, launchPortableSwap } from './desktopUpdate'
+import { autoUpdater, type UpdateCheckResult } from 'electron-updater'
+import { installBlockUpdate, type BlockUpdateClient } from './desktopUpdate'
 import { allowMediaPermissions, handleScreenShareRequests } from './mediaPermissions'
 import { findRadminIpv4 } from './radminAddress'
 import { exposeScreenShareIpc } from './screenShareSources'
@@ -52,23 +53,41 @@ function exposeRadminIp(): void {
 function exposeDesktopUpdate(): void {
   ipcMain.handle('radcord:check-update', async (_event, baseUrl: unknown) => {
     try {
-      return await checkAndInstallUpdate({
+      return await installBlockUpdate({
         packaged: app.isPackaged,
-        portablePath: process.env.PORTABLE_EXECUTABLE_FILE ?? null,
         baseUrl: typeof baseUrl === 'string' ? baseUrl : '',
-        currentVersion: app.getVersion(),
-        downloadPath: join(app.getPath('temp'), 'Radcord-update.exe'),
-        pid: process.pid,
-        fetchFn: fetch,
         confirm: confirmDesktopUpdate,
-        launchSwap: launchPortableSwap,
-        quit: () => app.quit(),
+        client: blockUpdateClient(),
       })
     } catch (error: unknown) {
       dialog.showErrorBox('Atualização do Radcord', error instanceof Error ? error.message : String(error))
       return 'failed'
     }
   })
+}
+
+function blockUpdateClient(): BlockUpdateClient {
+  autoUpdater.autoDownload = false
+  autoUpdater.autoInstallOnAppQuit = false
+  return {
+    setFeedURL(url: string) {
+      autoUpdater.setFeedURL({ provider: 'generic', url })
+    },
+    async checkForUpdates() {
+      return availableVersion(await autoUpdater.checkForUpdates())
+    },
+    async downloadUpdate() {
+      await autoUpdater.downloadUpdate()
+    },
+    quitAndInstall() {
+      autoUpdater.quitAndInstall(false, true)
+    },
+  }
+}
+
+function availableVersion(result: UpdateCheckResult | null): { version: string } | null {
+  if (!result?.isUpdateAvailable) return null
+  return { version: result.updateInfo.version }
 }
 
 function confirmDesktopUpdate(version: string): Promise<boolean> {
@@ -79,7 +98,7 @@ function confirmDesktopUpdate(version: string): Promise<boolean> {
     cancelId: 0,
     title: 'Atualização do Radcord',
     message: `A versão ${version} está no host`,
-    detail: 'O app baixa o arquivo, fecha e abre de novo. Quem estiver na chamada cai nesse intervalo.',
+    detail: 'O app baixa só a parte que mudou, fecha e abre de novo. Quem estiver na chamada cai nesse intervalo.',
   }).then((choice) => choice.response === 1)
 }
 

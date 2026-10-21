@@ -1,7 +1,7 @@
 {
   "name": "@radcord/desktop",
   "productName": "Radcord",
-  "version": "0.1.37",
+  "version": "0.1.38",
   "private": true,
   "description": "Radcord - voz, vídeo e tela pela rede do Radmin",
   "author": "Akira",
@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "electron-vite dev",
     "build": "electron-vite build",
-    "dist": "electron-vite build && electron-builder --win portable",
+    "dist": "electron-vite build && electron-builder --win nsis",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "vitest run"
   },
@@ -23,7 +23,12 @@
       "out/**/*"
     ],
     "win": {
-      "target": "portable"
+      "target": "nsis"
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": false
     }
   },
   "devDependencies": {
@@ -42,5 +47,8 @@
     "vite": "^8.3.4",
     "zod": "^4.6.7",
     "zustand": "^5.0.15"
+  },
+  "dependencies": {
+    "electron-updater": "^6.8.9"
   }
 }

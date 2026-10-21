@@ -7,7 +7,7 @@ import { HttpError } from './http/httpError'
 import { registerMessageRoutes } from './messages/messageRoutes'
 import type { ServerContext } from './serverContext'
 import { registerMemberRoutes } from './users/memberRoutes'
-import { registerUpdateRoutes } from './updates/updateRoutes'
+import { registerUpdateStatic } from './updates/updateStatic'
 import { registerVoiceRoutes } from './voice/voiceRoutes'
 
 /**
@@ -29,7 +29,7 @@ export async function buildApp(context: ServerContext, options: { logger: boolea
   registerMessageRoutes(app, context.auth, context.messages)
   registerMemberRoutes(app, context.auth, context.users, context.presence)
   registerVoiceRoutes(app, context)
-  registerUpdateRoutes(app, options.updatesDir ?? '')
+  await registerUpdateStatic(app, options.updatesDir ?? '')
   return app
 }
 

@@ -1,4 +1,3 @@
-import { createHash } from 'node:crypto'
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -16,7 +15,7 @@ class FakeVoiceTokenIssuer implements VoiceTokenIssuer {
   }
 }
 
-describe('rotas de atualização do desktop', () => {
+describe('arquivos de atualização do desktop', () => {
   let app: FastifyInstance
   let updatesDir = ''
 
@@ -25,9 +24,10 @@ describe('rotas de atualização do desktop', () => {
     if (updatesDir) rmSync(updatesDir, { recursive: true, force: true })
   })
 
-  async function start(withPackage: boolean): Promise<void> {
+  async function start(): Promise<void> {
     updatesDir = mkdtempSync(join(tmpdir(), 'radcord-updates-'))
-    if (withPackage) writePackage(updatesDir)
+    const manifest = 'version: 0.1.38\n'
+    writeFileSync(join(updatesDir, 'latest.yml'), manifest)
     const context = createServerContext({
       db: openDatabase(IN_MEMORY_DATABASE),
       tokenIssuer: new FakeVoiceTokenIssuer(),
@@ -38,34 +38,26 @@ describe('rotas de atualização do desktop', () => {
     app = await buildApp(context, { logger: false, updatesDir })
   }
 
-  it('responde 404 sem login quando nada foi publicado', async () => {
-    await start(false)
+  it('entrega o latest.yml sem login', async () => {
+    await start()
 
-    const response = await app.inject({ method: 'GET', url: '/updates/latest' })
+    const response = await app.inject({ method: 'GET', url: '/updates/latest.yml' })
 
-    expect(response.statusCode).toBe(404)
-    expect(response.json().error).toBe('not_found')
+    expect(response.statusCode).toBe(200)
+    expect(response.body).toContain('0.1.38')
   })
 
-  it('entrega o manifesto e o exe sem token', async () => {
-    await start(true)
+  it('responde uma faixa do arquivo para o download por blocos', async () => {
+    await start()
 
-    const manifest = await app.inject({ method: 'GET', url: '/updates/latest' })
-    const file = await app.inject({ method: 'GET', url: '/updates/Radcord.exe' })
+    const response = await app.inject({
+      method: 'GET',
+      url: '/updates/latest.yml',
+      headers: { range: 'bytes=0-3' },
+    })
 
-    expect(manifest.statusCode, 'manifesto').toBe(200)
-    expect(manifest.json().version).toBe('0.1.37')
-    expect(file.statusCode, 'exe').toBe(200)
-    expect(file.body).toBe('radcord')
+    expect(response.statusCode).toBe(206)
+    expect(response.headers['content-range']).toBe(`bytes 0-3/${Buffer.byteLength('version: 0.1.38\n')}`)
+    expect(response.body).toBe('vers')
   })
 })
-
-function writePackage(dir: string): void {
-  const bytes = 'radcord'
-  writeFileSync(join(dir, 'Radcord.exe'), bytes)
-  writeFileSync(join(dir, 'latest.json'), JSON.stringify({
-    version: '0.1.37',
-    sha256: createHash('sha256').update(bytes).digest('hex'),
-    size: bytes.length,
-  }))
-}
