@@ -1,4 +1,5 @@
-import { desktopCapturer, session } from 'electron'
+import { session } from 'electron'
+import { findChosenSource } from './screenShareSources'
 
 const ALLOWED_PERMISSIONS = new Set(['media', 'display-capture'])
 
@@ -16,17 +17,17 @@ export function allowMediaPermissions(): void {
 }
 
 /**
- * Sem este handler o `getDisplayMedia` falha no Electron. No protótipo compartilha
- * sempre o monitor principal; o seletor de janelas fica para a fase 4.
+ * Sem este handler o `getDisplayMedia` falha no Electron. Usa a fonte escolhida no
+ * seletor e o loopback do Windows, que leva o áudio do sistema junto.
  * Exemplo: `handleScreenShareRequests()` dentro de `app.whenReady()`
  */
 export function handleScreenShareRequests(): void {
-  session.defaultSession.setDisplayMediaRequestHandler(async (request, callback) => {
-    const [primaryScreen] = await desktopCapturer.getSources({ types: ['screen'] })
-    if (!primaryScreen) {
+  session.defaultSession.setDisplayMediaRequestHandler(async (_request, callback) => {
+    const chosen = await findChosenSource()
+    if (!chosen) {
       callback({})
       return
     }
-    callback(request.audioRequested ? { video: primaryScreen, audio: 'loopback' } : { video: primaryScreen })
+    callback({ video: chosen, audio: 'loopback' })
   })
 }

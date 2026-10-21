@@ -1,4 +1,4 @@
-import { VideoTrack, useIsSpeaking, useParticipants, useTracks } from '@livekit/components-react'
+import { AudioTrack, VideoTrack, useIsSpeaking, useParticipants, useTracks } from '@livekit/components-react'
 import { Track, type Participant } from 'livekit-client'
 import { Avatar } from '../common/Avatar'
 import { useMemberFace } from './useMemberFace'
@@ -16,6 +16,19 @@ function ParticipantTile({ participant }: { participant: Participant }): React.J
         {face.name}
       </span>
     </div>
+  )
+}
+
+function RemoteScreenAudio(): React.JSX.Element | null {
+  const tracks = useTracks([Track.Source.ScreenShareAudio]).filter((track) => !track.participant.isLocal)
+  if (tracks.length === 0) return null
+
+  return (
+    <>
+      {tracks.map((track) => (
+        <AudioTrack key={track.publication.trackSid} trackRef={track} />
+      ))}
+    </>
   )
 }
 
@@ -42,6 +55,7 @@ export function VoiceStage(): React.JSX.Element {
   return (
     <div className="voice-stage">
       <RemoteScreenShares />
+      <RemoteScreenAudio />
       <div className="participant-grid">
         {participants.map((participant) => (
           <ParticipantTile key={participant.identity} participant={participant} />

@@ -1,27 +1,46 @@
+import { useState } from 'react'
 import { useLocalParticipant } from '@livekit/components-react'
-import type { ScreenShareCaptureOptions } from 'livekit-client'
 import { HeadsetIcon, MicIcon } from '../common/AudioIcons'
+import { screenShareSettings } from '../../lib/voice/screenSharePresets'
 import { voiceSession } from '../../lib/voice/voiceSession'
 import { useVoiceStore } from '../../stores/voiceStore'
-
-// Áudio da tela desligado: o loopback do Windows também captura a voz dos amigos
-// tocando no Radcord e quem assiste ouviria eco. Resolver na fase 4.
-const SCREEN_SHARE_OPTIONS: ScreenShareCaptureOptions = {
-  audio: false,
-  contentHint: 'motion',
-  resolution: { width: 1920, height: 1080, frameRate: 30 },
-}
+import { ScreenSharePicker, type ShareSelection } from './ScreenSharePicker'
 
 export function VoiceControlBar(): React.JSX.Element {
   const { localParticipant, isScreenShareEnabled } = useLocalParticipant()
   const { micMuted, deafened, toggleMic, toggleDeafen } = useVoiceStore()
+  const [pickerOpen, setPickerOpen] = useState(false)
 
-  async function toggleScreenShare(): Promise<void> {
+  async function stopShare(): Promise<void> {
     try {
-      await localParticipant.setScreenShareEnabled(!isScreenShareEnabled, SCREEN_SHARE_OPTIONS)
+      await localParticipant.setScreenShareEnabled(false)
     } catch (error) {
-      console.error(JSON.stringify({ event: 'screen_share_failed', message: String(error) }))
+      logShareFailure(error)
     }
+  }
+
+  async function startShare(selection: ShareSelection): Promise<void> {
+    setPickerOpen(false)
+    const bridge = window.radcord
+    if (!bridge) {
+      logShareFailure('ponte radcord ausente')
+      return
+    }
+    const settings = screenShareSettings(selection.quality, selection.frameRate)
+    try {
+      await bridge.chooseScreenSource(selection.sourceId)
+      await localParticipant.setScreenShareEnabled(true, settings.capture, settings.publish)
+    } catch (error) {
+      logShareFailure(error)
+    }
+  }
+
+  function onShareClick(): void {
+    if (isScreenShareEnabled) {
+      void stopShare()
+      return
+    }
+    setPickerOpen(true)
   }
 
   return (
@@ -35,13 +54,18 @@ export function VoiceControlBar(): React.JSX.Element {
       <button
         className={isScreenShareEnabled ? 'round-button round-button--live' : 'round-button'}
         title={isScreenShareEnabled ? 'Parar de compartilhar' : 'Compartilhar tela'}
-        onClick={() => void toggleScreenShare()}
+        onClick={onShareClick}
       >
         🖥️
       </button>
       <button className="round-button round-button--danger" title="Sair da call" onClick={() => void voiceSession.leave()}>
         📞
       </button>
+      {pickerOpen && <ScreenSharePicker onCancel={() => setPickerOpen(false)} onConfirm={(selection) => void startShare(selection)} />}
     </div>
   )
+}
+
+function logShareFailure(error: unknown): void {
+  console.error(JSON.stringify({ event: 'screen_share_failed', message: String(error) }))
 }

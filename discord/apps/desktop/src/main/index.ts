@@ -3,6 +3,7 @@ import { join } from 'node:path'
 import { app, BrowserWindow, ipcMain, shell } from 'electron'
 import { allowMediaPermissions, handleScreenShareRequests } from './mediaPermissions'
 import { findRadminIpv4 } from './radminAddress'
+import { exposeScreenShareIpc } from './screenShareSources'
 import { windowChrome } from './windowChrome'
 
 // O Chromium troca os IPs locais por nomes mDNS ".local" nos candidatos WebRTC;
@@ -51,6 +52,7 @@ app.whenReady().then(() => {
   allowMediaPermissions()
   handleScreenShareRequests()
   exposeRadminIp()
+  exposeScreenShareIpc()
   createMainWindow()
 })
 
