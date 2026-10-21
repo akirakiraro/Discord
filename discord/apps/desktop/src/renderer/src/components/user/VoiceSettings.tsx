@@ -14,6 +14,8 @@ export function VoiceSettings(): React.JSX.Element {
       <h2>Voz</h2>
       <MicrophoneSelect devices={devices} deviceId={prefs.deviceId} onChange={prefs.setDeviceId} />
       <NoiseToggle enabled={prefs.noiseSuppression} onChange={prefs.setNoiseSuppression} />
+      <CaptureToggle label="Cancelamento de eco" enabled={prefs.echoCancellation} onChange={prefs.setEchoCancellation} />
+      <CaptureToggle label="Ganho automático" enabled={prefs.autoGainControl} onChange={prefs.setAutoGainControl} />
       <SensitivitySlider value={prefs.inputGain} onChange={prefs.setInputGain} />
       <MicLevel prefs={prefs} />
       <AudioPath />
@@ -24,10 +26,22 @@ export function VoiceSettings(): React.JSX.Element {
 }
 
 function NoiseToggle({ enabled, onChange }: { enabled: boolean; onChange: (enabled: boolean) => void }): React.JSX.Element {
+  return <CaptureToggle label="Supressão de ruído" enabled={enabled} onChange={onChange} />
+}
+
+function CaptureToggle({
+  label,
+  enabled,
+  onChange,
+}: {
+  label: string
+  enabled: boolean
+  onChange: (enabled: boolean) => void
+}): React.JSX.Element {
   return (
     <label className="settings-modal__row">
       <input type="checkbox" checked={enabled} onChange={(event) => onChange(event.target.checked)} />
-      Supressão de ruído
+      {label}
     </label>
   )
 }
@@ -52,7 +66,7 @@ function AudioPath(): React.JSX.Element {
       Caminho do áudio
       <ol className="audio-flow">
         <li>O microfone entra no navegador.</li>
-        <li>Cancelamento de eco e ganho automático ficam sempre ligados. A supressão de ruído só entra se a caixa estiver marcada.</li>
+        <li>Cancelamento de eco, ganho automático e supressão de ruído entram só se a caixa correspondente estiver marcada.</li>
         <li>A sensibilidade multiplica esse volume, de mudo até o dobro, e esse é o som enviado.</li>
         <li>O servidor comprime e entrega para quem está na chamada. Me ouvir toca essa volta.</li>
         <li>A barra de nível só mede. Ela não muda o que os outros escutam.</li>

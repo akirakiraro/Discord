@@ -8,12 +8,16 @@ const MAX_GAIN = 2
 export interface MicPreferences {
   deviceId: string
   noiseSuppression: boolean
+  echoCancellation: boolean
+  autoGainControl: boolean
   inputGain: number
 }
 
 export const DEFAULT_MIC_PREFERENCES: MicPreferences = {
   deviceId: 'default',
   noiseSuppression: true,
+  echoCancellation: true,
+  autoGainControl: true,
   inputGain: 1,
 }
 
@@ -41,7 +45,7 @@ export function loadMicPreferences(storage: KeyValueStorage): MicPreferences {
 }
 
 /**
- * Exemplo: `saveMicPreferences(window.localStorage, { deviceId: 'default', noiseSuppression: true, inputGain: 1 })`
+ * Exemplo: `saveMicPreferences(window.localStorage, DEFAULT_MIC_PREFERENCES)`
  */
 export function saveMicPreferences(storage: KeyValueStorage, prefs: MicPreferences): void {
   storage.setItem(STORAGE_KEY, JSON.stringify(sanitizeMicPreferences(prefs)))
@@ -49,15 +53,15 @@ export function saveMicPreferences(storage: KeyValueStorage, prefs: MicPreferenc
 
 /**
  * Opções de captura do LiveKit a partir do que o usuário escolheu.
- * Eco e ganho automático continuam ligados; a sensibilidade é um `GainNode` à parte.
- * Exemplo: `captureOptions({ deviceId: 'default', noiseSuppression: false, inputGain: 1 })`
+ * A sensibilidade é um `GainNode` à parte.
+ * Exemplo: `captureOptions({ deviceId: 'default', noiseSuppression: false, echoCancellation: true, autoGainControl: false, inputGain: 1 })`
  */
 export function captureOptions(prefs: MicPreferences): AudioCaptureOptions {
   return {
     deviceId: prefs.deviceId,
     noiseSuppression: prefs.noiseSuppression,
-    echoCancellation: true,
-    autoGainControl: true,
+    echoCancellation: prefs.echoCancellation,
+    autoGainControl: prefs.autoGainControl,
   }
 }
 
@@ -74,6 +78,8 @@ function sanitizeMicPreferences(raw: Partial<MicPreferences>): MicPreferences {
   return {
     deviceId: typeof raw.deviceId === 'string' && raw.deviceId !== '' ? raw.deviceId : 'default',
     noiseSuppression: raw.noiseSuppression !== false,
+    echoCancellation: raw.echoCancellation !== false,
+    autoGainControl: raw.autoGainControl !== false,
     inputGain: clampInputGain(typeof raw.inputGain === 'number' ? raw.inputGain : 1),
   }
 }

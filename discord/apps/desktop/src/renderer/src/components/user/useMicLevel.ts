@@ -19,7 +19,7 @@ export function useMicLevel(prefs: MicPreferences, inCall: boolean): number {
 
   useEffect(() => {
     return watchLevel(prefs, inCall, gainRef, setPercent)
-  }, [prefs.deviceId, prefs.noiseSuppression, inCall])
+  }, [prefs.deviceId, prefs.noiseSuppression, prefs.echoCancellation, prefs.autoGainControl, inCall])
 
   return percent
 }
@@ -78,8 +78,8 @@ function previewConstraints(prefs: MicPreferences): MediaTrackConstraints {
   return {
     deviceId,
     noiseSuppression: options.noiseSuppression,
-    echoCancellation: true,
-    autoGainControl: true,
+    echoCancellation: options.echoCancellation,
+    autoGainControl: options.autoGainControl,
   }
 }
 

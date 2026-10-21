@@ -29,9 +29,21 @@ describe('micPreferences', () => {
   it('lê de volta o que foi salvo e limita o ganho', () => {
     const storage = new InMemoryStorage()
 
-    saveMicPreferences(storage, { deviceId: 'headset', noiseSuppression: false, inputGain: 9 })
+    saveMicPreferences(storage, {
+      deviceId: 'headset',
+      noiseSuppression: false,
+      echoCancellation: false,
+      autoGainControl: true,
+      inputGain: 9,
+    })
 
-    expect(loadMicPreferences(storage)).toEqual({ deviceId: 'headset', noiseSuppression: false, inputGain: 2 })
+    expect(loadMicPreferences(storage)).toEqual({
+      deviceId: 'headset',
+      noiseSuppression: false,
+      echoCancellation: false,
+      autoGainControl: true,
+      inputGain: 2,
+    })
   })
 
   it('ignora conteúdo corrompido', () => {
@@ -46,13 +58,26 @@ describe('micPreferences', () => {
     expect(clampInputGain(-1)).toBe(0)
   })
 
-  it('captureOptions liga eco e ganho automático junto da escolha do usuário', () => {
-    expect(captureOptions({ deviceId: 'headset', noiseSuppression: false, inputGain: 0.5 })).toEqual({
+  it('captureOptions repassa eco e ganho automático escolhidos', () => {
+    expect(captureOptions({
       deviceId: 'headset',
       noiseSuppression: false,
-      echoCancellation: true,
+      echoCancellation: false,
+      autoGainControl: true,
+      inputGain: 0.5,
+    })).toEqual({
+      deviceId: 'headset',
+      noiseSuppression: false,
+      echoCancellation: false,
       autoGainControl: true,
     })
+  })
+
+  it('preferência antiga sem as caixas novas continua com eco e ganho ligados', () => {
+    const storage = new InMemoryStorage()
+    storage.setItem('radcord.mic', JSON.stringify({ deviceId: 'headset', noiseSuppression: true, inputGain: 1 }))
+
+    expect(loadMicPreferences(storage)).toMatchObject({ echoCancellation: true, autoGainControl: true })
   })
 
   it('resolveDeviceId volta ao padrão se o aparelho sumiu', () => {

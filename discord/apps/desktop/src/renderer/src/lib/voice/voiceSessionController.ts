@@ -71,7 +71,11 @@ export class VoiceSessionController {
 
   private onPrefsChange(state: MicPreferences, previous: MicPreferences): void {
     if (state.inputGain !== previous.inputGain) this.gainProcessor.setGain(state.inputGain)
-    const captureChanged = state.deviceId !== previous.deviceId || state.noiseSuppression !== previous.noiseSuppression
+    const captureChanged =
+      state.deviceId !== previous.deviceId ||
+      state.noiseSuppression !== previous.noiseSuppression ||
+      state.echoCancellation !== previous.echoCancellation ||
+      state.autoGainControl !== previous.autoGainControl
     if (captureChanged) void this.republishCapture()
   }
 

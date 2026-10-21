@@ -10,6 +10,8 @@ import {
 export interface MicPrefsStore extends MicPreferences {
   setDeviceId: (deviceId: string) => void
   setNoiseSuppression: (noiseSuppression: boolean) => void
+  setEchoCancellation: (echoCancellation: boolean) => void
+  setAutoGainControl: (autoGainControl: boolean) => void
   setInputGain: (inputGain: number) => void
   alignDevice: (knownIds: readonly string[]) => void
 }
@@ -23,6 +25,8 @@ export function createMicPrefsStore(storage: KeyValueStorage): UseBoundStore<Sto
     ...loadMicPreferences(storage),
     setDeviceId: (deviceId) => writePrefs(set, storage, { ...snapshot(get()), deviceId }),
     setNoiseSuppression: (noiseSuppression) => writePrefs(set, storage, { ...snapshot(get()), noiseSuppression }),
+    setEchoCancellation: (echoCancellation) => writePrefs(set, storage, { ...snapshot(get()), echoCancellation }),
+    setAutoGainControl: (autoGainControl) => writePrefs(set, storage, { ...snapshot(get()), autoGainControl }),
     setInputGain: (inputGain) => writePrefs(set, storage, { ...snapshot(get()), inputGain }),
     alignDevice: (knownIds) => alignSavedDevice(set, get, storage, knownIds),
   }))
@@ -41,6 +45,8 @@ function snapshot(state: MicPrefsStore): MicPreferences {
   return {
     deviceId: state.deviceId,
     noiseSuppression: state.noiseSuppression,
+    echoCancellation: state.echoCancellation,
+    autoGainControl: state.autoGainControl,
     inputGain: state.inputGain,
   }
 }
