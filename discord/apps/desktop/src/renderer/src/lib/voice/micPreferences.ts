@@ -5,6 +5,7 @@ import { clampGateDb, DEFAULT_GATE_DB } from './micLevel'
 const STORAGE_KEY = 'radcord.mic'
 const MIN_GAIN = 0
 const MAX_GAIN = 4
+const DEFAULTS_REVISION = 1
 
 export interface MicPreferences {
   deviceId: string
@@ -41,7 +42,10 @@ export function loadMicPreferences(storage: KeyValueStorage): MicPreferences {
   const raw = storage.getItem(STORAGE_KEY)
   if (!raw) return DEFAULT_MIC_PREFERENCES
   try {
-    return sanitizeMicPreferences(JSON.parse(raw) as Partial<MicPreferences>)
+    const parsed = JSON.parse(raw) as Partial<MicPreferences> & { defaultsRevision?: number }
+    const prefs = sanitizeMicPreferences(parsed)
+    if (parsed.defaultsRevision === DEFAULTS_REVISION) return prefs
+    return { ...prefs, noiseSuppression: true, autoGainControl: true }
   } catch {
     return DEFAULT_MIC_PREFERENCES
   }
@@ -51,7 +55,7 @@ export function loadMicPreferences(storage: KeyValueStorage): MicPreferences {
  * Exemplo: `saveMicPreferences(window.localStorage, DEFAULT_MIC_PREFERENCES)`
  */
 export function saveMicPreferences(storage: KeyValueStorage, prefs: MicPreferences): void {
-  storage.setItem(STORAGE_KEY, JSON.stringify(sanitizeMicPreferences(prefs)))
+  storage.setItem(STORAGE_KEY, JSON.stringify({ ...sanitizeMicPreferences(prefs), defaultsRevision: DEFAULTS_REVISION }))
 }
 
 /**

@@ -453,17 +453,6 @@
   font-weight: 600;
 }
 
-.audio-flow {
-  margin: 0;
-  padding-left: 18px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--text-normal);
-}
-
 .settings-modal__hint {
   margin: 0;
   font-size: 12px;

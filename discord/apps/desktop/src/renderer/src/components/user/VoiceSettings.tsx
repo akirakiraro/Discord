@@ -20,7 +20,6 @@ export function VoiceSettings(): React.JSX.Element {
       <VolumeSlider value={prefs.inputGain} onChange={prefs.setInputGain} />
       <SensitivitySlider value={prefs.gateDb} onChange={prefs.setGateDb} />
       <MicLevel prefs={prefs} />
-      <AudioPath />
       <HearMyself />
       {error && <p className="settings-modal__error">{error}</p>}
     </div>
@@ -83,22 +82,6 @@ function SensitivitySlider({ value, onChange }: { value: number; onChange: (valu
         Sons abaixo de {value} dB não são enviados. Na esquerda o portão abre com som mais baixo. Na direita só passa som mais alto.
       </p>
     </label>
-  )
-}
-
-function AudioPath(): React.JSX.Element {
-  return (
-    <div className="settings-modal__field">
-      Caminho do áudio
-      <ol className="audio-flow">
-        <li>O microfone entra no navegador.</li>
-        <li>Cancelamento de eco, ganho automático e supressão de ruído entram só se a caixa correspondente estiver marcada.</li>
-        <li>O volume multiplica o microfone antes de qualquer corte. 100% é o original; 400% é quatro vezes mais alto.</li>
-        <li>A sensibilidade é o portão. O que fica à esquerda do traço branco, já com o volume aplicado, não é enviado.</li>
-        <li>O servidor comprime e entrega para quem está na chamada. Me ouvir toca essa volta.</li>
-        <li>A barra verde é o volume já amplificado. O traço branco é o limite do portão.</li>
-      </ol>
-    </div>
   )
 }
 

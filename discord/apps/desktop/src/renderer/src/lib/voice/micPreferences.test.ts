@@ -70,11 +70,11 @@ describe('micPreferences', () => {
     })
   })
 
-  it('preferência antiga sem as caixas novas continua com eco e ganho ligados', () => {
+  it('preferência antiga liga de novo a supressão e o ganho automático', () => {
     const storage = new InMemoryStorage()
-    storage.setItem('radcord.mic', JSON.stringify({ deviceId: 'headset', noiseSuppression: true, inputGain: 2 }))
+    storage.setItem('radcord.mic', JSON.stringify({ deviceId: 'headset', noiseSuppression: false, autoGainControl: false, inputGain: 2 }))
 
-    expect(loadMicPreferences(storage)).toMatchObject({ echoCancellation: true, autoGainControl: true, gateDb: -45, inputGain: 2 })
+    expect(loadMicPreferences(storage)).toMatchObject({ noiseSuppression: true, autoGainControl: true, echoCancellation: true, gateDb: -45, inputGain: 2 })
   })
 
   it('resolveDeviceId volta ao padrão se o aparelho sumiu', () => {
