@@ -84,7 +84,7 @@ function OwnShareToggle({ sharing }: { sharing: boolean }): React.JSX.Element | 
 function OwnTileToggle(): React.JSX.Element {
   const showOwnTile = useVoiceStore((store) => store.showOwnTile)
   const toggleOwnTile = useVoiceStore((store) => store.toggleOwnTile)
-  const title = showOwnTile ? 'Ocultar meu ícone' : 'Mostrar meu ícone'
+  const title = showOwnTile ? 'Ocultar ícones' : 'Mostrar ícones'
   return (
     <button className={showOwnTile ? 'round-button' : 'round-button round-button--live'} title={title} onClick={toggleOwnTile}>
       👤

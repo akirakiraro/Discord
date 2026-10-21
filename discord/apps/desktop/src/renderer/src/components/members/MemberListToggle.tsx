@@ -1,14 +1,15 @@
 import { useMembersPanelStore } from '../../stores/membersPanelStore'
 
-export function MemberListToggle(): React.JSX.Element {
+export function MemberListToggle({ floating = false }: { floating?: boolean }): React.JSX.Element {
   const open = useMembersPanelStore((store) => store.open)
   const toggle = useMembersPanelStore((store) => store.toggle)
   const label = open ? 'Ocultar pessoas' : 'Mostrar pessoas'
+  const className = floating ? 'icon-button member-toggle member-toggle--float' : 'icon-button member-toggle'
 
   return (
     <button
       type="button"
-      className={open ? 'icon-button member-toggle member-toggle--open' : 'icon-button member-toggle'}
+      className={open ? `${className} member-toggle--open` : className}
       title={label}
       aria-label={label}
       aria-pressed={open}

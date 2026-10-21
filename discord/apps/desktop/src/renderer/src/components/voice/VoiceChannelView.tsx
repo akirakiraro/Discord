@@ -1,4 +1,7 @@
 import type { ChannelDto } from '@radcord/shared'
+import { useTracks } from '@livekit/components-react'
+import { Track } from 'livekit-client'
+import { visibleScreenShares } from '../../lib/voice/visibleScreenShares'
 import { voiceSession } from '../../lib/voice/voiceSession'
 import { useSessionStore } from '../../stores/sessionStore'
 import { useVoiceStore } from '../../stores/voiceStore'
@@ -23,15 +26,28 @@ function JoinPrompt({ channel }: { channel: ChannelDto }): React.JSX.Element {
 
 export function VoiceChannelView({ channel }: { channel: ChannelDto }): React.JSX.Element {
   const connectedHere = useVoiceStore((store) => store.connection?.channelId === channel.id)
+  const sharing = useSharingScreen(connectedHere)
 
   return (
-    <main className="main-panel voice-channel-view">
-      <header className="panel-header">
-        <span className="panel-header__icon">🔊</span>
-        <span className="panel-header__title">{channel.name}</span>
-        <MemberListToggle />
-      </header>
+    <main className={sharing ? 'main-panel voice-channel-view voice-channel-view--share' : 'main-panel voice-channel-view'}>
+      {sharing ? <MemberListToggle floating /> : <ChannelHeader name={channel.name} />}
       {connectedHere ? <VoiceStage /> : <JoinPrompt channel={channel} />}
     </main>
   )
+}
+
+function ChannelHeader({ name }: { name: string }): React.JSX.Element {
+  return (
+    <header className="panel-header">
+      <span className="panel-header__icon">🔊</span>
+      <span className="panel-header__title">{name}</span>
+      <MemberListToggle />
+    </header>
+  )
+}
+
+function useSharingScreen(connectedHere: boolean): boolean {
+  const showOwnShare = useVoiceStore((store) => store.showOwnShare)
+  const screens = visibleScreenShares(useTracks([Track.Source.ScreenShare]), showOwnShare)
+  return connectedHere && screens.length > 0
 }
