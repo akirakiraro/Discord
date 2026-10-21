@@ -1,5 +1,7 @@
 import { AudioTrack, VideoTrack, useIsSpeaking, useParticipants, useTracks } from '@livekit/components-react'
 import { Track, type Participant } from 'livekit-client'
+import { visibleScreenShares } from '../../lib/voice/visibleScreenShares'
+import { useVoiceStore } from '../../stores/voiceStore'
 import { Avatar } from '../common/Avatar'
 import { useMemberFace } from './useMemberFace'
 import { VoiceControlBar } from './VoiceControlBar'
@@ -32,9 +34,13 @@ function RemoteScreenAudio(): React.JSX.Element | null {
   )
 }
 
-function RemoteScreenShares(): React.JSX.Element | null {
-  // A própria tela fica de fora para não gerar o efeito de espelho infinito.
-  const screens = useTracks([Track.Source.ScreenShare]).filter((track) => !track.participant.isLocal)
+function shareCaption(name: string, isLocal: boolean): string {
+  return isLocal ? 'Sua transmissão' : name
+}
+
+function ScreenShares(): React.JSX.Element | null {
+  const showOwnShare = useVoiceStore((store) => store.showOwnShare)
+  const screens = visibleScreenShares(useTracks([Track.Source.ScreenShare]), showOwnShare)
   if (screens.length === 0) return null
 
   return (
@@ -42,7 +48,7 @@ function RemoteScreenShares(): React.JSX.Element | null {
       {screens.map((track) => (
         <figure key={track.publication.trackSid} className="screen-grid__item">
           <VideoTrack trackRef={track} />
-          <figcaption>{track.participant.name || track.participant.identity}</figcaption>
+          <figcaption>{shareCaption(track.participant.name || track.participant.identity, track.participant.isLocal)}</figcaption>
         </figure>
       ))}
     </div>
@@ -54,7 +60,7 @@ export function VoiceStage(): React.JSX.Element {
 
   return (
     <div className="voice-stage">
-      <RemoteScreenShares />
+      <ScreenShares />
       <RemoteScreenAudio />
       <div className="participant-grid">
         {participants.map((participant) => (

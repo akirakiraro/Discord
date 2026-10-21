@@ -5,7 +5,7 @@ const CONNECTION = { channelId: 'v', token: 't', livekitUrl: 'ws://26.186.21.58:
 
 describe('voiceStore', () => {
   beforeEach(() => {
-    useVoiceStore.setState({ connection: null, micMuted: false, deafened: false, lastError: null })
+    useVoiceStore.setState({ connection: null, micMuted: false, deafened: false, showOwnShare: true, lastError: null })
   })
 
   it('entrar limpa o erro anterior e sair pode registrar o motivo', () => {
@@ -23,6 +23,14 @@ describe('voiceStore', () => {
     useVoiceStore.getState().toggleDeafen()
 
     expect(useVoiceStore.getState()).toMatchObject({ micMuted: true, deafened: true })
+  })
+
+  it('a prévia da própria transmissão começa ligada e o toggle desliga', () => {
+    expect(useVoiceStore.getState().showOwnShare).toBe(true)
+
+    useVoiceStore.getState().toggleOwnShare()
+
+    expect(useVoiceStore.getState().showOwnShare).toBe(false)
   })
 
   it('ensurdecer também muta o microfone', () => {
