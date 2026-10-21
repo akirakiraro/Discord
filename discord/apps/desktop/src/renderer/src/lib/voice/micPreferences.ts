@@ -1,16 +1,15 @@
 import type { AudioCaptureOptions } from 'livekit-client'
 import type { KeyValueStorage } from '../savedLogin'
+import { clampGateDb, DEFAULT_GATE_DB } from './micLevel'
 
 const STORAGE_KEY = 'radcord.mic'
-const MIN_GAIN = 0
-const MAX_GAIN = 2
 
 export interface MicPreferences {
   deviceId: string
   noiseSuppression: boolean
   echoCancellation: boolean
   autoGainControl: boolean
-  inputGain: number
+  gateDb: number
 }
 
 export const DEFAULT_MIC_PREFERENCES: MicPreferences = {
@@ -18,16 +17,7 @@ export const DEFAULT_MIC_PREFERENCES: MicPreferences = {
   noiseSuppression: true,
   echoCancellation: true,
   autoGainControl: true,
-  inputGain: 1,
-}
-
-/**
- * Mantém o ganho do microfone entre 0 (mudo) e 2 (o dobro).
- * Exemplo: `clampInputGain(3)` devolve `2`.
- */
-export function clampInputGain(value: number): number {
-  if (!Number.isFinite(value)) return DEFAULT_MIC_PREFERENCES.inputGain
-  return Math.min(MAX_GAIN, Math.max(MIN_GAIN, value))
+  gateDb: DEFAULT_GATE_DB,
 }
 
 /**
@@ -53,8 +43,8 @@ export function saveMicPreferences(storage: KeyValueStorage, prefs: MicPreferenc
 
 /**
  * Opções de captura do LiveKit a partir do que o usuário escolheu.
- * A sensibilidade é um `GainNode` à parte.
- * Exemplo: `captureOptions({ deviceId: 'default', noiseSuppression: false, echoCancellation: true, autoGainControl: false, inputGain: 1 })`
+ * O portão de sensibilidade fica num processador à parte.
+ * Exemplo: `captureOptions({ deviceId: 'default', noiseSuppression: false, echoCancellation: true, autoGainControl: false, gateDb: -45 })`
  */
 export function captureOptions(prefs: MicPreferences): AudioCaptureOptions {
   return {
@@ -80,6 +70,6 @@ function sanitizeMicPreferences(raw: Partial<MicPreferences>): MicPreferences {
     noiseSuppression: raw.noiseSuppression !== false,
     echoCancellation: raw.echoCancellation !== false,
     autoGainControl: raw.autoGainControl !== false,
-    inputGain: clampInputGain(typeof raw.inputGain === 'number' ? raw.inputGain : 1),
+    gateDb: clampGateDb(typeof raw.gateDb === 'number' ? raw.gateDb : DEFAULT_GATE_DB),
   }
 }

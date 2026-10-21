@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { audioInputLabel, browserAudioInputs, listAudioInputs, type AudioInputDevice } from '../../lib/voice/audioInputs'
+import { dbToPercent, GATE_MAX_DB, GATE_MIN_DB } from '../../lib/voice/micLevel'
 import { useMicPrefsStore } from '../../stores/micPrefsStore'
 import { useVoiceStore } from '../../stores/voiceStore'
 import { HearMyself } from './HearMyself'
@@ -16,7 +17,7 @@ export function VoiceSettings(): React.JSX.Element {
       <NoiseToggle enabled={prefs.noiseSuppression} onChange={prefs.setNoiseSuppression} />
       <CaptureToggle label="Cancelamento de eco" enabled={prefs.echoCancellation} onChange={prefs.setEchoCancellation} />
       <CaptureToggle label="Ganho automático" enabled={prefs.autoGainControl} onChange={prefs.setAutoGainControl} />
-      <SensitivitySlider value={prefs.inputGain} onChange={prefs.setInputGain} />
+      <SensitivitySlider value={prefs.gateDb} onChange={prefs.setGateDb} />
       <MicLevel prefs={prefs} />
       <AudioPath />
       <HearMyself />
@@ -49,13 +50,22 @@ function CaptureToggle({
 function SensitivitySlider({ value, onChange }: { value: number; onChange: (value: number) => void }): React.JSX.Element {
   return (
     <label className="settings-modal__field">
-      Sensibilidade
-      <input type="range" min={0} max={2} step={0.05} value={value} onChange={(event) => onChange(Number(event.target.value))} />
+      Sensibilidade · {value} dB
+      <input
+        type="range"
+        min={GATE_MIN_DB}
+        max={GATE_MAX_DB}
+        step={1}
+        value={value}
+        onChange={(event) => onChange(Number(event.target.value))}
+      />
       <span className="settings-modal__scale">
-        <span>Esquerda: mais baixo</span>
-        <span>Direita: mais alto</span>
+        <span>Esquerda: mais sensível</span>
+        <span>Direita: menos sensível</span>
       </span>
-      <p className="settings-modal__hint">No meio, o volume segue o microfone. Na direita chega ao dobro. Na esquerda chega a mudo.</p>
+      <p className="settings-modal__hint">
+        Sons abaixo de {value} dB não são enviados. Na esquerda o portão abre com som mais baixo. Na direita só passa som mais alto.
+      </p>
     </label>
   )
 }
@@ -67,9 +77,9 @@ function AudioPath(): React.JSX.Element {
       <ol className="audio-flow">
         <li>O microfone entra no navegador.</li>
         <li>Cancelamento de eco, ganho automático e supressão de ruído entram só se a caixa correspondente estiver marcada.</li>
-        <li>A sensibilidade multiplica esse volume, de mudo até o dobro, e esse é o som enviado.</li>
+        <li>A sensibilidade é um portão em decibéis. O que fica abaixo do traço branco não é enviado.</li>
         <li>O servidor comprime e entrega para quem está na chamada. Me ouvir toca essa volta.</li>
-        <li>A barra de nível só mede. Ela não muda o que os outros escutam.</li>
+        <li>A barra verde mede o volume antes do portão. O traço branco é o limite.</li>
       </ol>
     </div>
   )
@@ -77,12 +87,15 @@ function AudioPath(): React.JSX.Element {
 
 function MicLevel({ prefs }: { prefs: ReturnType<typeof useMicPrefsStore.getState> }): React.JSX.Element {
   const inCall = useVoiceStore((store) => store.connection !== null)
-  const level = useMicLevel(prefs, inCall)
+  const levelDb = useMicLevel(prefs, inCall)
+  const level = dbToPercent(levelDb)
+  const mark = dbToPercent(prefs.gateDb)
   return (
     <div className="settings-modal__field">
-      Nível
-      <div className="mic-level" role="meter" aria-valuemin={0} aria-valuemax={100} aria-valuenow={level} aria-label="Nível do microfone">
+      Nível · {Math.round(levelDb)} dB
+      <div className="mic-level" role="meter" aria-valuemin={-80} aria-valuemax={0} aria-valuenow={Math.round(levelDb)} aria-label="Nível do microfone">
         <span className="mic-level__fill" style={{ width: `${level}%` }} />
+        <span className="mic-level__mark" style={{ left: `${mark}%` }} title={`Portão em ${prefs.gateDb} dB`} />
       </div>
     </div>
   )

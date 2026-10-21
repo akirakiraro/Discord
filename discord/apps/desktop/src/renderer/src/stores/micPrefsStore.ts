@@ -12,13 +12,13 @@ export interface MicPrefsStore extends MicPreferences {
   setNoiseSuppression: (noiseSuppression: boolean) => void
   setEchoCancellation: (echoCancellation: boolean) => void
   setAutoGainControl: (autoGainControl: boolean) => void
-  setInputGain: (inputGain: number) => void
+  setGateDb: (gateDb: number) => void
   alignDevice: (knownIds: readonly string[]) => void
 }
 
 /**
  * Preferências de microfone deste aparelho. A call lê daqui ao publicar o áudio.
- * Exemplo: `createMicPrefsStore(window.localStorage).getState().setInputGain(1.4)`
+ * Exemplo: `createMicPrefsStore(window.localStorage).getState().setGateDb(-50)`
  */
 export function createMicPrefsStore(storage: KeyValueStorage): UseBoundStore<StoreApi<MicPrefsStore>> {
   return create<MicPrefsStore>((set, get) => ({
@@ -27,7 +27,7 @@ export function createMicPrefsStore(storage: KeyValueStorage): UseBoundStore<Sto
     setNoiseSuppression: (noiseSuppression) => writePrefs(set, storage, { ...snapshot(get()), noiseSuppression }),
     setEchoCancellation: (echoCancellation) => writePrefs(set, storage, { ...snapshot(get()), echoCancellation }),
     setAutoGainControl: (autoGainControl) => writePrefs(set, storage, { ...snapshot(get()), autoGainControl }),
-    setInputGain: (inputGain) => writePrefs(set, storage, { ...snapshot(get()), inputGain }),
+    setGateDb: (gateDb) => writePrefs(set, storage, { ...snapshot(get()), gateDb }),
     alignDevice: (knownIds) => alignSavedDevice(set, get, storage, knownIds),
   }))
 }
@@ -47,7 +47,7 @@ function snapshot(state: MicPrefsStore): MicPreferences {
     noiseSuppression: state.noiseSuppression,
     echoCancellation: state.echoCancellation,
     autoGainControl: state.autoGainControl,
-    inputGain: state.inputGain,
+    gateDb: state.gateDb,
   }
 }
 

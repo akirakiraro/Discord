@@ -425,6 +425,7 @@
 }
 
 .mic-level {
+  position: relative;
   height: 10px;
   border-radius: 5px;
   background: var(--bg-input);
@@ -435,6 +436,14 @@
   display: block;
   height: 100%;
   background: var(--green);
+}
+
+.mic-level__mark {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: white;
 }
 
 .settings-modal__scale {

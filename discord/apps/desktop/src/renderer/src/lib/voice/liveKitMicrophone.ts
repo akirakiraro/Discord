@@ -7,7 +7,7 @@ export interface MicrophonePort {
 }
 
 /**
- * Adapta a `Room` do LiveKit para trocar o microfone e ligar o ganho
+ * Adapta a `Room` do LiveKit para trocar o microfone e ligar o portão
  * sem o controlador depender da sala inteira.
  * Exemplo: `liveKitMicrophone(voiceRoom)`
  */

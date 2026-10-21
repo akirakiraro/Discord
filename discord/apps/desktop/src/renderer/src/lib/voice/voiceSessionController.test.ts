@@ -3,13 +3,13 @@ import { ConnectionState, DisconnectReason, RoomEvent, type AudioCaptureOptions,
 import type { VoiceTokenResponse } from '@radcord/shared'
 import { useMicPrefsStore } from '../../stores/micPrefsStore'
 import { useVoiceStore } from '../../stores/voiceStore'
-import type { InputGainProcessor } from './inputGainProcessor'
+import type { SensitivityGate } from './sensitivityGate'
 import { VoiceSessionController, type VoiceRoomPort, type VoiceTokenSource } from './voiceSessionController'
 import type { MicrophonePort } from './liveKitMicrophone'
 
 class FakeMicrophone implements MicrophonePort {
   readonly log: string[] = []
-  processor: InputGainProcessor | null = null
+  processor: SensitivityGate | null = null
 
   async setEnabled(enabled: boolean, _options: AudioCaptureOptions): Promise<void> {
     this.log.push(`mic:${enabled}`)
@@ -20,7 +20,7 @@ class FakeMicrophone implements MicrophonePort {
   }
 
   async attachGain(processor: TrackProcessor<Track.Kind.Audio, AudioProcessorOptions>): Promise<void> {
-    this.processor = processor as InputGainProcessor
+    this.processor = processor as SensitivityGate
     this.log.push('gain')
   }
 }
@@ -69,7 +69,7 @@ describe('VoiceSessionController', () => {
 
   beforeEach(() => {
     useVoiceStore.setState({ connection: null, micMuted: false, deafened: false, lastError: null })
-    useMicPrefsStore.setState({ deviceId: 'default', noiseSuppression: true, inputGain: 1 })
+    useMicPrefsStore.setState({ deviceId: 'default', noiseSuppression: true, gateDb: -45 })
     room = new FakeVoiceRoom()
     controller = new VoiceSessionController(room, useVoiceStore, useMicPrefsStore)
   })
@@ -149,14 +149,14 @@ describe('VoiceSessionController', () => {
     expect(useMicPrefsStore.getState().deviceId).toBe('headset')
   })
 
-  it('sensibilidade só altera o ganho, sem recapturar', async () => {
+  it('sensibilidade só move o portão, sem recapturar', async () => {
     await controller.join(new FakeVoiceTokens(), 'v1')
 
-    useMicPrefsStore.getState().setInputGain(1.6)
+    useMicPrefsStore.getState().setGateDb(-30)
     await Promise.resolve()
 
     expect(room.log.filter((entry) => entry.startsWith('restart'))).toEqual([])
-    expect(room.microphone.processor?.appliedGain).toBe(1.6)
+    expect(room.microphone.processor?.thresholdDb).toBe(-30)
   })
 
   it('microfone mutado não republica ao trocar a entrada', async () => {

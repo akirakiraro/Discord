@@ -4,7 +4,7 @@ import type { VoiceTokenResponse } from '@radcord/shared'
 import { isMicrophoneLive, type VoiceStore } from '../../stores/voiceStore'
 import type { MicPrefsStore } from '../../stores/micPrefsStore'
 import { describeVoiceDisconnect } from './describeVoiceDisconnect'
-import { InputGainProcessor } from './inputGainProcessor'
+import { SensitivityGate } from './sensitivityGate'
 import { captureOptions, type MicPreferences } from './micPreferences'
 import type { MicrophonePort } from './liveKitMicrophone'
 
@@ -30,14 +30,14 @@ type MicPrefsApi = Pick<StoreApi<MicPrefsStore>, 'getState' | 'subscribe'>
  * Exemplo: `await voiceSession.join(api, channel.id)`
  */
 export class VoiceSessionController {
-  private readonly gainProcessor: InputGainProcessor
+  private readonly gate: SensitivityGate
 
   constructor(
     private readonly room: VoiceRoomPort,
     private readonly store: VoiceStoreApi,
     private readonly prefs: MicPrefsApi,
   ) {
-    this.gainProcessor = new InputGainProcessor(() => this.prefs.getState().inputGain)
+    this.gate = new SensitivityGate(() => this.prefs.getState().gateDb)
     room.on(RoomEvent.Disconnected, (reason) => this.handleDisconnected(reason))
     store.subscribe((state, previous) => {
       if (isMicrophoneLive(state) !== isMicrophoneLive(previous)) void this.syncMicrophone()
@@ -69,8 +69,14 @@ export class VoiceSessionController {
     if (message) this.store.getState().leave(message)
   }
 
+  /** Nível em dB antes do portão, só enquanto o microfone da chamada está ligado. */
+  inputLevelDb(): number | undefined {
+    if (!this.gate.listening) return undefined
+    return this.gate.levelDb
+  }
+
   private onPrefsChange(state: MicPreferences, previous: MicPreferences): void {
-    if (state.inputGain !== previous.inputGain) this.gainProcessor.setGain(state.inputGain)
+    if (state.gateDb !== previous.gateDb) this.gate.setThreshold(state.gateDb)
     const captureChanged =
       state.deviceId !== previous.deviceId ||
       state.noiseSuppression !== previous.noiseSuppression ||
@@ -90,6 +96,6 @@ export class VoiceSessionController {
     if (!state.connection) return
     const live = isMicrophoneLive(state)
     await this.room.microphone.setEnabled(live, captureOptions(this.prefs.getState()))
-    if (live) await this.room.microphone.attachGain(this.gainProcessor)
+    if (live) await this.room.microphone.attachGain(this.gate)
   }
 }

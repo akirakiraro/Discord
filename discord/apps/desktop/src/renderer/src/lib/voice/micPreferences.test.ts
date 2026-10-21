@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest'
 import type { KeyValueStorage } from '../savedLogin'
 import {
   captureOptions,
-  clampInputGain,
   DEFAULT_MIC_PREFERENCES,
   loadMicPreferences,
   resolveDeviceId,
@@ -34,7 +33,7 @@ describe('micPreferences', () => {
       noiseSuppression: false,
       echoCancellation: false,
       autoGainControl: true,
-      inputGain: 9,
+      gateDb: -5,
     })
 
     expect(loadMicPreferences(storage)).toEqual({
@@ -42,7 +41,7 @@ describe('micPreferences', () => {
       noiseSuppression: false,
       echoCancellation: false,
       autoGainControl: true,
-      inputGain: 2,
+      gateDb: -10,
     })
   })
 
@@ -53,18 +52,13 @@ describe('micPreferences', () => {
     expect(loadMicPreferences(storage)).toEqual(DEFAULT_MIC_PREFERENCES)
   })
 
-  it('clampInputGain trata valor inválido como volume normal', () => {
-    expect(clampInputGain(Number.NaN)).toBe(1)
-    expect(clampInputGain(-1)).toBe(0)
-  })
-
   it('captureOptions repassa eco e ganho automático escolhidos', () => {
     expect(captureOptions({
       deviceId: 'headset',
       noiseSuppression: false,
       echoCancellation: false,
       autoGainControl: true,
-      inputGain: 0.5,
+      gateDb: -45,
     })).toEqual({
       deviceId: 'headset',
       noiseSuppression: false,
@@ -75,9 +69,9 @@ describe('micPreferences', () => {
 
   it('preferência antiga sem as caixas novas continua com eco e ganho ligados', () => {
     const storage = new InMemoryStorage()
-    storage.setItem('radcord.mic', JSON.stringify({ deviceId: 'headset', noiseSuppression: true, inputGain: 1 }))
+    storage.setItem('radcord.mic', JSON.stringify({ deviceId: 'headset', noiseSuppression: true, inputGain: 2 }))
 
-    expect(loadMicPreferences(storage)).toMatchObject({ echoCancellation: true, autoGainControl: true })
+    expect(loadMicPreferences(storage)).toMatchObject({ echoCancellation: true, autoGainControl: true, gateDb: -45 })
   })
 
   it('resolveDeviceId volta ao padrão se o aparelho sumiu', () => {
