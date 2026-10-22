@@ -12,7 +12,7 @@ describe('screenShareSettings', () => {
     expect(DEFAULT_SHARE_QUALITY).toBe('native')
     expect(DEFAULT_SHARE_FRAME_RATE).toBe(60)
     expect(settings.capture.resolution).toEqual({ width: 3840, height: 2160, frameRate: 60 })
-    expect(settings.capture.audio).toBe(true)
+    expect(settings.capture.audio).toBe(false)
   })
 
   it('mantém 1080p a 30 fps em 3 Mbps', () => {

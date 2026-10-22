@@ -7,6 +7,10 @@ declare global {
       checkForUpdate(): Promise<string>
       listScreenSources(): Promise<ScreenSourceOption[]>
       chooseScreenSource(sourceId: string): Promise<void>
+      startScreenAudio(): Promise<void>
+      stopScreenAudio(): Promise<void>
+      onScreenAudio(listener: (pcm: Uint8Array) => void): void
+      offScreenAudio(): void
       takeQueuedReports(): Promise<QueuedClientReport[]>
       saveQueuedReports(reports: QueuedClientReport[]): Promise<void>
       onMainReport(listener: (message: string) => void): void

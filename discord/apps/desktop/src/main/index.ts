@@ -6,6 +6,7 @@ import { bindClientReports } from './clientReportBridge'
 import { installBlockUpdate, type BlockUpdateClient } from './desktopUpdate'
 import { allowMediaPermissions, handleScreenShareRequests } from './mediaPermissions'
 import { findRadminIpv4 } from './radminAddress'
+import { exposeScreenAudioIpc } from './screenAudioCapture'
 import { exposeScreenShareIpc } from './screenShareSources'
 import { windowChrome } from './windowChrome'
 
@@ -118,6 +119,7 @@ app.whenReady().then(() => {
   exposeRadminIp()
   exposeDesktopUpdate()
   exposeScreenShareIpc()
+  exposeScreenAudioIpc()
   bindClientReports(createMainWindow(), join(app.getPath('userData'), 'pending-reports.json'))
 })
 

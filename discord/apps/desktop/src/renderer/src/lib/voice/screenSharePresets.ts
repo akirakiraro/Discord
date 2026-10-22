@@ -23,14 +23,14 @@ export interface ScreenShareSettings {
 }
 
 /**
- * Monta captura e encoding do compartilhamento. O padrão da UI é nativa a 60 fps.
+ * Monta captura e encoding do vídeo. O áudio da tela entra por outra faixa, só do processo escolhido.
  * Exemplo: `screenShareSettings('1080p', 30)`
  */
 export function screenShareSettings(quality: ShareQuality, frameRate: ShareFrameRate): ScreenShareSettings {
   const size = FRAME_SIZE[quality]
   return {
     capture: {
-      audio: true,
+      audio: false,
       contentHint: 'motion',
       resolution: { width: size.width, height: size.height, frameRate },
     },

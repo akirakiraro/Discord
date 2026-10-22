@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useLocalParticipant } from '@livekit/components-react'
 import { HeadsetIcon, MicIcon } from '../common/AudioIcons'
 import { screenShareSettings } from '../../lib/voice/screenSharePresets'
+import { publishFilteredScreenAudio, stopFilteredScreenAudio } from '../../lib/voice/filteredScreenAudio'
 import { voiceSession } from '../../lib/voice/voiceSession'
 import { useVoiceStore } from '../../stores/voiceStore'
 import { ScreenSharePicker, type ShareSelection } from './ScreenSharePicker'
@@ -13,6 +14,7 @@ export function VoiceControlBar(): React.JSX.Element {
 
   async function stopShare(): Promise<void> {
     try {
+      await stopFilteredScreenAudio(localParticipant)
       await localParticipant.setScreenShareEnabled(false)
     } catch (error) {
       logShareFailure(error)
@@ -30,6 +32,7 @@ export function VoiceControlBar(): React.JSX.Element {
     try {
       await bridge.chooseScreenSource(selection.sourceId)
       await localParticipant.setScreenShareEnabled(true, settings.capture, settings.publish)
+      await publishFilteredScreenAudio(localParticipant)
     } catch (error) {
       logShareFailure(error)
     }

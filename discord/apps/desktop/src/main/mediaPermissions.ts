@@ -18,7 +18,8 @@ export function allowMediaPermissions(): void {
 
 /**
  * Sem este handler o `getDisplayMedia` falha no Electron. Usa a fonte escolhida no
- * seletor e o loopback do Windows, que leva o áudio do sistema junto.
+ * seletor. O áudio não vem do loopback do sistema: o helper captura só o processo da janela
+ * ou os processos daquele monitor.
  * Exemplo: `handleScreenShareRequests()` dentro de `app.whenReady()`
  */
 export function handleScreenShareRequests(): void {
@@ -28,6 +29,6 @@ export function handleScreenShareRequests(): void {
       callback({})
       return
     }
-    callback({ video: chosen, audio: 'loopback' })
+    callback({ video: chosen })
   })
 }

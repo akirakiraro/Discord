@@ -15,3 +15,6 @@ infra/host/data/
 # Executável publicado para os clientes baixarem
 infra/host/updates/
 apps/server/data/
+apps/desktop/native/loopback/bin/
+apps/desktop/native/loopback/obj/
+apps/desktop/native/loopback/out/
