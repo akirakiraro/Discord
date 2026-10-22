@@ -93,7 +93,6 @@ sealed partial class LoopbackSession
     int _blockAlign = 4;
     int _channels = 2;
     bool _float;
-    int _warmupBytes;
     volatile bool _stop;
 
     public bool Failed { get; private set; }
@@ -149,19 +148,7 @@ sealed partial class LoopbackSession
             _activateHr = hr;
             if (hr < 0 || punk == 0) return;
             _client = (IAudioClient?)ComBridge.ComWrappers.GetOrCreateObjectForComInstance(punk, CreateObjectFlags.None);
-            if (_client is null) return;
-            // Process loopback returns E_NOTIMPL for GetMixFormat and the
-            // generated wrapper throws, which used to kill the helper.
-            var forced = WaveFormat.Pcm(AudioFlags.SampleRate, 2);
-            var forcedPtr = Marshal.AllocHGlobal(Marshal.SizeOf<WaveFormat>());
-            Marshal.StructureToPtr(forced, forcedPtr, false);
-            var flags = AudioFlags.LoopbackFlag | AudioFlags.EventFlag | AudioFlags.AutoConvertFlag;
-            _activateHr = _client.Initialize(0, flags, 0, 0, forcedPtr, 0);
-            Marshal.FreeHGlobal(forcedPtr);
-            _float = false;
-            _channels = 2;
-            _blockAlign = forced.BlockAlign;
-            if (_activateHr < 0) return;
+            if (_client is null || !OpenCapture(punk)) return;
             var captureId = typeof(IAudioCaptureClient).GUID;
             _activateHr = _client.GetService(ref captureId, out var capturePtr);
             _capture = (IAudioCaptureClient?)ComBridge.ComWrappers.GetOrCreateObjectForComInstance(capturePtr, CreateObjectFlags.None);
@@ -196,6 +183,98 @@ sealed partial class LoopbackSession
         }
     }
 
+    bool OpenCapture(nint punk)
+    {
+        if (TryEngineMix(punk)) return true;
+        var nativeFloat = WaveFormat.Float(AudioFlags.SampleRate, 2);
+        if (TryFormat(nativeFloat, AudioFlags.LoopbackFlag | AudioFlags.EventFlag, "float")) return true;
+        var convert = AudioFlags.LoopbackFlag | AudioFlags.EventFlag | AudioFlags.AutoConvertFlag;
+        if (TryFormat(nativeFloat, convert, "float-convert")) return true;
+        return TryFormat(WaveFormat.Pcm(AudioFlags.SampleRate, 2), convert, "pcm-convert");
+    }
+
+    bool TryEngineMix(nint punk)
+    {
+        var hr = RawGetMixFormat(punk, out var mix);
+        if (hr < 0 || mix == 0)
+        {
+            Console.Error.WriteLine($"mix ausente: 0x{hr:X8}");
+            return false;
+        }
+        try
+        {
+            if (!RememberMix(mix)) return false;
+            return Commit(mix, AudioFlags.LoopbackFlag | AudioFlags.EventFlag, "mix");
+        }
+        finally
+        {
+            NativeAudio.CoTaskMemFree(mix);
+        }
+    }
+
+    bool TryFormat(WaveFormat format, uint flags, string path)
+    {
+        RememberWave(format);
+        var ptr = Marshal.AllocHGlobal(Marshal.SizeOf<WaveFormat>());
+        try
+        {
+            Marshal.StructureToPtr(format, ptr, false);
+            return Commit(ptr, flags, path);
+        }
+        finally
+        {
+            Marshal.FreeHGlobal(ptr);
+        }
+    }
+
+    bool Commit(nint format, uint flags, string path)
+    {
+        try
+        {
+            _activateHr = _client!.Initialize(0, flags, 0, 0, format, 0);
+        }
+        catch (Exception error)
+        {
+            _activateHr = error.HResult;
+        }
+        Console.Error.WriteLine($"init path={path} hr=0x{_activateHr:X8}");
+        return _activateHr >= 0;
+    }
+
+    bool RememberMix(nint mix)
+    {
+        var tag = (ushort)Marshal.ReadInt16(mix);
+        var channels = Marshal.ReadInt16(mix, 2);
+        var rate = Marshal.ReadInt32(mix, 4);
+        var align = Marshal.ReadInt16(mix, 12);
+        var bits = Marshal.ReadInt16(mix, 14);
+        var sub = tag == 0xFFFE ? (uint)Marshal.ReadInt32(mix, 24) : tag;
+        Console.Error.WriteLine($"mix tag={tag} sub={sub} ch={channels} rate={rate} bits={bits}");
+        var isFloat = sub == 3;
+        if (rate != AudioFlags.SampleRate || channels < 1) return false;
+        if (!isFloat && (bits != 16 || align != channels * 2)) return false;
+        _float = isFloat;
+        _channels = channels;
+        _blockAlign = align;
+        return true;
+    }
+
+    void RememberWave(WaveFormat format)
+    {
+        _float = format.FormatTag == 3;
+        _channels = format.Channels;
+        _blockAlign = format.BlockAlign;
+    }
+
+    static unsafe int RawGetMixFormat(nint client, out nint format)
+    {
+        var getMix = (delegate* unmanaged<nint, nint*, int>)(*((nint*)(*(nint*)client) + 8));
+        nint mix;
+        var hr = getMix(client, &mix);
+        format = mix;
+        return hr;
+    }
+
     byte[] ToPcm16(nint data, int frames, int bytes)
     {
         var pcm = new byte[frames * 4];
@@ -224,23 +303,6 @@ sealed partial class LoopbackSession
         pcm[offset + 1] = (byte)(scaled >> 8);
     }
 
-    void RemoveStartupClick(byte[] pcm)
-    {
-        const int warmup = 48000 * 4;
-        if (_warmupBytes >= warmup) return;
-        var removed = 0;
-        for (var offset = 0; offset + 1 < pcm.Length; offset += 2)
-        {
-            var sample = (short)(pcm[offset] | (pcm[offset + 1] << 8));
-            if (sample > -32000 && sample < 32000) continue;
-            pcm[offset] = 0;
-            pcm[offset + 1] = 0;
-            removed += 1;
-        }
-        _warmupBytes += pcm.Length;
-        if (removed > 0) Console.Error.WriteLine($"startup_click samples={removed}");
-    }
-
     void Drain()
     {
         if (_capture is null) return;
@@ -251,7 +313,6 @@ sealed partial class LoopbackSession
             var glitch = (flags & AudioFlags.DiscontinuityFlag) != 0;
             if (glitch) Console.Error.WriteLine($"discontinuity frames={frames}");
             var pcm = glitch ? new byte[frames * 4] : ToPcm16(data, (int)frames, bytes);
-            RemoveStartupClick(pcm);
             _output.Write(pcm);
             _capture.ReleaseBuffer(frames);
         }
@@ -411,14 +472,17 @@ struct WaveFormat
     public ushort BitsPerSample;
     public ushort ExtraSize;
 
-    public static WaveFormat Pcm(int sampleRate, ushort channels)
+    public static WaveFormat Pcm(int sampleRate, ushort channels) => Packed(1, sampleRate, channels, 16);
+
+    public static WaveFormat Float(int sampleRate, ushort channels) => Packed(3, sampleRate, channels, 32);
+
+    static WaveFormat Packed(ushort tag, int sampleRate, ushort channels, ushort bits)
     {
-        const ushort bits = 16;
         var align = (ushort)(channels * bits / 8);
         return new WaveFormat
         {
-            FormatTag = 1,
-            Channels = (ushort)channels,
+            FormatTag = tag,
+            Channels = channels,
             SamplesPerSecond = (uint)sampleRate,
             AverageBytesPerSecond = (uint)(sampleRate * align),
             BlockAlign = align,
