@@ -1,0 +1,28 @@
+name: Testes da PR
+
+# A suíte só entra na PR de dev para qa. O publish do instalador continua no push da qa.
+on:
+  pull_request:
+    branches:
+      - qa
+
+jobs:
+  test:
+    if: github.head_ref == 'dev'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: discord/package-lock.json
+
+      - name: Instalar dependências
+        working-directory: discord
+        run: npm ci
+
+      - name: Rodar os testes
+        working-directory: discord
+        run: npm test
