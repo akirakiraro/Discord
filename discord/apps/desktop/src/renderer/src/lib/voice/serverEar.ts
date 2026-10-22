@@ -11,7 +11,7 @@ export async function startServerEar(url: string, token: string, userId: string)
   const room = new Room()
   const elements: HTMLMediaElement[] = []
   const onSubscribed = (track: RemoteTrack, publication: RemoteTrackPublication, participant: RemoteParticipant) => {
-    playOwnMic(track, publication, participant, userId, elements)
+    playOwnMic(track, publication, participant, userId, elements, room)
   }
   room.on(RoomEvent.TrackSubscribed, onSubscribed)
   await room.connect(url, token, { autoSubscribe: false })
@@ -58,13 +58,14 @@ function playOwnMic(
   participant: RemoteParticipant,
   userId: string,
   elements: HTMLMediaElement[],
+  room: Room,
 ): void {
   if (!isOwnMic(participant.identity, userId, publication.source)) return
   const element = track.attach()
   element.hidden = true
   document.body.append(element)
   elements.push(element)
-  void element.play()
+  void room.startAudio()
 }
 
 function isOwnMic(identity: string, userId: string, source: Track.Source): boolean {

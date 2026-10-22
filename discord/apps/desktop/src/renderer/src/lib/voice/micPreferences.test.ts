@@ -4,6 +4,7 @@ import {
   captureOptions,
   DEFAULT_MIC_PREFERENCES,
   loadMicPreferences,
+  monitorCapture,
   resolveDeviceId,
   saveMicPreferences,
 } from './micPreferences'
@@ -75,6 +76,14 @@ describe('micPreferences', () => {
     storage.setItem('radcord.mic', JSON.stringify({ deviceId: 'headset', noiseSuppression: false, autoGainControl: false, inputGain: 2 }))
 
     expect(loadMicPreferences(storage)).toMatchObject({ noiseSuppression: true, autoGainControl: true, echoCancellation: true, gateDb: -45, inputGain: 2 })
+  })
+
+  it('escuta da própria voz desliga o cancelamento de eco', () => {
+    const monitoring = monitorCapture(DEFAULT_MIC_PREFERENCES, true)
+    const normal = monitorCapture(DEFAULT_MIC_PREFERENCES, false)
+
+    expect(monitoring.echoCancellation, 'eco pausado para o retorno não ser apagado').toBe(false)
+    expect(normal.echoCancellation, 'fora da escuta vale a preferência').toBe(true)
   })
 
   it('resolveDeviceId volta ao padrão se o aparelho sumiu', () => {

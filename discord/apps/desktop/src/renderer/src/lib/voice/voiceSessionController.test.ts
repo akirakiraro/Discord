@@ -10,12 +10,14 @@ import type { MicrophonePort } from './liveKitMicrophone'
 class FakeMicrophone implements MicrophonePort {
   readonly log: string[] = []
   processor: SensitivityGate | null = null
+  lastRestart: AudioCaptureOptions | null = null
 
   async setEnabled(enabled: boolean, _options: AudioCaptureOptions): Promise<void> {
     this.log.push(`mic:${enabled}`)
   }
 
   async restart(options: AudioCaptureOptions): Promise<void> {
+    this.lastRestart = options
     this.log.push(`restart:${String(options.deviceId)}:${String(options.noiseSuppression)}`)
   }
 
@@ -157,6 +159,17 @@ describe('VoiceSessionController', () => {
 
     expect(room.log.filter((entry) => entry.startsWith('restart'))).toEqual([])
     expect(room.microphone.processor?.thresholdDb).toBe(-30)
+  })
+
+  it('se ouvir tira o cancelamento de eco e devolve ao soltar', async () => {
+    useMicPrefsStore.setState({ echoCancellation: true })
+    await controller.join(new FakeVoiceTokens(), 'v1')
+
+    await controller.setSelfMonitor(true)
+    expect(room.microphone.lastRestart?.echoCancellation, 'eco pausado enquanto se ouve').toBe(false)
+
+    await controller.setSelfMonitor(false)
+    expect(room.microphone.lastRestart?.echoCancellation, 'eco volta ao soltar').toBe(true)
   })
 
   it('microfone mutado não republica ao trocar a entrada', async () => {

@@ -1,11 +1,11 @@
-import { ConnectionState, RoomEvent, type DisconnectReason } from 'livekit-client'
+import { ConnectionState, RoomEvent, type AudioCaptureOptions, type DisconnectReason } from 'livekit-client'
 import type { StoreApi } from 'zustand'
 import type { VoiceTokenResponse } from '@radcord/shared'
 import { isMicrophoneLive, type VoiceStore } from '../../stores/voiceStore'
 import type { MicPrefsStore } from '../../stores/micPrefsStore'
 import { describeVoiceDisconnect } from './describeVoiceDisconnect'
 import { SensitivityGate } from './sensitivityGate'
-import { captureOptions, type MicPreferences } from './micPreferences'
+import { monitorCapture, type MicPreferences } from './micPreferences'
 import type { MicrophonePort } from './liveKitMicrophone'
 import { reportAppError } from '../report/reportAppError'
 
@@ -32,6 +32,7 @@ type MicPrefsApi = Pick<StoreApi<MicPrefsStore>, 'getState' | 'subscribe'>
  */
 export class VoiceSessionController {
   private readonly gate: SensitivityGate
+  private monitoring = false
 
   constructor(
     private readonly room: VoiceRoomPort,
@@ -59,8 +60,20 @@ export class VoiceSessionController {
   }
 
   async leave(): Promise<void> {
+    this.monitoring = false
     this.store.getState().leave()
     await this.room.disconnect()
+  }
+
+  /**
+   * Liga a escuta da própria voz e tira o cancelamento de eco enquanto ela durar.
+   * Sem isso o Chromium apaga o áudio que volta do servidor.
+   * Exemplo: `await controller.setSelfMonitor(true)`.
+   */
+  async setSelfMonitor(on: boolean): Promise<void> {
+    this.monitoring = on
+    if (!this.prefs.getState().echoCancellation) return
+    await this.republishCapture()
   }
 
   private async enterChannel(tokens: VoiceTokenSource, channelId: string): Promise<void> {
@@ -110,14 +123,18 @@ export class VoiceSessionController {
   private async republishCapture(): Promise<void> {
     const state = this.store.getState()
     if (!state.connection || !isMicrophoneLive(state)) return
-    await this.room.microphone.restart(captureOptions(this.prefs.getState()))
+    await this.room.microphone.restart(this.captureNow())
   }
 
   private async syncMicrophone(): Promise<void> {
     const state = this.store.getState()
     if (!state.connection) return
     const live = isMicrophoneLive(state)
-    await this.room.microphone.setEnabled(live, captureOptions(this.prefs.getState()))
+    await this.room.microphone.setEnabled(live, this.captureNow())
     if (live) await this.room.microphone.attachGain(this.gate)
+  }
+
+  private captureNow(): AudioCaptureOptions {
+    return monitorCapture(this.prefs.getState(), this.monitoring)
   }
 }

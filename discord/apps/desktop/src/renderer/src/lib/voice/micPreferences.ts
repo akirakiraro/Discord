@@ -73,6 +73,17 @@ export function captureOptions(prefs: MicPreferences): AudioCaptureOptions {
 }
 
 /**
+ * Captura usada na call. Com a escuta da própria voz, o eco sai.
+ * O Chromium cancela o retorno do servidor porque ele parece eco do microfone.
+ * Exemplo: `monitorCapture(prefs, true).echoCancellation` devolve `false`.
+ */
+export function monitorCapture(prefs: MicPreferences, monitoring: boolean): AudioCaptureOptions {
+  const options = captureOptions(prefs)
+  if (!monitoring) return options
+  return { ...options, echoCancellation: false }
+}
+
+/**
  * Se o microfone salvo foi desplugado, volta para o padrão do sistema.
  * Exemplo: `resolveDeviceId('old-mic', ['built-in'])` devolve `'default'`.
  */
