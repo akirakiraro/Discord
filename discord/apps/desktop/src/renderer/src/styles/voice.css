@@ -117,6 +117,14 @@
   padding: 28px 16px 12px;
 }
 
+.voice-stage--strip-hidden .tile-collapse {
+  margin-top: 0;
+}
+
+.voice-stage--strip-hidden .voice-controls {
+  padding-top: 6px;
+}
+
 .member-toggle--float {
   position: absolute;
   top: 8px;
