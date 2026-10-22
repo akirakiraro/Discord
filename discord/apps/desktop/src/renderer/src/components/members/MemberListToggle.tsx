@@ -1,20 +1,17 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useMembersPanelStore } from '../../stores/membersPanelStore'
 
 const AWAKE_MS = 900
-const NEAR_PX = 72
 
 export function MemberListToggle({ floating = false }: { floating?: boolean }): React.JSX.Element {
   const open = useMembersPanelStore((store) => store.open)
   const toggle = useMembersPanelStore((store) => store.toggle)
-  const buttonRef = useRef<HTMLButtonElement>(null)
-  const awake = useFloatAwake(floating, buttonRef)
+  const awake = useFloatAwake(floating)
   const label = open ? 'Ocultar pessoas' : 'Mostrar pessoas'
   const className = toggleClass(floating, open, awake)
 
   return (
     <button
-      ref={buttonRef}
       type="button"
       className={className}
       title={label}
@@ -34,37 +31,32 @@ function toggleClass(floating: boolean, open: boolean, awake: boolean): string {
   return `${base}${openClass}${awakeClass}`
 }
 
-function useFloatAwake(enabled: boolean, ref: React.RefObject<HTMLButtonElement | null>): boolean {
+function useFloatAwake(enabled: boolean): boolean {
   const [awake, setAwake] = useState(false)
 
   useEffect(() => {
     if (!enabled) return undefined
-    return watchPointer(ref, setAwake)
-  }, [enabled, ref])
+    return watchPointer(setAwake)
+  }, [enabled])
 
   return awake
 }
 
-function watchPointer(ref: React.RefObject<HTMLButtonElement | null>, setAwake: (value: boolean) => void): () => void {
+function watchPointer(setAwake: (value: boolean) => void): () => void {
   let timer = 0
-  const onMove = (event: MouseEvent): void => {
-    const box = ref.current?.getBoundingClientRect()
-    const near = box ? nearBox(event.clientX, event.clientY, box, NEAR_PX) : false
-    setAwake(near)
+  const hide = (): void => setAwake(false)
+  const onMove = (): void => {
+    setAwake(true)
     window.clearTimeout(timer)
-    if (near) timer = window.setTimeout(() => setAwake(false), AWAKE_MS)
+    timer = window.setTimeout(hide, AWAKE_MS)
   }
   window.addEventListener('mousemove', onMove)
+  document.documentElement.addEventListener('mouseleave', hide)
   return () => {
     window.removeEventListener('mousemove', onMove)
+    document.documentElement.removeEventListener('mouseleave', hide)
     window.clearTimeout(timer)
   }
-}
-
-function nearBox(x: number, y: number, box: DOMRect, pad: number): boolean {
-  const insideX = x >= box.left - pad && x <= box.right + pad
-  const insideY = y >= box.top - pad && y <= box.bottom + pad
-  return insideX && insideY
 }
 
 function PeopleIcon(): React.JSX.Element {

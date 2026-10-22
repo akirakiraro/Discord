@@ -71,7 +71,7 @@ function TileCollapse(): React.JSX.Element {
 
 function ChevronIcon({ down }: { down: boolean }): React.JSX.Element {
   return (
-    <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
+    <svg width="22" height="22" viewBox="0 0 18 18" aria-hidden="true">
       <path d={down ? 'M4 7 L9 12 L14 7' : 'M4 11 L9 6 L14 11'} fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
     </svg>
   )
