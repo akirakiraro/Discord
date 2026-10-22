@@ -42,4 +42,4 @@ O desktop entra na sala com `livekit-client`. A API usa `livekit-server-sdk` só
 
 ## Desktop
 
-O app é Electron, em `apps/desktop`. `npm run desktop` sobe o modo de desenvolvimento com `electron-vite`. `npm run desktop:dist` gera o instalador NSIS do Windows com `electron-builder`, em `apps/desktop/release`. `npm run desktop:publish` copia esse pacote para a pasta que a API serve.
+O app é Electron, em `apps/desktop`. O áudio que acompanha a tela não vem do loopback do sistema: o helper WASAPI captura o processo da janela, e o que já quebrou nessa captura está em [audio-tela.md](audio-tela.md). `npm run desktop` sobe o modo de desenvolvimento com `electron-vite`. `npm run desktop:dist` gera o instalador NSIS do Windows com `electron-builder`, em `apps/desktop/release`. `npm run desktop:publish` copia esse pacote para a pasta que a API serve.
