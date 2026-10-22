@@ -7,7 +7,6 @@ import { warmScreenAudio } from '../../lib/voice/screenAudioPump'
 import { visibleScreenShares } from '../../lib/voice/visibleScreenShares'
 import { useVoiceStore } from '../../stores/voiceStore'
 import { ScreenVolumeSlider } from './ScreenVolumeSlider'
-import { LocalScreenAudio } from './LocalScreenAudio'
 import { Avatar } from '../common/Avatar'
 import { useMemberFace } from './useMemberFace'
 import { useSpeaking } from './useSpeaking'
@@ -44,17 +43,13 @@ function RemoteScreenAudio(): React.JSX.Element | null {
     for (const track of remote) applyScreenVolume(asVolumeTrack(track.publication.track), level)
   }, [remote, level])
 
-  if (tracks.length === 0) return null
+  if (remote.length === 0) return null
 
   return (
     <>
-      {tracks.map((track) =>
-        track.participant.isLocal ? (
-          <LocalScreenAudio key={track.publication.trackSid} trackRef={track} volume={level} />
-        ) : (
-          <AudioTrack key={track.publication.trackSid} trackRef={track} volume={level} />
-        ),
-      )}
+      {remote.map((track) => (
+        <AudioTrack key={track.publication.trackSid} trackRef={track} volume={level} />
+      ))}
     </>
   )
 }

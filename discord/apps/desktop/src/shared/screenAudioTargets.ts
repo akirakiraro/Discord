@@ -74,5 +74,5 @@ function parseWindowLine(line: string): DesktopWindow[] {
 
 function clampedSum(chunks: readonly Buffer[], offset: number): number {
   const sum = chunks.reduce((total, chunk) => total + chunk.readInt16LE(offset), 0)
-  return Math.max(-32768, Math.min(32767, sum))
+  return Math.max(-32768, Math.min(32767, Math.round(sum / chunks.length)))
 }

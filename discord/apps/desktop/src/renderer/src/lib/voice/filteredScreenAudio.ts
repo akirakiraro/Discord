@@ -1,7 +1,9 @@
 import { Track, type LocalParticipant } from 'livekit-client'
+import { useVoiceStore } from '../../stores/voiceStore'
 import { ScreenAudioPump } from './screenAudioPump'
 
 let pump: ScreenAudioPump | null = null
+let stopGain: (() => void) | null = null
 
 /**
  * Publica o áudio isolado da tela que acabou de ser escolhida.
@@ -13,6 +15,8 @@ export async function publishFilteredScreenAudio(participant: LocalParticipant):
   await stopFilteredScreenAudio(participant)
   const next = new ScreenAudioPump()
   pump = next
+  stopGain = useVoiceStore.subscribe((state) => next.setGain(state.screenAudioVolume))
+  next.setGain(useVoiceStore.getState().screenAudioVolume)
   bridge.onScreenAudio((pcm) => next.push(pcm))
   try {
     await bridge.startScreenAudio()
@@ -32,6 +36,8 @@ export async function stopFilteredScreenAudio(participant: LocalParticipant): Pr
   await window.radcord?.stopScreenAudio()
   const publication = participant.getTrackPublication(Track.Source.ScreenShareAudio)
   if (publication?.track) await participant.unpublishTrack(publication.track)
+  stopGain?.()
+  stopGain = null
   pump?.close()
   pump = null
 }

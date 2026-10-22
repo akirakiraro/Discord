@@ -19,11 +19,11 @@ describe('pidsOnDisplay', () => {
 })
 
 describe('mixPcm', () => {
-  it('soma as amostras e limita o topo', () => {
+  it('faz a média para duas faixas no máximo não estourarem', () => {
     const loud = Buffer.alloc(2)
     loud.writeInt16LE(30000, 0)
     const mixed = mixPcm([loud, loud])
 
-    expect(mixed.readInt16LE(0)).toBe(32767)
+    expect(mixed.readInt16LE(0)).toBe(30000)
   })
 })
