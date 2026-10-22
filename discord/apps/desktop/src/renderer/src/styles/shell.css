@@ -432,7 +432,7 @@
 }
 
 .account-profile__actions {
-  align-self: center;
+  align-self: flex-end;
   width: auto;
 }
 
