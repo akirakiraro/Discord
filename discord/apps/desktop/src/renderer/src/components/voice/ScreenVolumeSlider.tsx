@@ -12,7 +12,7 @@ export function ScreenVolumeSlider(): React.JSX.Element {
 
   return (
     <label className="screen-volume">
-      <VolumeIcon muted={percent === 0} />
+      <VolumeIcon muted={percent === 0} size={24} />
       <input
         type="range"
         min={0}

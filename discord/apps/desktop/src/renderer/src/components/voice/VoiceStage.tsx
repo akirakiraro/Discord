@@ -6,7 +6,6 @@ import { applyScreenVolume, type VolumeTrack } from '../../lib/voice/screenAudio
 import { warmScreenAudio } from '../../lib/voice/screenAudioPump'
 import { visibleScreenShares } from '../../lib/voice/visibleScreenShares'
 import { useVoiceStore } from '../../stores/voiceStore'
-import { ScreenVolumeSlider } from './ScreenVolumeSlider'
 import { LocalScreenAudio } from './LocalScreenAudio'
 import { Avatar } from '../common/Avatar'
 import { useMemberFace } from './useMemberFace'
@@ -76,7 +75,6 @@ function ScreenShares(): React.JSX.Element | null {
           <figcaption>{shareCaption(track.participant.name || track.participant.identity, track.participant.isLocal)}</figcaption>
         </figure>
       ))}
-      <ScreenVolumeSlider />
     </div>
   )
 }
