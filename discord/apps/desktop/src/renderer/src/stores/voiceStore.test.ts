@@ -5,7 +5,15 @@ const CONNECTION = { channelId: 'v', token: 't', livekitUrl: 'ws://26.186.21.58:
 
 describe('voiceStore', () => {
   beforeEach(() => {
-    useVoiceStore.setState({ connection: null, micMuted: false, deafened: false, showOwnShare: true, showOwnTile: true, lastError: null })
+    useVoiceStore.setState({
+      connection: null,
+      micMuted: false,
+      deafened: false,
+      showOwnShare: true,
+      showOwnTile: true,
+      screenAudioVolume: 1,
+      lastError: null,
+    })
   })
 
   it('entrar limpa o erro anterior e sair pode registrar o motivo', () => {
@@ -39,6 +47,16 @@ describe('voiceStore', () => {
     useVoiceStore.getState().toggleOwnTile()
 
     expect(useVoiceStore.getState().showOwnTile).toBe(false)
+  })
+
+  it('o volume da tela fica entre 0 e 1', () => {
+    useVoiceStore.getState().setScreenAudioVolume(2)
+
+    expect(useVoiceStore.getState().screenAudioVolume).toBe(1)
+
+    useVoiceStore.getState().setScreenAudioVolume(-1)
+
+    expect(useVoiceStore.getState().screenAudioVolume).toBe(0)
   })
 
   it('ensurdecer também muta o microfone', () => {

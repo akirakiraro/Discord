@@ -1,8 +1,11 @@
 import { AudioTrack, VideoTrack, useParticipants, useTracks } from '@livekit/components-react'
 import { isMonitorIdentity } from '@radcord/shared'
 import { Track, type Participant } from 'livekit-client'
+import { useEffect } from 'react'
+import { applyScreenVolume, type VolumeTrack } from '../../lib/voice/screenAudioVolume'
 import { visibleScreenShares } from '../../lib/voice/visibleScreenShares'
 import { useVoiceStore } from '../../stores/voiceStore'
+import { ScreenVolumeSlider } from './ScreenVolumeSlider'
 import { Avatar } from '../common/Avatar'
 import { useMemberFace } from './useMemberFace'
 import { useSpeaking } from './useSpeaking'
@@ -23,14 +26,27 @@ function ParticipantTile({ participant }: { participant: Participant }): React.J
   )
 }
 
+function asVolumeTrack(track: Track | undefined): VolumeTrack | undefined {
+  if (track && 'setVolume' in track) return track
+  return undefined
+}
+
 function RemoteScreenAudio(): React.JSX.Element | null {
   const tracks = useTracks([Track.Source.ScreenShareAudio]).filter((track) => !track.participant.isLocal)
+  const volume = useVoiceStore((store) => store.screenAudioVolume)
+  const deafened = useVoiceStore((store) => store.deafened)
+
+  useEffect(() => {
+    const level = deafened ? 0 : volume
+    for (const track of tracks) applyScreenVolume(asVolumeTrack(track.publication.track), level)
+  }, [tracks, volume, deafened])
+
   if (tracks.length === 0) return null
 
   return (
     <>
       {tracks.map((track) => (
-        <AudioTrack key={track.publication.trackSid} trackRef={track} />
+        <AudioTrack key={track.publication.trackSid} trackRef={track} volume={deafened ? 0 : volume} />
       ))}
     </>
   )
@@ -43,6 +59,7 @@ function shareCaption(name: string, isLocal: boolean): string {
 function ScreenShares(): React.JSX.Element | null {
   const showOwnShare = useVoiceStore((store) => store.showOwnShare)
   const screens = visibleScreenShares(useTracks([Track.Source.ScreenShare]), showOwnShare)
+  const hearingRemote = screens.some((track) => !track.participant.isLocal)
   if (screens.length === 0) return null
 
   return (
@@ -53,6 +70,7 @@ function ScreenShares(): React.JSX.Element | null {
           <figcaption>{shareCaption(track.participant.name || track.participant.identity, track.participant.isLocal)}</figcaption>
         </figure>
       ))}
+      {hearingRemote && <ScreenVolumeSlider />}
     </div>
   )
 }
