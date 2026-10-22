@@ -25,7 +25,7 @@ export function HearMyself(): React.JSX.Element {
     <div className="settings-modal__field">
       <button
         type="button"
-        className={hearing ? 'settings-modal__action settings-modal__action--on' : 'settings-modal__action'}
+        className={hearing ? 'button button--success' : 'button button--primary'}
         disabled={!channelId && !hearing}
         onClick={() => {
           setError(null)

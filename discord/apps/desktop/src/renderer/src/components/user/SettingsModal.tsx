@@ -69,7 +69,7 @@ function AccountSettings(): React.JSX.Element {
         </div>
       )}
       {session && (
-        <button type="button" className="settings-modal__logout" onClick={() => void logout(session)}>
+        <button type="button" className="button settings-modal__logout" onClick={() => void logout(session)}>
           Sair da conta
         </button>
       )}
