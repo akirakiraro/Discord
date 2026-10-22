@@ -83,10 +83,9 @@ export function VoiceStage(): React.JSX.Element {
   const anyoneSharing = screenTracks.length > 0
   const participants = useParticipants().filter((participant) => !isMonitorIdentity(participant.identity))
   const tiles = !anyoneSharing || showOwnTile ? participants : []
-  const stageClass = anyoneSharing && !showOwnTile ? 'voice-stage voice-stage--controls-overlay' : 'voice-stage'
 
   return (
-    <div className={stageClass}>
+    <div className="voice-stage">
       <ScreenShares />
       <RemoteScreenAudio />
       {anyoneSharing && <TileCollapse />}
