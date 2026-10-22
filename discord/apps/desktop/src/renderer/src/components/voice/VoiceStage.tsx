@@ -6,6 +6,7 @@ import { applyScreenVolume, type VolumeTrack } from '../../lib/voice/screenAudio
 import { visibleScreenShares } from '../../lib/voice/visibleScreenShares'
 import { useVoiceStore } from '../../stores/voiceStore'
 import { ScreenVolumeSlider } from './ScreenVolumeSlider'
+import { LocalScreenAudio } from './LocalScreenAudio'
 import { Avatar } from '../common/Avatar'
 import { useMemberFace } from './useMemberFace'
 import { useSpeaking } from './useSpeaking'
@@ -32,22 +33,27 @@ function asVolumeTrack(track: Track | undefined): VolumeTrack | undefined {
 }
 
 function RemoteScreenAudio(): React.JSX.Element | null {
-  const tracks = useTracks([Track.Source.ScreenShareAudio]).filter((track) => !track.participant.isLocal)
+  const tracks = useTracks([Track.Source.ScreenShareAudio])
   const volume = useVoiceStore((store) => store.screenAudioVolume)
   const deafened = useVoiceStore((store) => store.deafened)
+  const level = deafened ? 0 : volume
+  const remote = tracks.filter((track) => !track.participant.isLocal)
 
   useEffect(() => {
-    const level = deafened ? 0 : volume
-    for (const track of tracks) applyScreenVolume(asVolumeTrack(track.publication.track), level)
-  }, [tracks, volume, deafened])
+    for (const track of remote) applyScreenVolume(asVolumeTrack(track.publication.track), level)
+  }, [remote, level])
 
   if (tracks.length === 0) return null
 
   return (
     <>
-      {tracks.map((track) => (
-        <AudioTrack key={track.publication.trackSid} trackRef={track} volume={deafened ? 0 : volume} />
-      ))}
+      {tracks.map((track) =>
+        track.participant.isLocal ? (
+          <LocalScreenAudio key={track.publication.trackSid} trackRef={track} volume={level} />
+        ) : (
+          <AudioTrack key={track.publication.trackSid} trackRef={track} volume={level} />
+        ),
+      )}
     </>
   )
 }
@@ -97,7 +103,6 @@ export function VoiceStage(): React.JSX.Element {
   const showOwnTile = useVoiceStore((store) => store.showOwnTile)
   const screenTracks = useTracks([Track.Source.ScreenShare])
   const anyoneSharing = screenTracks.length > 0
-  const hearingRemote = screenTracks.some((track) => !track.participant.isLocal)
   const participants = useParticipants().filter((participant) => !isMonitorIdentity(participant.identity))
   const tiles = !anyoneSharing || showOwnTile ? participants : []
   const stageClass = anyoneSharing && tiles.length === 0 ? 'voice-stage voice-stage--strip-hidden' : 'voice-stage'
@@ -105,7 +110,7 @@ export function VoiceStage(): React.JSX.Element {
   return (
     <div className={stageClass}>
       <ScreenShares />
-      {hearingRemote && <ScreenVolumeSlider />}
+      {anyoneSharing && <ScreenVolumeSlider />}
       <RemoteScreenAudio />
       {anyoneSharing && <TileCollapse />}
       {tiles.length > 0 && (
