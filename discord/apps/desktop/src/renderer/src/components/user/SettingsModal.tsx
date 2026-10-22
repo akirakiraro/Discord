@@ -59,7 +59,7 @@ function AccountSettings(): React.JSX.Element {
       <h2>Minha conta</h2>
       {user && (
         <div className="settings-account">
-          <Avatar name={user.displayName} seed={user.id} imageUrl={user.avatarUrl} size={96} />
+          <Avatar name={user.displayName} seed={user.id} imageUrl={user.avatarUrl} size={64} />
           <div>
             <p className="settings-account__name">{user.displayName}</p>
             <p className="settings-account__username">{user.username}</p>
