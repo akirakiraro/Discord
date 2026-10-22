@@ -2,7 +2,7 @@ import { AudioTrack, VideoTrack, useParticipants, useTracks } from '@livekit/com
 import { isMonitorIdentity } from '@radcord/shared'
 import { Track, type Participant } from 'livekit-client'
 import { useEffect } from 'react'
-import { applyScreenVolume, type VolumeTrack } from '../../lib/voice/screenAudioVolume'
+import { applyScreenVolume, type ScreenVolumeTarget, type VolumeTrack } from '../../lib/voice/screenAudioVolume'
 import { warmScreenAudio } from '../../lib/voice/screenAudioPump'
 import { visibleScreenShares } from '../../lib/voice/visibleScreenShares'
 import { useVoiceStore } from '../../stores/voiceStore'
@@ -32,16 +32,23 @@ function asVolumeTrack(track: Track | undefined): VolumeTrack | undefined {
   return undefined
 }
 
+function useScreenListenLevel(target: ScreenVolumeTarget): number {
+  const own = useVoiceStore((store) => store.ownScreenAudioVolume)
+  const remote = useVoiceStore((store) => store.screenAudioVolume)
+  const deafened = useVoiceStore((store) => store.deafened)
+  if (deafened) return 0
+  return target === 'own' ? own : remote
+}
+
 function RemoteScreenAudio(): React.JSX.Element | null {
   const tracks = useTracks([Track.Source.ScreenShareAudio])
-  const volume = useVoiceStore((store) => store.screenAudioVolume)
-  const deafened = useVoiceStore((store) => store.deafened)
-  const level = deafened ? 0 : volume
+  const ownLevel = useScreenListenLevel('own')
+  const remoteLevel = useScreenListenLevel('remote')
   const remote = tracks.filter((track) => !track.participant.isLocal)
 
   useEffect(() => {
-    for (const track of remote) applyScreenVolume(asVolumeTrack(track.publication.track), level)
-  }, [remote, level])
+    for (const track of remote) applyScreenVolume(asVolumeTrack(track.publication.track), remoteLevel)
+  }, [remote, remoteLevel])
 
   const local = tracks.filter((track) => track.participant.isLocal)
   if (remote.length === 0 && local.length === 0) return null
@@ -49,10 +56,10 @@ function RemoteScreenAudio(): React.JSX.Element | null {
   return (
     <>
       {local.map((track) => (
-        <LocalScreenAudio key={track.publication.trackSid} trackRef={track} volume={level} />
+        <LocalScreenAudio key={track.publication.trackSid} trackRef={track} volume={ownLevel} />
       ))}
       {remote.map((track) => (
-        <AudioTrack key={track.publication.trackSid} trackRef={track} volume={level} />
+        <AudioTrack key={track.publication.trackSid} trackRef={track} volume={remoteLevel} />
       ))}
     </>
   )

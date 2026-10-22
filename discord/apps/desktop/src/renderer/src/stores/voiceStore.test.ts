@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest'
+import { OWN_SCREEN_LISTEN, REMOTE_SCREEN_LISTEN } from '../lib/voice/screenAudioVolume'
 import { isMicrophoneLive, useVoiceStore } from './voiceStore'
 
 const CONNECTION = { channelId: 'v', token: 't', livekitUrl: 'ws://26.186.21.58:7880' }
@@ -11,7 +12,8 @@ describe('voiceStore', () => {
       deafened: false,
       showOwnShare: true,
       showOwnTile: true,
-      screenAudioVolume: 1,
+      ownScreenAudioVolume: OWN_SCREEN_LISTEN,
+      screenAudioVolume: REMOTE_SCREEN_LISTEN,
       lastError: null,
     })
   })
@@ -47,6 +49,13 @@ describe('voiceStore', () => {
     useVoiceStore.getState().toggleOwnTile()
 
     expect(useVoiceStore.getState().showOwnTile).toBe(false)
+  })
+
+  it('a própria tela começa muda e a dos outros no máximo', () => {
+    expect(useVoiceStore.getState()).toMatchObject({
+      ownScreenAudioVolume: OWN_SCREEN_LISTEN,
+      screenAudioVolume: REMOTE_SCREEN_LISTEN,
+    })
   })
 
   it('o volume da tela fica entre 0 e 1', () => {

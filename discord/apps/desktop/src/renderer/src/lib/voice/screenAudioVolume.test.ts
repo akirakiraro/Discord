@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { applyScreenVolume, clampUnitVolume } from './screenAudioVolume'
+import { OWN_SCREEN_LISTEN, REMOTE_SCREEN_LISTEN, applyScreenVolume, clampUnitVolume, volumeTarget } from './screenAudioVolume'
 
 describe('clampUnitVolume', () => {
   it.each([
@@ -11,6 +11,21 @@ describe('clampUnitVolume', () => {
     [Number.NaN, 1],
   ])('clampUnitVolume(%s) → %s', (value, expected) => {
     expect(clampUnitVolume(value)).toBe(expected)
+  })
+})
+
+describe('volume inicial', () => {
+  it('a própria escuta nasce muda e a dos outros no máximo', () => {
+    expect(OWN_SCREEN_LISTEN).toBe(0)
+    expect(REMOTE_SCREEN_LISTEN).toBe(1)
+  })
+})
+
+describe('volumeTarget', () => {
+  it('a própria escuta só entra quando não há tela de outra pessoa', () => {
+    expect(volumeTarget(true, false)).toBe('own')
+    expect(volumeTarget(true, true)).toBe('remote')
+    expect(volumeTarget(false, true)).toBe('remote')
   })
 })
 
