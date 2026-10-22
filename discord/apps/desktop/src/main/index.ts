@@ -1,6 +1,6 @@
 import { networkInterfaces } from 'node:os'
 import { join } from 'node:path'
-import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron'
+import { app, BrowserWindow, dialog, ipcMain, screen, shell } from 'electron'
 import { autoUpdater, type UpdateCheckResult } from 'electron-updater'
 import { bindClientReports } from './clientReportBridge'
 import { installBlockUpdate, type BlockUpdateClient } from './desktopUpdate'
@@ -34,8 +34,18 @@ function createMainWindow(): BrowserWindow {
     if (/^https?:\/\//.test(url)) void shell.openExternal(url)
     return { action: 'deny' }
   })
+  // Com titleBarOverlay, o maximizar no Windows passa da área de trabalho e cobre a barra de tarefas.
+  window.on('maximize', () => snapToWorkArea(window))
   loadRenderer(window)
   return window
+}
+
+function snapToWorkArea(window: BrowserWindow): void {
+  const area = screen.getDisplayMatching(window.getBounds()).workArea
+  setTimeout(() => {
+    if (window.isDestroyed() || !window.isMaximized()) return
+    window.setBounds({ x: area.x, y: area.y, width: area.width, height: area.height })
+  }, 0)
 }
 
 function loadRenderer(window: BrowserWindow): void {
