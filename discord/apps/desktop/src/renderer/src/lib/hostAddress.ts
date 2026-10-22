@@ -1,17 +1,15 @@
 import { SERVER_DEFAULT_PORT } from '@radcord/shared'
 
-const HOSTNAME_PATTERN = /^[a-z0-9.-]+$/i
-
 /**
  * Converte o que o usuário digitou ("26.186.21.58" ou "26.186.21.58:3000") na URL base da API do host.
  * Exemplo: `buildHostBaseUrl('26.186.21.58')` → `'http://26.186.21.58:3000'`
  */
 export function buildHostBaseUrl(hostInput: string): string {
-  const [hostname = '', portText, ...extra] = hostInput.trim().split(':')
-  if (!HOSTNAME_PATTERN.test(hostname) || extra.length > 0) {
+  const match = /^([a-z0-9.-]+)(?::(\d+))?$/i.exec(hostInput.trim())
+  if (!match) {
     throw new Error(`Endereço do host inválido: "${hostInput}". Esperado IP do Radmin, ex.: 26.186.21.58:3000`)
   }
-  return `http://${hostname}:${parseHostPort(portText)}`
+  return `http://${match[1]}:${parseHostPort(match[2])}`
 }
 
 function parseHostPort(portText: string | undefined): number {

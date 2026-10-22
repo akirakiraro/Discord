@@ -54,8 +54,10 @@ export function loadMicPreferences(storage: KeyValueStorage): MicPreferences {
 /**
  * Exemplo: `saveMicPreferences(window.localStorage, DEFAULT_MIC_PREFERENCES)`
  */
-export function saveMicPreferences(storage: KeyValueStorage, prefs: MicPreferences): void {
-  storage.setItem(STORAGE_KEY, JSON.stringify({ ...sanitizeMicPreferences(prefs), defaultsRevision: DEFAULTS_REVISION }))
+export function saveMicPreferences(storage: KeyValueStorage, prefs: MicPreferences): MicPreferences {
+  const stored = sanitizeMicPreferences(prefs)
+  storage.setItem(STORAGE_KEY, JSON.stringify({ ...stored, defaultsRevision: DEFAULTS_REVISION }))
+  return stored
 }
 
 /**

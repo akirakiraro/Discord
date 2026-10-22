@@ -59,8 +59,8 @@ function writePrefs(
   storage: KeyValueStorage,
   prefs: MicPreferences,
 ): void {
-  saveMicPreferences(storage, prefs)
-  set(loadMicPreferences(storage))
+  // O estado segue o que foi pedido. Reler o storage apagava a escolha quando o localStorage não existe, como no teste.
+  set(saveMicPreferences(storage, prefs))
 }
 
 function alignSavedDevice(
