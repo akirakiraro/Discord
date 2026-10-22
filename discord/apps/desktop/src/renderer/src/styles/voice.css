@@ -144,6 +144,15 @@
   z-index: 3;
 }
 
+.voice-stage--controls-overlay .tile-collapse {
+  position: absolute;
+  left: 50%;
+  bottom: 112px;
+  z-index: 4;
+  margin: 0;
+  transform: translateX(-50%);
+}
+
 .voice-join {
   flex: 1;
   display: flex;
