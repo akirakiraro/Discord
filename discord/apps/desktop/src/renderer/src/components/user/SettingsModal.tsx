@@ -55,11 +55,11 @@ function AccountSettings(): React.JSX.Element {
   const user = session?.user
 
   return (
-    <div className="settings-pane">
+    <div className="settings-pane settings-pane--account">
       <h2>Minha conta</h2>
       {user && (
         <div className="settings-account">
-          <Avatar name={user.displayName} seed={user.id} imageUrl={user.avatarUrl} size={64} />
+          <Avatar name={user.displayName} seed={user.id} imageUrl={user.avatarUrl} size={96} />
           <div>
             <p className="settings-account__name">{user.displayName}</p>
             <p className="settings-account__username">{user.username}</p>
