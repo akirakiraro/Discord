@@ -76,6 +76,7 @@ function ScreenShares(): React.JSX.Element | null {
           <figcaption>{shareCaption(track.participant.name || track.participant.identity, track.participant.isLocal)}</figcaption>
         </figure>
       ))}
+      <ScreenVolumeSlider />
     </div>
   )
 }
@@ -112,7 +113,6 @@ export function VoiceStage(): React.JSX.Element {
   return (
     <div className={stageClass}>
       <ScreenShares />
-      {anyoneSharing && <ScreenVolumeSlider />}
       <RemoteScreenAudio />
       {anyoneSharing && <TileCollapse />}
       {tiles.length > 0 && (
