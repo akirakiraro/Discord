@@ -404,14 +404,12 @@
   align-self: stretch;
   display: flex;
   flex-direction: column;
-  height: 200px;
   padding: 24px;
   border-radius: 8px;
   background: var(--bg-dark);
 }
 
 .account-profile {
-  flex: 1;
   display: flex;
   align-items: flex-start;
   gap: 20px;
