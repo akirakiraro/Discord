@@ -91,6 +91,9 @@ sealed partial class LoopbackSession
     IAudioClient? _client;
     IAudioCaptureClient? _capture;
     int _blockAlign = 4;
+    int _channels = 2;
+    bool _float;
+    int _warmupBytes;
     volatile bool _stop;
 
     public bool Failed { get; private set; }
@@ -147,13 +150,24 @@ sealed partial class LoopbackSession
             if (hr < 0 || punk == 0) return;
             _client = (IAudioClient?)ComBridge.ComWrappers.GetOrCreateObjectForComInstance(punk, CreateObjectFlags.None);
             if (_client is null) return;
-            var format = WaveFormat.Pcm(AudioFlags.SampleRate, 2);
-            var formatPtr = Marshal.AllocHGlobal(Marshal.SizeOf<WaveFormat>());
-            Marshal.StructureToPtr(format, formatPtr, false);
-            _activateHr = _client.Initialize(0, AudioFlags.LoopbackFlag | AudioFlags.EventFlag | AudioFlags.AutoConvertFlag, 0, 0, formatPtr, 0);
-            Marshal.FreeHGlobal(formatPtr);
+            _activateHr = _client.GetMixFormat(out var mix);
+            if (_activateHr < 0 || mix == 0) return;
+            DescribeMix(mix);
+            var flags = AudioFlags.LoopbackFlag | AudioFlags.EventFlag;
+            _activateHr = _client.Initialize(0, flags, 0, 0, mix, 0);
+            if (_activateHr < 0)
+            {
+                var forced = WaveFormat.Pcm(AudioFlags.SampleRate, 2);
+                var forcedPtr = Marshal.AllocHGlobal(Marshal.SizeOf<WaveFormat>());
+                Marshal.StructureToPtr(forced, forcedPtr, false);
+                _activateHr = _client.Initialize(0, flags | AudioFlags.AutoConvertFlag, 0, 0, forcedPtr, 0);
+                Marshal.FreeHGlobal(forcedPtr);
+                _float = false;
+                _channels = 2;
+                _blockAlign = forced.BlockAlign;
+            }
+            NativeAudio.CoTaskMemFree(mix);
             if (_activateHr < 0) return;
-            _blockAlign = format.BlockAlign;
             var captureId = typeof(IAudioCaptureClient).GUID;
             _activateHr = _client.GetService(ref captureId, out var capturePtr);
             _capture = (IAudioCaptureClient?)ComBridge.ComWrappers.GetOrCreateObjectForComInstance(capturePtr, CreateObjectFlags.None);
@@ -182,6 +196,62 @@ sealed partial class LoopbackSession
         }
     }
 
+    void DescribeMix(nint mix)
+    {
+        var tag = (ushort)Marshal.ReadInt16(mix);
+        _channels = Math.Max(1, (int)Marshal.ReadInt16(mix, 2));
+        _blockAlign = Marshal.ReadInt16(mix, 12);
+        var bits = Marshal.ReadInt16(mix, 14);
+        var rate = Marshal.ReadInt32(mix, 4);
+        _float = tag == 3 || (tag == 0xFFFE && bits == 32);
+        Console.Error.WriteLine($"mix tag={tag} ch={_channels} rate={rate} bits={bits}");
+    }
+
+    byte[] ToPcm16(nint data, int frames, int bytes)
+    {
+        var pcm = new byte[frames * 4];
+        if (data == 0 || (bytes == 0)) return pcm;
+        if (!_float)
+        {
+            Marshal.Copy(data, pcm, 0, Math.Min(bytes, pcm.Length));
+            return pcm;
+        }
+        var samples = new float[frames * _channels];
+        Marshal.Copy(data, samples, 0, samples.Length);
+        for (var frame = 0; frame < frames; frame += 1)
+        {
+            var left = samples[frame * _channels];
+            var right = _channels > 1 ? samples[frame * _channels + 1] : left;
+            WriteSample(pcm, frame * 4, left);
+            WriteSample(pcm, frame * 4 + 2, right);
+        }
+        return pcm;
+    }
+
+    static void WriteSample(byte[] pcm, int offset, float sample)
+    {
+        var scaled = Math.Clamp((int)Math.Round(sample * 32767f), -32768, 32767);
+        pcm[offset] = (byte)scaled;
+        pcm[offset + 1] = (byte)(scaled >> 8);
+    }
+
+    void RemoveStartupClick(byte[] pcm)
+    {
+        const int warmup = 48000 * 4;
+        if (_warmupBytes >= warmup) return;
+        var removed = 0;
+        for (var offset = 0; offset + 1 < pcm.Length; offset += 2)
+        {
+            var sample = (short)(pcm[offset] | (pcm[offset + 1] << 8));
+            if (sample > -32000 && sample < 32000) continue;
+            pcm[offset] = 0;
+            pcm[offset + 1] = 0;
+            removed += 1;
+        }
+        _warmupBytes += pcm.Length;
+        if (removed > 0) Console.Error.WriteLine($"startup_click samples={removed}");
+    }
+
     void Drain()
     {
         if (_capture is null) return;
@@ -189,10 +259,10 @@ sealed partial class LoopbackSession
         {
             if (_capture.GetBuffer(out var data, out frames, out var flags, out _, out _) < 0) return;
             var bytes = (int)frames * _blockAlign;
-            var pcm = new byte[bytes];
             var glitch = (flags & AudioFlags.DiscontinuityFlag) != 0;
             if (glitch) Console.Error.WriteLine($"discontinuity frames={frames}");
-            else if ((flags & AudioFlags.SilentFlag) == 0 && data != 0) Marshal.Copy(data, pcm, 0, bytes);
+            var pcm = glitch ? new byte[frames * 4] : ToPcm16(data, (int)frames, bytes);
+            RemoveStartupClick(pcm);
             _output.Write(pcm);
             _capture.ReleaseBuffer(frames);
         }
@@ -375,6 +445,9 @@ static partial class NativeAudio
 
     [DllImport("ole32.dll")]
     public static extern int CoCreateFreeThreadedMarshaler(nint outer, out nint marshaler);
+
+    [DllImport("ole32.dll")]
+    public static extern void CoTaskMemFree(nint pointer);
 
     [DllImport("mmdevapi.dll", ExactSpelling = true)]
     public static extern int ActivateAudioInterfaceAsync(
