@@ -59,7 +59,6 @@ export function VoiceControlBar(): React.JSX.Element {
         🖥️
       </button>
       <OwnShareToggle sharing={isScreenShareEnabled} />
-      <OwnTileToggle />
       <button className="round-button round-button--danger" title="Sair da call" onClick={() => void voiceSession.leave()}>
         📞
       </button>
@@ -77,17 +76,6 @@ function OwnShareToggle({ sharing }: { sharing: boolean }): React.JSX.Element | 
   return (
     <button className={showOwnShare ? 'round-button round-button--live' : 'round-button'} title={title} onClick={toggleOwnShare}>
       👁️
-    </button>
-  )
-}
-
-function OwnTileToggle(): React.JSX.Element {
-  const showOwnTile = useVoiceStore((store) => store.showOwnTile)
-  const toggleOwnTile = useVoiceStore((store) => store.toggleOwnTile)
-  const title = showOwnTile ? 'Ocultar ícones' : 'Mostrar ícones'
-  return (
-    <button className={showOwnTile ? 'round-button' : 'round-button round-button--live'} title={title} onClick={toggleOwnTile}>
-      👤
     </button>
   )
 }

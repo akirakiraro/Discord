@@ -57,18 +57,39 @@ function ScreenShares(): React.JSX.Element | null {
   )
 }
 
+function TileCollapse(): React.JSX.Element {
+  const showOwnTile = useVoiceStore((store) => store.showOwnTile)
+  const toggleOwnTile = useVoiceStore((store) => store.toggleOwnTile)
+  const title = showOwnTile ? 'Ocultar usuários' : 'Mostrar usuários'
+
+  return (
+    <button className="tile-collapse" title={title} onClick={toggleOwnTile}>
+      <ChevronIcon down={showOwnTile} />
+    </button>
+  )
+}
+
+function ChevronIcon({ down }: { down: boolean }): React.JSX.Element {
+  return (
+    <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
+      <path d={down ? 'M4 7 L9 12 L14 7' : 'M4 11 L9 6 L14 11'} fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  )
+}
+
 export function VoiceStage(): React.JSX.Element {
   const showOwnTile = useVoiceStore((store) => store.showOwnTile)
-  const showOwnShare = useVoiceStore((store) => store.showOwnShare)
-  const sharing = visibleScreenShares(useTracks([Track.Source.ScreenShare]), showOwnShare).length > 0
+  const screenTracks = useTracks([Track.Source.ScreenShare])
+  const anyoneSharing = screenTracks.length > 0
   const participants = useParticipants().filter((participant) => !isMonitorIdentity(participant.identity))
-  const tiles = showOwnTile ? participants : []
-  const stageClass = sharing && !showOwnTile ? 'voice-stage voice-stage--controls-overlay' : 'voice-stage'
+  const tiles = !anyoneSharing || showOwnTile ? participants : []
+  const stageClass = anyoneSharing && !showOwnTile ? 'voice-stage voice-stage--controls-overlay' : 'voice-stage'
 
   return (
     <div className={stageClass}>
       <ScreenShares />
       <RemoteScreenAudio />
+      {anyoneSharing && <TileCollapse />}
       {tiles.length > 0 && (
         <div className="participant-grid">
           {tiles.map((participant) => (
