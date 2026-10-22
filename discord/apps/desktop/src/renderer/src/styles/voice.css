@@ -107,12 +107,33 @@
   height: 100%;
 }
 
+.voice-channel-view--share .participant-grid {
+  flex: 0 0 auto;
+  align-content: center;
+  padding: 4px 8px 0;
+}
+
+.voice-channel-view--share .voice-controls {
+  padding: 8px 16px 12px;
+}
+
 .member-toggle--float {
   position: absolute;
   top: 8px;
   right: 16px;
   z-index: 3;
-  background: rgba(0, 0, 0, 0.55);
+  background: transparent;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.member-toggle--float.member-toggle--awake {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.member-toggle--float:hover {
+  background: transparent;
 }
 
 .voice-stage--controls-overlay .voice-controls {
