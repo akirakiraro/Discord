@@ -8,11 +8,13 @@ import { activeScreenSourceId } from './screenShareSources'
 import { screenAudioLog } from './screenAudioLog'
 
 const FRAME = 3840
+const PREROLL_BYTES = 48000 * 2 * 2 * 0.3
 const captures: ChildProcessWithoutNullStreams[] = []
 let sender: WebContents | null = null
 let pending: Buffer[] = []
 let meter = emptyMeter()
 let meterTimer: NodeJS.Timeout | null = null
+let skipped = 0
 
 /**
  * Liga o áudio isolado da última tela escolhida e corta quando o renderer pede.
@@ -30,6 +32,7 @@ export function stopScreenAudio(): void {
   pending = []
   sender = null
   meter = emptyMeter()
+  skipped = 0
   if (meterTimer) clearInterval(meterTimer)
   meterTimer = null
 }
@@ -61,9 +64,19 @@ function spawnCapture(pid: number, index: number): ChildProcessWithoutNullStream
 
 function pushPcm(index: number, chunk: Buffer): void {
   if (!pending[index]) return
-  noteMeter(chunk)
-  pending[index] = Buffer.concat([pending[index], chunk])
+  const audible = withoutPreroll(chunk)
+  if (!audible.length) return
+  noteMeter(audible)
+  pending[index] = Buffer.concat([pending[index], audible])
   drainMixer()
+}
+
+function withoutPreroll(chunk: Buffer): Buffer {
+  if (skipped >= PREROLL_BYTES) return chunk
+  const take = Math.min(chunk.length, PREROLL_BYTES - skipped)
+  skipped += take
+  if (skipped === take) screenAudioLog('preroll_dropped', { bytes: skipped, peak: pcmPeak(chunk.subarray(0, take)) })
+  return chunk.subarray(take)
 }
 
 function noteMeter(chunk: Buffer): void {
@@ -72,7 +85,7 @@ function noteMeter(chunk: Buffer): void {
   meter.lastAt = now
   meter.chunks += 1
   meter.bytes += chunk.length
-  meter.peak = Math.max(meter.peak, pcmPeak(chunk))
+  meter.peak = pcmPeak(chunk)
 }
 
 function pcmPeak(chunk: Buffer): number {
