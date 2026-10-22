@@ -407,10 +407,25 @@
   background: var(--bg-dark);
 }
 
-.settings-account .profile-modal {
+.account-profile {
+  display: flex;
+  align-items: center;
+  gap: 20px;
   width: 100%;
-  padding: 0;
-  background: transparent;
+}
+
+.account-profile__text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.account-profile__actions {
+  align-self: center;
+  width: auto;
 }
 
 .settings-account__name,
