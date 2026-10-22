@@ -426,6 +426,10 @@
   gap: 8px;
 }
 
+.account-profile__edit {
+  align-self: flex-end;
+}
+
 .account-profile__actions {
   align-self: center;
   width: auto;

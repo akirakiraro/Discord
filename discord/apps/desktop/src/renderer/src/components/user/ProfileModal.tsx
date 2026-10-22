@@ -56,7 +56,7 @@ export function ProfileEditor({ user }: { user: UserDto }): React.JSX.Element {
         {editing && <ChangePhoto onFile={(file) => void choosePhoto(file, setAvatarUrl, setError)} />}
         {error && <p className="profile-modal__error">{error}</p>}
       </div>
-      {editing ? <EditActions saving={saving} onCancel={cancel} onSave={() => void save()} /> : <button type="button" className="profile-modal__text" onClick={startEdit}>Editar</button>}
+      {editing ? <EditActions saving={saving} onCancel={cancel} onSave={() => void save()} /> : <button type="button" className="profile-modal__text account-profile__edit" onClick={startEdit}>Editar</button>}
     </div>
   )
 }
