@@ -47,10 +47,6 @@ function CaptureToggle({
   )
 }
 
-function sliderFill(percent: number): React.CSSProperties {
-  return { '--slider-fill': `${percent}%` } as React.CSSProperties
-}
-
 function VolumeSlider({ value, onChange }: { value: number; onChange: (value: number) => void }): React.JSX.Element {
   const percent = Math.round(value * 100)
   return (
@@ -62,7 +58,6 @@ function VolumeSlider({ value, onChange }: { value: number; onChange: (value: nu
         max={4}
         step={0.05}
         value={value}
-        style={sliderFill((value / 4) * 100)}
         onChange={(event) => onChange(Number(event.target.value))}
       />
       <span className="settings-modal__scale">
@@ -83,7 +78,6 @@ function SensitivitySlider({ value, onChange }: { value: number; onChange: (valu
         max={GATE_MAX_DB}
         step={1}
         value={value}
-        style={sliderFill(((value - GATE_MIN_DB) / (GATE_MAX_DB - GATE_MIN_DB)) * 100)}
         onChange={(event) => onChange(Number(event.target.value))}
       />
       <span className="settings-modal__scale">
