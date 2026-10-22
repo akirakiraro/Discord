@@ -59,7 +59,6 @@ function shareCaption(name: string, isLocal: boolean): string {
 function ScreenShares(): React.JSX.Element | null {
   const showOwnShare = useVoiceStore((store) => store.showOwnShare)
   const screens = visibleScreenShares(useTracks([Track.Source.ScreenShare]), showOwnShare)
-  const hearingRemote = screens.some((track) => !track.participant.isLocal)
   if (screens.length === 0) return null
 
   return (
@@ -70,7 +69,6 @@ function ScreenShares(): React.JSX.Element | null {
           <figcaption>{shareCaption(track.participant.name || track.participant.identity, track.participant.isLocal)}</figcaption>
         </figure>
       ))}
-      {hearingRemote && <ScreenVolumeSlider />}
     </div>
   )
 }
@@ -99,6 +97,7 @@ export function VoiceStage(): React.JSX.Element {
   const showOwnTile = useVoiceStore((store) => store.showOwnTile)
   const screenTracks = useTracks([Track.Source.ScreenShare])
   const anyoneSharing = screenTracks.length > 0
+  const hearingRemote = screenTracks.some((track) => !track.participant.isLocal)
   const participants = useParticipants().filter((participant) => !isMonitorIdentity(participant.identity))
   const tiles = !anyoneSharing || showOwnTile ? participants : []
   const stageClass = anyoneSharing && tiles.length === 0 ? 'voice-stage voice-stage--strip-hidden' : 'voice-stage'
@@ -106,6 +105,7 @@ export function VoiceStage(): React.JSX.Element {
   return (
     <div className={stageClass}>
       <ScreenShares />
+      {hearingRemote && <ScreenVolumeSlider />}
       <RemoteScreenAudio />
       {anyoneSharing && <TileCollapse />}
       {tiles.length > 0 && (

@@ -125,6 +125,10 @@
   padding-top: 6px;
 }
 
+.voice-stage--strip-hidden .screen-volume {
+  bottom: 84px;
+}
+
 .member-toggle--float {
   position: absolute;
   top: 8px;
@@ -178,8 +182,8 @@
 .screen-volume {
   position: absolute;
   right: 16px;
-  bottom: 16px;
-  z-index: 2;
+  bottom: 108px;
+  z-index: 6;
   display: flex;
   align-items: center;
   gap: 8px;
