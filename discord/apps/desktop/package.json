@@ -1,7 +1,7 @@
 {
   "name": "@radcord/desktop",
   "productName": "Radcord",
-  "version": "0.1.101",
+  "version": "0.1.102",
   "private": true,
   "description": "Radcord - voz, vídeo e tela pela rede do Radmin",
   "author": "Akira",
@@ -28,7 +28,10 @@
     "nsis": {
       "oneClick": true,
       "perMachine": false,
-      "allowToChangeInstallationDirectory": false
+      "allowToChangeInstallationDirectory": false,
+      "createDesktopShortcut": "always",
+      "createStartMenuShortcut": true,
+      "shortcutName": "Radcord"
     },
     "extraResources": [
       {
