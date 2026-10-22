@@ -514,6 +514,7 @@
 }
 
 .settings-modal__logout {
+  margin-top: auto;
   background: transparent;
   color: var(--red);
 }
