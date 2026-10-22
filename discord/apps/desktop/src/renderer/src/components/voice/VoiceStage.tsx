@@ -3,6 +3,7 @@ import { isMonitorIdentity } from '@radcord/shared'
 import { Track, type Participant } from 'livekit-client'
 import { useEffect } from 'react'
 import { applyScreenVolume, type VolumeTrack } from '../../lib/voice/screenAudioVolume'
+import { warmScreenAudio } from '../../lib/voice/screenAudioPump'
 import { visibleScreenShares } from '../../lib/voice/visibleScreenShares'
 import { useVoiceStore } from '../../stores/voiceStore'
 import { ScreenVolumeSlider } from './ScreenVolumeSlider'
@@ -106,6 +107,7 @@ export function VoiceStage(): React.JSX.Element {
   const participants = useParticipants().filter((participant) => !isMonitorIdentity(participant.identity))
   const tiles = !anyoneSharing || showOwnTile ? participants : []
   const stageClass = anyoneSharing && tiles.length === 0 ? 'voice-stage voice-stage--strip-hidden' : 'voice-stage'
+  useEffect(() => warmScreenAudio(), [])
 
   return (
     <div className={stageClass}>

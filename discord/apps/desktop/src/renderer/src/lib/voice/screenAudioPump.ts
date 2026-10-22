@@ -1,4 +1,16 @@
-const SAMPLE_RATE = 48000
+const CAPTURE_RATE = 48000
+const LEAD_SECONDS = 0.02
+
+let shared: AudioContext | null = null
+
+/**
+ * Contexto único da tela. Criar outro a cada compartilhamento reinicia a placa e estala o som.
+ * Exemplo: `warmScreenAudio()` ao entrar no palco de voz.
+ */
+export function warmScreenAudio(): void {
+  const context = screenAudioContext()
+  void context.resume()
+}
 
 /**
  * Transforma o PCM do processo escolhido numa faixa publicável.
@@ -6,24 +18,27 @@ const SAMPLE_RATE = 48000
  */
 export class ScreenAudioPump {
   readonly track: MediaStreamTrack
-  private readonly context = new AudioContext({ sampleRate: SAMPLE_RATE })
+  private readonly context = screenAudioContext()
   private readonly destination = this.context.createMediaStreamDestination()
   private next = 0
   private pending = new Uint8Array(0)
+  private readonly playing = new Set<AudioBufferSourceNode>()
 
   constructor() {
     this.track = this.destination.stream.getAudioTracks()[0]
+    void this.context.resume()
   }
 
   push(bytes: Uint8Array): void {
     this.pending = concat(this.pending, bytes)
-    void this.context.resume()
     this.scheduleReadyFrames()
   }
 
   close(): void {
+    for (const source of this.playing) source.stop()
+    this.playing.clear()
     this.track.stop()
-    void this.context.close()
+    this.destination.disconnect()
   }
 
   private scheduleReadyFrames(): void {
@@ -31,15 +46,22 @@ export class ScreenAudioPump {
     if (frames === 0) return
     const used = frames * 4
     const start = this.playAt(frames)
-    scheduleStereo(this.context, this.destination, this.pending.subarray(0, used), start)
+    const source = scheduleStereo(this.context, this.destination, this.pending.subarray(0, used), start)
+    this.playing.add(source)
+    source.onended = () => this.playing.delete(source)
     this.pending = this.pending.subarray(used)
   }
 
   private playAt(frames: number): number {
-    const start = Math.max(this.context.currentTime + 0.05, this.next)
-    this.next = start + frames / SAMPLE_RATE
+    const start = Math.max(this.context.currentTime + LEAD_SECONDS, this.next)
+    this.next = start + frames / CAPTURE_RATE
     return start
   }
+}
+
+function screenAudioContext(): AudioContext {
+  shared ??= new AudioContext()
+  return shared
 }
 
 function scheduleStereo(
@@ -47,9 +69,9 @@ function scheduleStereo(
   destination: MediaStreamAudioDestinationNode,
   bytes: Uint8Array,
   start: number,
-): void {
+): AudioBufferSourceNode {
   const frames = bytes.length / 4
-  const buffer = context.createBuffer(2, frames, SAMPLE_RATE)
+  const buffer = context.createBuffer(2, frames, CAPTURE_RATE)
   const left = buffer.getChannelData(0)
   const right = buffer.getChannelData(1)
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
@@ -61,6 +83,7 @@ function scheduleStereo(
   source.buffer = buffer
   source.connect(destination)
   source.start(start)
+  return source
 }
 
 function concat(left: Uint8Array, right: Uint8Array): Uint8Array {
