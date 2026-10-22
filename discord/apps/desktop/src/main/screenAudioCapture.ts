@@ -49,7 +49,11 @@ async function startScreenAudio(target: WebContents): Promise<void> {
   const names = await Promise.all(pids.map(processName))
   screenAudioLog('capture_started', { sourceId, pids, names })
   pids.forEach((pid, index) => captures.push(spawnCapture(pid, index)))
-  meterTimer = setInterval(() => screenAudioLog('capture_meter', { ...meter }), 1000)
+  meterTimer = setInterval(() => {
+    screenAudioLog('capture_meter', { ...meter })
+    meter.peak = 0
+    meter.maxGapMs = 0
+  }, 1000)
   target.once('destroyed', stopScreenAudio)
 }
 
@@ -85,7 +89,7 @@ function noteMeter(chunk: Buffer): void {
   meter.lastAt = now
   meter.chunks += 1
   meter.bytes += chunk.length
-  meter.peak = pcmPeak(chunk)
+  meter.peak = Math.max(meter.peak, pcmPeak(chunk))
 }
 
 function pcmPeak(chunk: Buffer): number {
