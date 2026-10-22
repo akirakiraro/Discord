@@ -15,6 +15,9 @@ contextBridge.exposeInMainWorld('radcord', {
   offScreenAudio: (): void => {
     ipcRenderer.removeAllListeners('radcord:screen-audio-pcm')
   },
+  logScreenAudio: (event: string, detail: Record<string, unknown>): void => {
+    ipcRenderer.send('radcord:screen-audio-log', { event, detail })
+  },
   takeQueuedReports: (): Promise<ClientReportRequest[]> => ipcRenderer.invoke('radcord:take-reports'),
   saveQueuedReports: (reports: ClientReportRequest[]): Promise<void> => ipcRenderer.invoke('radcord:queue-reports', reports),
   onMainReport: (listener: (message: string) => void): void => {

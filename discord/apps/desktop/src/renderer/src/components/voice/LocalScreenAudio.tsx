@@ -25,6 +25,7 @@ export function LocalScreenAudio({ trackRef, volume }: LocalScreenAudioProps): R
 
   useEffect(() => {
     if (element.current) element.current.volume = volume
+    window.radcord?.logScreenAudio('local_monitor', { volume })
   }, [volume, media])
 
   return <audio ref={element} autoPlay />

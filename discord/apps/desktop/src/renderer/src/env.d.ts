@@ -11,6 +11,7 @@ declare global {
       stopScreenAudio(): Promise<void>
       onScreenAudio(listener: (pcm: Uint8Array) => void): void
       offScreenAudio(): void
+      logScreenAudio(event: string, detail: Record<string, unknown>): void
       takeQueuedReports(): Promise<QueuedClientReport[]>
       saveQueuedReports(reports: QueuedClientReport[]): Promise<void>
       onMainReport(listener: (message: string) => void): void

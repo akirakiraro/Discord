@@ -1,14 +1,18 @@
 import { spawn, type ChildProcessWithoutNullStreams } from 'node:child_process'
+import { execFile } from 'node:child_process'
 import { existsSync } from 'node:fs'
 import { join } from 'node:path'
 import { app, desktopCapturer, ipcMain, screen, type WebContents } from 'electron'
 import { mixPcm, parseWindowLines, pidsOnDisplay, windowHandle } from '../shared/screenAudioTargets'
 import { activeScreenSourceId } from './screenShareSources'
+import { screenAudioLog } from './screenAudioLog'
 
 const FRAME = 3840
 const captures: ChildProcessWithoutNullStreams[] = []
 let sender: WebContents | null = null
 let pending: Buffer[] = []
+let meter = emptyMeter()
+let meterTimer: NodeJS.Timeout | null = null
 
 /**
  * Liga o áudio isolado da última tela escolhida e corta quando o renderer pede.
@@ -20,10 +24,14 @@ export function exposeScreenAudioIpc(): void {
 }
 
 export function stopScreenAudio(): void {
+  if (captures.length > 0) screenAudioLog('capture_stopped', meter)
   for (const child of captures) child.kill()
   captures.length = 0
   pending = []
   sender = null
+  meter = emptyMeter()
+  if (meterTimer) clearInterval(meterTimer)
+  meterTimer = null
 }
 
 async function startScreenAudio(target: WebContents): Promise<void> {
@@ -34,7 +42,11 @@ async function startScreenAudio(target: WebContents): Promise<void> {
   if (pids.length === 0) throw new Error(`sem processo de áudio para ${sourceId}`)
   sender = target
   pending = pids.map(() => Buffer.alloc(0))
+  meter = emptyMeter()
+  const names = await Promise.all(pids.map(processName))
+  screenAudioLog('capture_started', { sourceId, pids, names })
   pids.forEach((pid, index) => captures.push(spawnCapture(pid, index)))
+  meterTimer = setInterval(() => screenAudioLog('capture_meter', { ...meter }), 1000)
   target.once('destroyed', stopScreenAudio)
 }
 
@@ -42,15 +54,53 @@ function spawnCapture(pid: number, index: number): ChildProcessWithoutNullStream
   const child = spawn(loopbackExe(), ['capture', String(pid)], { windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] })
   child.stdout.on('data', (chunk: Buffer) => pushPcm(index, chunk))
   child.stderr.on('data', (chunk: Buffer) => {
-    console.error(JSON.stringify({ event: 'screen_audio_failed', pid, message: chunk.toString().trim() }))
+    screenAudioLog('capture_stderr', { pid, message: chunk.toString().trim() })
   })
   return child
 }
 
 function pushPcm(index: number, chunk: Buffer): void {
   if (!pending[index]) return
+  noteMeter(chunk)
   pending[index] = Buffer.concat([pending[index], chunk])
   drainMixer()
+}
+
+function noteMeter(chunk: Buffer): void {
+  const now = Date.now()
+  if (meter.lastAt > 0) meter.maxGapMs = Math.max(meter.maxGapMs, now - meter.lastAt)
+  meter.lastAt = now
+  meter.chunks += 1
+  meter.bytes += chunk.length
+  meter.peak = Math.max(meter.peak, pcmPeak(chunk))
+}
+
+function pcmPeak(chunk: Buffer): number {
+  let peak = 0
+  for (let offset = 0; offset + 1 < chunk.length; offset += 32) {
+    peak = Math.max(peak, Math.abs(chunk.readInt16LE(offset)))
+  }
+  return peak
+}
+
+function emptyMeter(): CaptureMeter {
+  return { chunks: 0, bytes: 0, peak: 0, maxGapMs: 0, lastAt: 0 }
+}
+
+interface CaptureMeter {
+  chunks: number
+  bytes: number
+  peak: number
+  maxGapMs: number
+  lastAt: number
+}
+
+function processName(pid: number): Promise<string> {
+  return new Promise((resolve) => {
+    execFile('tasklist', ['/FI', `PID eq ${pid}`, '/FO', 'CSV', '/NH'], { windowsHide: true }, (_error, stdout) => {
+      resolve(stdout.split(',')[0]?.replaceAll('"', '').trim() || 'desconhecido')
+    })
+  })
 }
 
 function drainMixer(): void {

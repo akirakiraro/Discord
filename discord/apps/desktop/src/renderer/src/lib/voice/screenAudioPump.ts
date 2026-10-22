@@ -47,6 +47,7 @@ export class ScreenAudioPump {
     const used = frames * 4
     const start = this.playAt(frames)
     const source = scheduleStereo(this.context, this.destination, this.pending.subarray(0, used), start)
+    logPlayback(this.context, frames, start)
     this.playing.add(source)
     source.onended = () => this.playing.delete(source)
     this.pending = this.pending.subarray(used)
@@ -59,6 +60,15 @@ export class ScreenAudioPump {
   }
 }
 
+function logPlayback(context: AudioContext, frames: number, start: number): void {
+  const lateMs = Math.round((context.currentTime + 0.02 - start) * 1000)
+  if (frames < 24000 && lateMs < 80) return
+  window.radcord?.logScreenAudio('playback_burst', {
+    sampleRate: context.sampleRate,
+    frames,
+    lateMs,
+  })
+}
 function screenAudioContext(): AudioContext {
   shared ??= new AudioContext()
   return shared
