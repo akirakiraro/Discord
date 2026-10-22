@@ -108,6 +108,21 @@ sealed partial class LoopbackSession
 
     public void Stop() => _stop = true;
 
+    void WatchStop()
+    {
+        try { Console.OpenStandardInput().ReadByte(); }
+        catch (Exception error) { Console.Error.WriteLine(error.Message); }
+        Stop();
+    }
+
+    void ReleaseClient()
+    {
+        _capture = null;
+        _client = null;
+        GC.Collect();
+        GC.WaitForPendingFinalizers();
+    }
+
     void Activate(uint pid)
     {
         var activation = new ActivationParams { ActivationType = AudioFlags.ActivationProcessLoopback, TargetProcessId = pid, Mode = AudioFlags.IncludeProcessTree };
@@ -126,6 +141,7 @@ sealed partial class LoopbackSession
             if (_activateHr < 0 || _client is null || _capture is null) throw new InvalidOperationException($"loopback do pid {pid} falhou: 0x{_activateHr:X8}");
             _client.SetEventHandle(_sampleReady.SafeWaitHandle.DangerousGetHandle());
             if (_client.Start() < 0) throw new InvalidOperationException($"Start do pid {pid} falhou");
+            _ = Task.Run(WatchStop);
             _ = Task.Run(Pump);
         }
         catch (Exception error)
@@ -147,11 +163,11 @@ sealed partial class LoopbackSession
         {
             _activateHr = hr;
             if (hr < 0 || punk == 0) return;
-            _client = (IAudioClient?)ComBridge.ComWrappers.GetOrCreateObjectForComInstance(punk, CreateObjectFlags.None);
+            _client = (IAudioClient?)ComBridge.ComWrappers.GetOrCreateObjectForComInstance(punk, CreateObjectFlags.UniqueInstance);
             if (_client is null || !OpenCapture(punk)) return;
             var captureId = typeof(IAudioCaptureClient).GUID;
             _activateHr = _client.GetService(ref captureId, out var capturePtr);
-            _capture = (IAudioCaptureClient?)ComBridge.ComWrappers.GetOrCreateObjectForComInstance(capturePtr, CreateObjectFlags.None);
+            _capture = (IAudioCaptureClient?)ComBridge.ComWrappers.GetOrCreateObjectForComInstance(capturePtr, CreateObjectFlags.UniqueInstance);
         }
         catch (Exception error)
         {
@@ -169,8 +185,13 @@ sealed partial class LoopbackSession
     {
         try
         {
-            while (!_stop && _sampleReady.WaitOne(200)) Drain();
+            while (!_stop)
+            {
+                _sampleReady.WaitOne(10);
+                Drain();
+            }
             _client?.Stop();
+            ReleaseClient();
         }
         catch (Exception error)
         {
@@ -229,10 +250,10 @@ sealed partial class LoopbackSession
 
     bool Commit(nint format, uint flags, string path)
     {
-        try
-        {
-            _activateHr = _client!.Initialize(0, flags, 0, 0, format, 0);
-        }
+            try
+            {
+                _activateHr = _client!.Initialize(0, flags, 0, 0, format, 0);
+            }
         catch (Exception error)
         {
             _activateHr = error.HResult;
@@ -313,8 +334,8 @@ sealed partial class LoopbackSession
             var glitch = (flags & AudioFlags.DiscontinuityFlag) != 0;
             if (glitch) Console.Error.WriteLine($"discontinuity frames={frames}");
             var pcm = glitch ? new byte[frames * 4] : ToPcm16(data, (int)frames, bytes);
-            _output.Write(pcm);
             _capture.ReleaseBuffer(frames);
+            _output.Write(pcm);
         }
         _output.Flush();
     }

@@ -23,19 +23,19 @@ export function exposeScreenAudioIpc(): void {
   ipcMain.handle('radcord:screen-audio-stop', () => stopScreenAudio())
 }
 
-export function stopScreenAudio(): void {
-  if (captures.length > 0) screenAudioLog('capture_stopped', meter)
-  for (const child of captures) child.kill()
-  captures.length = 0
+export async function stopScreenAudio(): Promise<void> {
+  const running = captures.splice(0)
+  if (running.length > 0) screenAudioLog('capture_stopped', meter)
   pending = []
   sender = null
   meter = emptyMeter()
   if (meterTimer) clearInterval(meterTimer)
   meterTimer = null
+  await Promise.all(running.map(releaseCapture))
 }
 
 async function startScreenAudio(target: WebContents): Promise<void> {
-  stopScreenAudio()
+  await stopScreenAudio()
   const sourceId = activeScreenSourceId()
   if (!sourceId) throw new Error('nenhuma tela escolhida para o áudio')
   const pids = await pidsFor(sourceId)
@@ -51,15 +51,35 @@ async function startScreenAudio(target: WebContents): Promise<void> {
     meter.peak = 0
     meter.maxGapMs = 0
   }, 1000)
+  target.removeListener('destroyed', stopScreenAudio)
   target.once('destroyed', stopScreenAudio)
 }
 
+function releaseCapture(child: ChildProcessWithoutNullStreams): Promise<void> {
+  return new Promise((resolve) => {
+    if (child.exitCode !== null) {
+      resolve()
+      return
+    }
+    child.once('exit', () => resolve())
+    try {
+      child.stdin.end()
+    } catch {
+      child.kill()
+    }
+    setTimeout(() => {
+      if (child.exitCode === null) child.kill()
+    }, 400)
+  })
+}
+
 function spawnCapture(pid: number, index: number): ChildProcessWithoutNullStreams {
-  const child = spawn(loopbackExe(), ['capture', String(pid)], { windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] })
+  const child = spawn(loopbackExe(), ['capture', String(pid)], { windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'] })
   child.stdout.on('data', (chunk: Buffer) => pushPcm(index, chunk))
   child.stderr.on('data', (chunk: Buffer) => {
     screenAudioLog('capture_stderr', { pid, message: chunk.toString().trim() })
   })
+  child.on('exit', (code) => screenAudioLog('capture_exit', { pid, code }))
   return child
 }
 
