@@ -23,9 +23,7 @@ export function SettingsModal({ onClose }: SettingsModalProps): React.JSX.Elemen
       <div className="settings-modal" role="dialog" aria-label="Configurações" onClick={(event) => event.stopPropagation()}>
         <SettingsNav tab={tab} onSelect={setTab} />
         <div className="settings-modal__content">
-          <button type="button" className="settings-modal__close" title="Fechar" onClick={onClose}>
-            ×
-          </button>
+          <button type="button" className="settings-modal__close" title="Fechar" aria-label="Fechar" onClick={onClose} />
           {tab === 'conta' ? <AccountSettings /> : <VoiceSettings />}
         </div>
       </div>
