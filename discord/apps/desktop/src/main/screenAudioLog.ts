@@ -1,22 +1,11 @@
-import { appendFileSync } from 'node:fs'
-import { join } from 'node:path'
-import { app, ipcMain } from 'electron'
+import { ipcMain } from 'electron'
 
 /**
- * Grava uma linha do que acontece com o áudio da tela.
+ * Diagnóstico da captura desligado. Não grava `screen-audio.log`.
+ * O formato das linhas, se for religado, está em `docs/audio-tela.md`.
  * Exemplo: `screenAudioLog('capture_started', { pids: [1] })`.
  */
-export function screenAudioLog(event: string, detail: Record<string, unknown>): void {
-  const line = JSON.stringify({ t: new Date().toISOString(), event, ...detail })
-  for (const file of logFiles()) {
-    try {
-      appendFileSync(file, `${line}\n`)
-    } catch (error) {
-      console.error(JSON.stringify({ event: 'screen_audio_log_failed', file, message: String(error) }))
-    }
-  }
-  console.error(line)
-}
+export function screenAudioLog(_event: string, _detail: Record<string, unknown>): void {}
 
 /** Recebe o relato do renderer. Exemplo: `exposeScreenAudioLog()` no app pronto. */
 export function exposeScreenAudioLog(): void {
@@ -24,10 +13,6 @@ export function exposeScreenAudioLog(): void {
     if (!isLogPayload(payload)) return
     screenAudioLog(payload.event, payload.detail ?? {})
   })
-}
-
-function logFiles(): string[] {
-  return [join(app.getPath('userData'), 'screen-audio.log'), join(app.getAppPath(), 'screen-audio.log')]
 }
 
 function isLogPayload(payload: unknown): payload is { event: string; detail?: Record<string, unknown> } {

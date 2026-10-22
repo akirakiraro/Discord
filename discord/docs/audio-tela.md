@@ -78,7 +78,7 @@ Prova local, com um tom de 440 Hz e amplitude 12000, duas capturas seguidas: as 
 
 ## Como ler o log
 
-O arquivo é `apps/desktop/screen-audio.log` (e uma cópia em `%userData%/screen-audio.log`). Está no `.gitignore` por `*.log`. Uma linha JSON por evento. O pico do medidor é o máximo daquele segundo e volta a zero no intervalo.
+A gravação está desligada desde a 0.1.96: `screenAudioLog` não escreve arquivo nem console. Os eventos continuam chamando a função, então religar é voltar a gravar a linha JSON nesse ponto. Quando estava ligado, o arquivo era `apps/desktop/screen-audio.log` (e uma cópia em `%userData%/screen-audio.log`), no `.gitignore` por `*.log`. Uma linha JSON por evento. O pico do medidor era o máximo daquele segundo e voltava a zero no intervalo.
 
 Captura saudável de uma janela:
 
