@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { logout } from '../../lib/auth/logout'
 import { useSessionStore } from '../../stores/sessionStore'
-import { Avatar } from '../common/Avatar'
+import { ProfileEditor } from './ProfileModal'
 import { VoiceSettings } from './VoiceSettings'
 
 type SettingsTab = 'conta' | 'voz'
@@ -23,9 +23,7 @@ export function SettingsModal({ onClose }: SettingsModalProps): React.JSX.Elemen
       <div className="settings-modal" role="dialog" aria-label="Configurações" onClick={(event) => event.stopPropagation()}>
         <SettingsNav tab={tab} onSelect={setTab} />
         <div className="settings-modal__content">
-          <button type="button" className="settings-modal__close" title="Fechar" onClick={onClose}>
-            ×
-          </button>
+          <button type="button" className="settings-modal__close" title="Fechar" aria-label="Fechar" onClick={onClose} />
           {tab === 'conta' ? <AccountSettings /> : <VoiceSettings />}
         </div>
       </div>
@@ -57,19 +55,15 @@ function AccountSettings(): React.JSX.Element {
   const user = session?.user
 
   return (
-    <div className="settings-pane">
+    <div className="settings-pane settings-pane--account">
       <h2>Minha conta</h2>
       {user && (
         <div className="settings-account">
-          <Avatar name={user.displayName} seed={user.id} imageUrl={user.avatarUrl} size={64} />
-          <div>
-            <p className="settings-account__name">{user.displayName}</p>
-            <p className="settings-account__username">{user.username}</p>
-          </div>
+          <ProfileEditor user={user} />
         </div>
       )}
       {session && (
-        <button type="button" className="settings-modal__logout" onClick={() => void logout(session)}>
+        <button type="button" className="button settings-modal__logout" onClick={() => void logout(session)}>
           Sair da conta
         </button>
       )}

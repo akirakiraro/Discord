@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { clampUnitVolume, OWN_SCREEN_LISTEN, REMOTE_SCREEN_LISTEN } from '../lib/voice/screenAudioVolume'
 
 export interface VoiceConnection {
   channelId: string
@@ -12,6 +13,8 @@ export interface VoiceStore {
   deafened: boolean
   showOwnShare: boolean
   showOwnTile: boolean
+  ownScreenAudioVolume: number
+  screenAudioVolume: number
   lastError: string | null
   join: (connection: VoiceConnection) => void
   leave: (error?: string) => void
@@ -19,6 +22,8 @@ export interface VoiceStore {
   toggleDeafen: () => void
   toggleOwnShare: () => void
   toggleOwnTile: () => void
+  setOwnScreenAudioVolume: (volume: number) => void
+  setScreenAudioVolume: (volume: number) => void
 }
 
 export const useVoiceStore = create<VoiceStore>((set) => ({
@@ -27,6 +32,8 @@ export const useVoiceStore = create<VoiceStore>((set) => ({
   deafened: false,
   showOwnShare: true,
   showOwnTile: true,
+  ownScreenAudioVolume: OWN_SCREEN_LISTEN,
+  screenAudioVolume: REMOTE_SCREEN_LISTEN,
   lastError: null,
   join: (connection) => set({ connection, lastError: null }),
   leave: (error) => set({ connection: null, lastError: error ?? null }),
@@ -38,6 +45,8 @@ export const useVoiceStore = create<VoiceStore>((set) => ({
     }),
   toggleOwnShare: () => set((store) => ({ showOwnShare: !store.showOwnShare })),
   toggleOwnTile: () => set((store) => ({ showOwnTile: !store.showOwnTile })),
+  setOwnScreenAudioVolume: (volume) => set({ ownScreenAudioVolume: clampUnitVolume(volume) }),
+  setScreenAudioVolume: (volume) => set({ screenAudioVolume: clampUnitVolume(volume) }),
 }))
 
 /** Ensurdecer também corta o microfone, como no Discord. */

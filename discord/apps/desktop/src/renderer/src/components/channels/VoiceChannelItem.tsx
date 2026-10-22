@@ -29,7 +29,7 @@ export function VoiceChannelItem({ channel }: { channel: ChannelDto }): React.JS
 
   return (
     <li>
-      <button className={viewing || connectedHere ? 'channel-item channel-item--active' : 'channel-item'} onClick={joinChannel}>
+      <button className={viewing ? 'channel-item channel-item--active' : 'channel-item'} onClick={joinChannel}>
         <span className="channel-item__icon">🔊</span>
         {channel.name}
       </button>

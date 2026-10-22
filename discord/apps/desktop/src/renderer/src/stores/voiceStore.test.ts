@@ -1,11 +1,21 @@
 import { beforeEach, describe, expect, it } from 'vitest'
+import { OWN_SCREEN_LISTEN, REMOTE_SCREEN_LISTEN } from '../lib/voice/screenAudioVolume'
 import { isMicrophoneLive, useVoiceStore } from './voiceStore'
 
 const CONNECTION = { channelId: 'v', token: 't', livekitUrl: 'ws://26.186.21.58:7880' }
 
 describe('voiceStore', () => {
   beforeEach(() => {
-    useVoiceStore.setState({ connection: null, micMuted: false, deafened: false, showOwnShare: true, showOwnTile: true, lastError: null })
+    useVoiceStore.setState({
+      connection: null,
+      micMuted: false,
+      deafened: false,
+      showOwnShare: true,
+      showOwnTile: true,
+      ownScreenAudioVolume: OWN_SCREEN_LISTEN,
+      screenAudioVolume: REMOTE_SCREEN_LISTEN,
+      lastError: null,
+    })
   })
 
   it('entrar limpa o erro anterior e sair pode registrar o motivo', () => {
@@ -39,6 +49,23 @@ describe('voiceStore', () => {
     useVoiceStore.getState().toggleOwnTile()
 
     expect(useVoiceStore.getState().showOwnTile).toBe(false)
+  })
+
+  it('a própria tela começa muda e a dos outros no máximo', () => {
+    expect(useVoiceStore.getState()).toMatchObject({
+      ownScreenAudioVolume: OWN_SCREEN_LISTEN,
+      screenAudioVolume: REMOTE_SCREEN_LISTEN,
+    })
+  })
+
+  it('o volume da tela fica entre 0 e 1', () => {
+    useVoiceStore.getState().setScreenAudioVolume(2)
+
+    expect(useVoiceStore.getState().screenAudioVolume).toBe(1)
+
+    useVoiceStore.getState().setScreenAudioVolume(-1)
+
+    expect(useVoiceStore.getState().screenAudioVolume).toBe(0)
   })
 
   it('ensurdecer também muta o microfone', () => {

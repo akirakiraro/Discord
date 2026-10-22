@@ -107,20 +107,41 @@
   height: 100%;
 }
 
+.voice-channel-view--share .participant-grid {
+  flex: 0 0 auto;
+  align-content: center;
+  padding: 4px 8px 0;
+}
+
+.voice-channel-view--share .voice-controls {
+  padding: 28px 16px 12px;
+}
+
+.voice-stage--strip-hidden .tile-collapse {
+  margin-top: 0;
+}
+
+.voice-stage--strip-hidden .voice-controls {
+  padding-top: 6px;
+}
+
 .member-toggle--float {
   position: absolute;
   top: 8px;
   right: 16px;
   z-index: 3;
-  background: rgba(0, 0, 0, 0.55);
+  background: transparent;
+  opacity: 0;
+  pointer-events: none;
 }
 
-.voice-stage--controls-overlay .voice-controls {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 8px;
-  z-index: 3;
+.member-toggle--float.member-toggle--awake {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.member-toggle--float:hover {
+  background: transparent;
 }
 
 .voice-join {
@@ -154,7 +175,59 @@
   flex-direction: column;
 }
 
+.voice-controls__row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.screen-volume {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  background: none;
+  color: var(--text-strong);
+  cursor: pointer;
+}
+
+.screen-volume input[type='range'] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 92px;
+  height: 14px;
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.screen-volume input[type='range']::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 999px;
+  background: linear-gradient(to right, var(--brand) var(--volume-fill), #72767d var(--volume-fill));
+}
+
+.screen-volume input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 10px;
+  height: 10px;
+  margin-top: -3px;
+  border: none;
+  border-radius: 50%;
+  background: #fff;
+}
+
 .screen-grid {
+  position: relative;
   flex: 3;
   min-height: 0;
   display: grid;
@@ -186,6 +259,25 @@
   border-radius: 4px;
   background: rgba(0, 0, 0, 0.6);
   font-size: 13px;
+}
+
+.tile-collapse {
+  align-self: center;
+  width: 32px;
+  height: 32px;
+  margin: 8px 0 0;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--bg-active);
+  color: var(--text-strong);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.tile-collapse:hover {
+  filter: brightness(1.2);
 }
 
 .participant-grid {

@@ -12,6 +12,7 @@ export interface ScreenSourceOption {
 const THUMBNAIL = { width: 320, height: 180 }
 
 let pendingSourceId: string | null = null
+let activeSourceId: string | null = null
 
 /**
  * Lista monitores e janelas para o seletor do renderer.
@@ -31,6 +32,12 @@ export async function listScreenSources(): Promise<ScreenSourceOption[]> {
  */
 export function rememberScreenSource(sourceId: string): void {
   pendingSourceId = sourceId
+  activeSourceId = sourceId
+}
+
+/** A última tela escolhida, ainda depois do getDisplayMedia consumir a pendência. */
+export function activeScreenSourceId(): string | null {
+  return activeSourceId
 }
 
 /**

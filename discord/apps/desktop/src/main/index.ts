@@ -1,23 +1,49 @@
 import { networkInterfaces } from 'node:os'
 import { join } from 'node:path'
-import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron'
+import { app, BrowserWindow, dialog, ipcMain, screen, shell, type BrowserWindowConstructorOptions } from 'electron'
 import { autoUpdater, type UpdateCheckResult } from 'electron-updater'
+import { bindClientReports } from './clientReportBridge'
 import { installBlockUpdate, type BlockUpdateClient } from './desktopUpdate'
 import { allowMediaPermissions, handleScreenShareRequests } from './mediaPermissions'
 import { findRadminIpv4 } from './radminAddress'
+import { exposeScreenAudioIpc } from './screenAudioCapture'
+import { exposeScreenAudioLog } from './screenAudioLog'
 import { exposeScreenShareIpc } from './screenShareSources'
 import { windowChrome } from './windowChrome'
+import {
+  DEFAULT_WINDOW_SIZE,
+  launchPlacement,
+  placementFromWindow,
+  readWindowPlacement,
+  rememberPlacement,
+  writeWindowPlacement,
+  type PlacementMemory,
+  type WindowPlacement,
+} from './windowPlacement'
 
 // O Chromium troca os IPs locais por nomes mDNS ".local" nos candidatos WebRTC;
 // pela LAN virtual do Radmin esses nomes não resolvem e a mídia pode não conectar.
 app.commandLine.appendSwitch('disable-features', 'WebRtcHideLocalIpsWithMdns')
 
 function createMainWindow(): BrowserWindow {
-  const window = new BrowserWindow({
-    width: 1200,
-    height: 760,
+  const placementFile = join(app.getPath('userData'), 'window-placement.json')
+  const saved = launchPlacement(readWindowPlacement(placementFile), workAreas())
+  const window = new BrowserWindow(mainWindowOptions(saved))
+  bindWindowNavigation(window)
+  // Com titleBarOverlay, o maximizar no Windows passa da área de trabalho e cobre a barra de tarefas.
+  window.on('maximize', () => snapToWorkArea(window))
+  watchPlacement(window, placementFile, saved)
+  revealWhenReady(window, saved)
+  loadRenderer(window)
+  return window
+}
+
+function mainWindowOptions(saved: WindowPlacement | null): BrowserWindowConstructorOptions {
+  return {
+    ...openingBounds(saved),
     minWidth: 900,
     minHeight: 560,
+    show: false,
     backgroundColor: windowChrome.backgroundColor,
     titleBarStyle: windowChrome.titleBarStyle,
     titleBarOverlay: windowChrome.titleBarOverlay,
@@ -28,13 +54,108 @@ function createMainWindow(): BrowserWindow {
       contextIsolation: true,
       sandbox: true,
     },
-  })
+  }
+}
+
+function openingBounds(saved: WindowPlacement | null): { x?: number; y?: number; width: number; height: number } {
+  if (!saved) return DEFAULT_WINDOW_SIZE
+  return { x: saved.x, y: saved.y, width: saved.width, height: saved.height }
+}
+
+function workAreas() {
+  return screen.getAllDisplays().map((display) => display.workArea)
+}
+
+function bindWindowNavigation(window: BrowserWindow): void {
   window.webContents.setWindowOpenHandler(({ url }) => {
     if (/^https?:\/\//.test(url)) void shell.openExternal(url)
     return { action: 'deny' }
   })
-  loadRenderer(window)
-  return window
+}
+
+function revealWhenReady(window: BrowserWindow, saved: WindowPlacement | null): void {
+  const reveal = () => revealWindow(window, saved)
+  window.once('ready-to-show', reveal)
+  window.webContents.on('did-fail-load', (_event, _code, _desc, _url, isMainFrame) => {
+    if (isMainFrame) reveal()
+  })
+}
+
+function revealWindow(window: BrowserWindow, saved: WindowPlacement | null): void {
+  if (window.isDestroyed() || window.isVisible()) return
+  if (saved?.fullscreen) window.setFullScreen(true)
+  else if (saved?.maximized) window.maximize()
+  window.show()
+}
+
+function watchPlacement(window: BrowserWindow, filePath: string, saved: WindowPlacement | null): void {
+  const memory = rememberPlacement(saved ?? placementFromWindow(window))
+  const save = () => writeWindowPlacement(filePath, memory.current())
+  bindPlacementFlags(window, memory, save)
+  bindPlacementBounds(window, memory, save)
+}
+
+function bindPlacementFlags(window: BrowserWindow, memory: PlacementMemory, save: () => void): void {
+  window.on('maximize', () => { memory.noteMaximized(true); save() })
+  window.on('enter-full-screen', () => { memory.noteFullscreen(true); save() })
+  deferUntilAlive(window, 'unmaximize', () => noteRestored(window, memory, save, false))
+  deferUntilAlive(window, 'leave-full-screen', () => noteRestored(window, memory, save, true))
+}
+
+function noteRestored(window: BrowserWindow, memory: PlacementMemory, save: () => void, fullscreen: boolean): void {
+  if (fullscreen) memory.noteFullscreen(false)
+  else if (!fillsWorkArea(window)) memory.noteMaximized(false)
+  if (!memory.current().maximized && !memory.current().fullscreen) memory.noteBounds(window.getNormalBounds())
+  save()
+}
+
+function fillsWorkArea(window: BrowserWindow): boolean {
+  const bounds = window.getBounds()
+  const area = screen.getDisplayMatching(bounds).workArea
+  return Math.abs(bounds.x - area.x) <= 2
+    && Math.abs(bounds.y - area.y) <= 2
+    && Math.abs(bounds.width - area.width) <= 2
+    && Math.abs(bounds.height - area.height) <= 2
+}
+
+function deferUntilAlive(window: BrowserWindow, event: 'unmaximize' | 'leave-full-screen', apply: () => void): void {
+  window.on(event, () => {
+    setTimeout(() => {
+      if (!window.isDestroyed()) apply()
+    }, 100)
+  })
+}
+
+function bindPlacementBounds(window: BrowserWindow, memory: PlacementMemory, save: () => void): void {
+  let timer: ReturnType<typeof setTimeout> | undefined
+  const schedule = () => {
+    clearTimeout(timer)
+    timer = setTimeout(() => storeRestoredBounds(window, memory, save), 200)
+  }
+  window.on('resize', schedule)
+  window.on('move', schedule)
+  window.on('close', () => {
+    clearTimeout(timer)
+    storeRestoredBounds(window, memory, save)
+  })
+}
+
+function storeRestoredBounds(window: BrowserWindow, memory: PlacementMemory, save: () => void): void {
+  if (window.isDestroyed()) return
+  const maximized = memory.current().maximized || window.isMaximized()
+  const fullscreen = memory.current().fullscreen || window.isFullScreen()
+  memory.noteMaximized(maximized)
+  memory.noteFullscreen(fullscreen)
+  if (!maximized && !fullscreen) memory.noteBounds(window.getNormalBounds())
+  save()
+}
+
+function snapToWorkArea(window: BrowserWindow): void {
+  const area = screen.getDisplayMatching(window.getBounds()).workArea
+  setTimeout(() => {
+    if (window.isDestroyed() || !window.isMaximized()) return
+    window.setBounds({ x: area.x, y: area.y, width: area.width, height: area.height })
+  }, 0)
 }
 
 function loadRenderer(window: BrowserWindow): void {
@@ -107,7 +228,9 @@ app.whenReady().then(() => {
   exposeRadminIp()
   exposeDesktopUpdate()
   exposeScreenShareIpc()
-  createMainWindow()
+  exposeScreenAudioIpc()
+  exposeScreenAudioLog()
+  bindClientReports(createMainWindow(), join(app.getPath('userData'), 'pending-reports.json'))
 })
 
 app.on('window-all-closed', () => app.quit())

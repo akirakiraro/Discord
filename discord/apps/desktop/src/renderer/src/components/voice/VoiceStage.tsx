@@ -1,8 +1,12 @@
 import { AudioTrack, VideoTrack, useParticipants, useTracks } from '@livekit/components-react'
 import { isMonitorIdentity } from '@radcord/shared'
 import { Track, type Participant } from 'livekit-client'
+import { useEffect } from 'react'
+import { applyScreenVolume, type ScreenVolumeTarget, type VolumeTrack } from '../../lib/voice/screenAudioVolume'
+import { warmScreenAudio } from '../../lib/voice/screenAudioPump'
 import { visibleScreenShares } from '../../lib/voice/visibleScreenShares'
 import { useVoiceStore } from '../../stores/voiceStore'
+import { LocalScreenAudio } from './LocalScreenAudio'
 import { Avatar } from '../common/Avatar'
 import { useMemberFace } from './useMemberFace'
 import { useSpeaking } from './useSpeaking'
@@ -23,14 +27,39 @@ function ParticipantTile({ participant }: { participant: Participant }): React.J
   )
 }
 
+function asVolumeTrack(track: Track | undefined): VolumeTrack | undefined {
+  if (track && 'setVolume' in track) return track
+  return undefined
+}
+
+function useScreenListenLevel(target: ScreenVolumeTarget): number {
+  const own = useVoiceStore((store) => store.ownScreenAudioVolume)
+  const remote = useVoiceStore((store) => store.screenAudioVolume)
+  const deafened = useVoiceStore((store) => store.deafened)
+  if (deafened) return 0
+  return target === 'own' ? own : remote
+}
+
 function RemoteScreenAudio(): React.JSX.Element | null {
-  const tracks = useTracks([Track.Source.ScreenShareAudio]).filter((track) => !track.participant.isLocal)
-  if (tracks.length === 0) return null
+  const tracks = useTracks([Track.Source.ScreenShareAudio])
+  const ownLevel = useScreenListenLevel('own')
+  const remoteLevel = useScreenListenLevel('remote')
+  const remote = tracks.filter((track) => !track.participant.isLocal)
+
+  useEffect(() => {
+    for (const track of remote) applyScreenVolume(asVolumeTrack(track.publication.track), remoteLevel)
+  }, [remote, remoteLevel])
+
+  const local = tracks.filter((track) => track.participant.isLocal)
+  if (remote.length === 0 && local.length === 0) return null
 
   return (
     <>
-      {tracks.map((track) => (
-        <AudioTrack key={track.publication.trackSid} trackRef={track} />
+      {local.map((track) => (
+        <LocalScreenAudio key={track.publication.trackSid} trackRef={track} volume={ownLevel} />
+      ))}
+      {remote.map((track) => (
+        <AudioTrack key={track.publication.trackSid} trackRef={track} volume={remoteLevel} />
       ))}
     </>
   )
@@ -57,18 +86,40 @@ function ScreenShares(): React.JSX.Element | null {
   )
 }
 
+function TileCollapse(): React.JSX.Element {
+  const showOwnTile = useVoiceStore((store) => store.showOwnTile)
+  const toggleOwnTile = useVoiceStore((store) => store.toggleOwnTile)
+  const title = showOwnTile ? 'Ocultar usuários' : 'Mostrar usuários'
+
+  return (
+    <button className="tile-collapse" title={title} onClick={toggleOwnTile}>
+      <ChevronIcon down={showOwnTile} />
+    </button>
+  )
+}
+
+function ChevronIcon({ down }: { down: boolean }): React.JSX.Element {
+  return (
+    <svg width="16" height="16" viewBox="0 0 18 18" aria-hidden="true">
+      <path d={down ? 'M4 7 L9 12 L14 7' : 'M4 11 L9 6 L14 11'} fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  )
+}
+
 export function VoiceStage(): React.JSX.Element {
   const showOwnTile = useVoiceStore((store) => store.showOwnTile)
-  const showOwnShare = useVoiceStore((store) => store.showOwnShare)
-  const sharing = visibleScreenShares(useTracks([Track.Source.ScreenShare]), showOwnShare).length > 0
+  const screenTracks = useTracks([Track.Source.ScreenShare])
+  const anyoneSharing = screenTracks.length > 0
   const participants = useParticipants().filter((participant) => !isMonitorIdentity(participant.identity))
-  const tiles = showOwnTile ? participants : []
-  const stageClass = sharing && !showOwnTile ? 'voice-stage voice-stage--controls-overlay' : 'voice-stage'
+  const tiles = !anyoneSharing || showOwnTile ? participants : []
+  const stageClass = anyoneSharing && tiles.length === 0 ? 'voice-stage voice-stage--strip-hidden' : 'voice-stage'
+  useEffect(() => warmScreenAudio(), [])
 
   return (
     <div className={stageClass}>
       <ScreenShares />
       <RemoteScreenAudio />
+      {anyoneSharing && <TileCollapse />}
       {tiles.length > 0 && (
         <div className="participant-grid">
           {tiles.map((participant) => (

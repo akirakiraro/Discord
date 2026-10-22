@@ -8,6 +8,7 @@ function buildUser(overrides: Partial<UserRecord> = {}): UserRecord {
     username: 'akira',
     displayName: 'Akira',
     createdAt: '2026-10-19T12:00:00.000Z',
+    avatarUrl: null,
     ...overrides,
   }
 }

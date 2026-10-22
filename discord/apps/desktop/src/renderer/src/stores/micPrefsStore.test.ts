@@ -26,6 +26,17 @@ describe('micPrefsStore', () => {
     expect(storage.getItem('radcord.mic')).toContain('"deviceId":"default"')
   })
 
+  it('mantém a escolha quando o armazenamento não devolve o que gravou', () => {
+    const storage: KeyValueStorage = { getItem: () => null, setItem: () => undefined }
+    const store = createMicPrefsStore(storage)
+
+    store.getState().setDeviceId('headset')
+    store.getState().setGateDb(-30)
+
+    expect(store.getState().deviceId).toBe('headset')
+    expect(store.getState().gateDb).toBe(-30)
+  })
+
   it('mantém o id quando o aparelho continua conectado', () => {
     const store = createMicPrefsStore(new InMemoryStorage())
 

@@ -54,8 +54,10 @@ export function loadMicPreferences(storage: KeyValueStorage): MicPreferences {
 /**
  * Exemplo: `saveMicPreferences(window.localStorage, DEFAULT_MIC_PREFERENCES)`
  */
-export function saveMicPreferences(storage: KeyValueStorage, prefs: MicPreferences): void {
-  storage.setItem(STORAGE_KEY, JSON.stringify({ ...sanitizeMicPreferences(prefs), defaultsRevision: DEFAULTS_REVISION }))
+export function saveMicPreferences(storage: KeyValueStorage, prefs: MicPreferences): MicPreferences {
+  const stored = sanitizeMicPreferences(prefs)
+  storage.setItem(STORAGE_KEY, JSON.stringify({ ...stored, defaultsRevision: DEFAULTS_REVISION }))
+  return stored
 }
 
 /**
@@ -70,6 +72,17 @@ export function captureOptions(prefs: MicPreferences): AudioCaptureOptions {
     echoCancellation: prefs.echoCancellation,
     autoGainControl: prefs.autoGainControl,
   }
+}
+
+/**
+ * Captura usada na call. Com a escuta da própria voz, o eco sai.
+ * O Chromium cancela o retorno do servidor porque ele parece eco do microfone.
+ * Exemplo: `monitorCapture(prefs, true).echoCancellation` devolve `false`.
+ */
+export function monitorCapture(prefs: MicPreferences, monitoring: boolean): AudioCaptureOptions {
+  const options = captureOptions(prefs)
+  if (!monitoring) return options
+  return { ...options, echoCancellation: false }
 }
 
 /**

@@ -47,17 +47,28 @@ function CaptureToggle({
   )
 }
 
+function sliderFill(percent: number): React.CSSProperties {
+  return { '--slider-fill': `${percent}%` } as React.CSSProperties
+}
+
 function VolumeSlider({ value, onChange }: { value: number; onChange: (value: number) => void }): React.JSX.Element {
   const percent = Math.round(value * 100)
   return (
     <label className="settings-modal__field">
       Volume · {percent}%
-      <input type="range" min={0} max={4} step={0.05} value={value} onChange={(event) => onChange(Number(event.target.value))} />
+      <input
+        type="range"
+        min={0}
+        max={4}
+        step={0.05}
+        value={value}
+        style={sliderFill((value / 4) * 100)}
+        onChange={(event) => onChange(Number(event.target.value))}
+      />
       <span className="settings-modal__scale">
         <span>Esquerda: mais baixo</span>
         <span>Direita: mais alto</span>
       </span>
-      <p className="settings-modal__hint">100% é o microfone. Na direita chega a 400%. A barra verde sobe junto. O traço branco continua sendo o portão.</p>
     </label>
   )
 }
@@ -72,15 +83,13 @@ function SensitivitySlider({ value, onChange }: { value: number; onChange: (valu
         max={GATE_MAX_DB}
         step={1}
         value={value}
+        style={sliderFill(((value - GATE_MIN_DB) / (GATE_MAX_DB - GATE_MIN_DB)) * 100)}
         onChange={(event) => onChange(Number(event.target.value))}
       />
       <span className="settings-modal__scale">
         <span>Esquerda: mais sensível</span>
         <span>Direita: menos sensível</span>
       </span>
-      <p className="settings-modal__hint">
-        Sons abaixo de {value} dB não são enviados. Na esquerda o portão abre com som mais baixo. Na direita só passa som mais alto.
-      </p>
     </label>
   )
 }

@@ -26,6 +26,35 @@ export function GearIcon({ size = 20 }: { size?: number }): React.JSX.Element {
   )
 }
 
+/**
+ * Alto-falante do volume da tela. Sem ondas quando o volume está em zero.
+ * Exemplo: `<VolumeIcon muted={volume === 0} />`.
+ */
+export function VolumeIcon({ muted, size = 18 }: { muted: boolean; size?: number }): React.JSX.Element {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
+      <path fill="currentColor" d="M3.5 9.5h3.4L11 5.6v12.8l-4.1-3.9H3.5z" />
+      {muted ? mutedMark() : volumeWaves()}
+    </svg>
+  )
+}
+
+function volumeWaves(): React.JSX.Element {
+  return (
+    <path
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.7"
+      strokeLinecap="round"
+      d="M15 9.1a4.2 4.2 0 0 1 0 5.8M17.5 6.6a7.4 7.4 0 0 1 0 10.8"
+    />
+  )
+}
+
+function mutedMark(): React.JSX.Element {
+  return <path fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" d="m16 10 4 4m0-4-4 4" />
+}
+
 /** Fone no estilo do Discord, com risco quando o áudio está silenciado. */
 export function HeadsetIcon({ off, size = 20 }: AudioIconProps): React.JSX.Element {
   return (

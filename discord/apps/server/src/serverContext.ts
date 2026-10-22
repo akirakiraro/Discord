@@ -1,3 +1,5 @@
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import type { DatabaseSync } from 'node:sqlite'
 import { AuthService } from './auth/authService'
 import { SqliteSessionRepository } from './auth/sessionRepository'
@@ -17,6 +19,7 @@ export interface ServerContextInputs {
   livekitPublicUrl: string
   clock: Clock
   newId: IdGenerator
+  clientReportsPath?: string
 }
 
 export interface ServerContext {
@@ -28,6 +31,8 @@ export interface ServerContext {
   broadcaster: SocketIoBroadcaster
   tokenIssuer: VoiceTokenIssuer
   livekitPublicUrl: string
+  clock: Clock
+  clientReportsPath: string
 }
 
 /**
@@ -52,5 +57,7 @@ export function createServerContext(inputs: ServerContextInputs): ServerContext 
     broadcaster,
     tokenIssuer: inputs.tokenIssuer,
     livekitPublicUrl: inputs.livekitPublicUrl,
+    clock: inputs.clock,
+    clientReportsPath: inputs.clientReportsPath ?? join(tmpdir(), 'radcord-client-reports.log'),
   }
 }

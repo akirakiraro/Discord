@@ -8,6 +8,7 @@ import { registerMessageRoutes } from './messages/messageRoutes'
 import type { ServerContext } from './serverContext'
 import { registerMemberRoutes } from './users/memberRoutes'
 import { registerUpdateStatic } from './updates/updateStatic'
+import { registerClientReportRoutes } from './reports/clientReportRoutes'
 import { registerVoiceRoutes } from './voice/voiceRoutes'
 
 /**
@@ -29,6 +30,7 @@ export async function buildApp(context: ServerContext, options: { logger: boolea
   registerMessageRoutes(app, context.auth, context.messages)
   registerMemberRoutes(app, context.auth, context.users, context.presence)
   registerVoiceRoutes(app, context)
+  registerClientReportRoutes(app, context.auth, context.clientReportsPath, context.clock)
   await registerUpdateStatic(app, options.updatesDir ?? '')
   return app
 }

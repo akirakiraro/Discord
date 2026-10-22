@@ -1,15 +1,19 @@
+import { useEffect, useState } from 'react'
 import { useMembersPanelStore } from '../../stores/membersPanelStore'
+
+const AWAKE_MS = 900
 
 export function MemberListToggle({ floating = false }: { floating?: boolean }): React.JSX.Element {
   const open = useMembersPanelStore((store) => store.open)
   const toggle = useMembersPanelStore((store) => store.toggle)
+  const awake = useFloatAwake(floating)
   const label = open ? 'Ocultar pessoas' : 'Mostrar pessoas'
-  const className = floating ? 'icon-button member-toggle member-toggle--float' : 'icon-button member-toggle'
+  const className = toggleClass(floating, open, awake)
 
   return (
     <button
       type="button"
-      className={open ? `${className} member-toggle--open` : className}
+      className={className}
       title={label}
       aria-label={label}
       aria-pressed={open}
@@ -18,6 +22,41 @@ export function MemberListToggle({ floating = false }: { floating?: boolean }): 
       <PeopleIcon />
     </button>
   )
+}
+
+function toggleClass(floating: boolean, open: boolean, awake: boolean): string {
+  const base = floating ? 'icon-button member-toggle member-toggle--float' : 'icon-button member-toggle'
+  const openClass = open ? ' member-toggle--open' : ''
+  const awakeClass = floating && awake ? ' member-toggle--awake' : ''
+  return `${base}${openClass}${awakeClass}`
+}
+
+function useFloatAwake(enabled: boolean): boolean {
+  const [awake, setAwake] = useState(false)
+
+  useEffect(() => {
+    if (!enabled) return undefined
+    return watchPointer(setAwake)
+  }, [enabled])
+
+  return awake
+}
+
+function watchPointer(setAwake: (value: boolean) => void): () => void {
+  let timer = 0
+  const hide = (): void => setAwake(false)
+  const onMove = (): void => {
+    setAwake(true)
+    window.clearTimeout(timer)
+    timer = window.setTimeout(hide, AWAKE_MS)
+  }
+  window.addEventListener('mousemove', onMove)
+  document.documentElement.addEventListener('mouseleave', hide)
+  return () => {
+    window.removeEventListener('mousemove', onMove)
+    document.documentElement.removeEventListener('mouseleave', hide)
+    window.clearTimeout(timer)
+  }
 }
 
 function PeopleIcon(): React.JSX.Element {
