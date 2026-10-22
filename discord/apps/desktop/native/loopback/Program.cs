@@ -150,27 +150,27 @@ sealed partial class LoopbackSession
             if (hr < 0 || punk == 0) return;
             _client = (IAudioClient?)ComBridge.ComWrappers.GetOrCreateObjectForComInstance(punk, CreateObjectFlags.None);
             if (_client is null) return;
-            _activateHr = _client.GetMixFormat(out var mix);
-            if (_activateHr < 0 || mix == 0) return;
-            DescribeMix(mix);
-            var flags = AudioFlags.LoopbackFlag | AudioFlags.EventFlag;
-            _activateHr = _client.Initialize(0, flags, 0, 0, mix, 0);
-            if (_activateHr < 0)
-            {
-                var forced = WaveFormat.Pcm(AudioFlags.SampleRate, 2);
-                var forcedPtr = Marshal.AllocHGlobal(Marshal.SizeOf<WaveFormat>());
-                Marshal.StructureToPtr(forced, forcedPtr, false);
-                _activateHr = _client.Initialize(0, flags | AudioFlags.AutoConvertFlag, 0, 0, forcedPtr, 0);
-                Marshal.FreeHGlobal(forcedPtr);
-                _float = false;
-                _channels = 2;
-                _blockAlign = forced.BlockAlign;
-            }
-            NativeAudio.CoTaskMemFree(mix);
+            // Process loopback returns E_NOTIMPL for GetMixFormat and the
+            // generated wrapper throws, which used to kill the helper.
+            var forced = WaveFormat.Pcm(AudioFlags.SampleRate, 2);
+            var forcedPtr = Marshal.AllocHGlobal(Marshal.SizeOf<WaveFormat>());
+            Marshal.StructureToPtr(forced, forcedPtr, false);
+            var flags = AudioFlags.LoopbackFlag | AudioFlags.EventFlag | AudioFlags.AutoConvertFlag;
+            _activateHr = _client.Initialize(0, flags, 0, 0, forcedPtr, 0);
+            Marshal.FreeHGlobal(forcedPtr);
+            _float = false;
+            _channels = 2;
+            _blockAlign = forced.BlockAlign;
             if (_activateHr < 0) return;
             var captureId = typeof(IAudioCaptureClient).GUID;
             _activateHr = _client.GetService(ref captureId, out var capturePtr);
             _capture = (IAudioCaptureClient?)ComBridge.ComWrappers.GetOrCreateObjectForComInstance(capturePtr, CreateObjectFlags.None);
+        }
+        catch (Exception error)
+        {
+            Failed = true;
+            _activateHr = unchecked((int)0x80004005);
+            Console.Error.WriteLine(error.ToString());
         }
         finally
         {
@@ -194,17 +194,6 @@ sealed partial class LoopbackSession
         {
             _stopped.Set();
         }
-    }
-
-    void DescribeMix(nint mix)
-    {
-        var tag = (ushort)Marshal.ReadInt16(mix);
-        _channels = Math.Max(1, (int)Marshal.ReadInt16(mix, 2));
-        _blockAlign = Marshal.ReadInt16(mix, 12);
-        var bits = Marshal.ReadInt16(mix, 14);
-        var rate = Marshal.ReadInt32(mix, 4);
-        _float = tag == 3 || (tag == 0xFFFE && bits == 32);
-        Console.Error.WriteLine($"mix tag={tag} ch={_channels} rate={rate} bits={bits}");
     }
 
     byte[] ToPcm16(nint data, int frames, int bytes)
