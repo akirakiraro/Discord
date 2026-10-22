@@ -55,7 +55,7 @@ export function pidsOnDisplay(
 }
 
 /**
- * Soma faixas PCM 16-bit little-endian do mesmo tamanho.
+ * Soma faixas PCM 16-bit e divide pela quantidade, para não estourar.
  * Exemplo: `mixPcm([left, right])`.
  */
 export function mixPcm(chunks: readonly Buffer[]): Buffer {
