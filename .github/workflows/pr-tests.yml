@@ -1,18 +1,13 @@
 name: Testes da PR
 
-# PR de dev para qa. O push na dev garante a execução: o GitHub só enxerga
-# um workflow novo de pull_request depois que ele já existe na branch de destino.
 on:
   pull_request:
     branches:
       - qa
-  push:
-    branches:
-      - dev
 
 jobs:
   test:
-    if: github.event_name == 'push' || github.head_ref == 'dev'
+    if: github.head_ref == 'dev'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
