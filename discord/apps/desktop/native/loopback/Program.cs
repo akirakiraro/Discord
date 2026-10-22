@@ -190,7 +190,9 @@ sealed partial class LoopbackSession
             if (_capture.GetBuffer(out var data, out frames, out var flags, out _, out _) < 0) return;
             var bytes = (int)frames * _blockAlign;
             var pcm = new byte[bytes];
-            if ((flags & AudioFlags.SilentFlag) == 0 && data != 0) Marshal.Copy(data, pcm, 0, bytes);
+            var glitch = (flags & AudioFlags.DiscontinuityFlag) != 0;
+            if (glitch) Console.Error.WriteLine($"discontinuity frames={frames}");
+            else if ((flags & AudioFlags.SilentFlag) == 0 && data != 0) Marshal.Copy(data, pcm, 0, bytes);
             _output.Write(pcm);
             _capture.ReleaseBuffer(frames);
         }
@@ -205,6 +207,7 @@ static class AudioFlags
     public const uint LoopbackFlag = 0x00020000;
     public const uint EventFlag = 0x00040000;
     public const uint AutoConvertFlag = 0x80000000;
+    public const uint DiscontinuityFlag = 1;
     public const uint SilentFlag = 2;
     public const int SampleRate = 48000;
 }
