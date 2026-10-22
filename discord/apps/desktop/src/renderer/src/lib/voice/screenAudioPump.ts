@@ -21,17 +21,12 @@ export class ScreenAudioPump {
   private readonly context = screenAudioContext()
   private readonly destination = this.context.createMediaStreamDestination()
   private next = 0
-  private gain = 1
   private pending = new Uint8Array(0)
   private readonly playing = new Set<AudioBufferSourceNode>()
 
   constructor() {
     this.track = this.destination.stream.getAudioTracks()[0]
     void this.context.resume()
-  }
-
-  setGain(value: number): void {
-    this.gain = value
   }
 
   push(bytes: Uint8Array): void {
@@ -51,7 +46,7 @@ export class ScreenAudioPump {
     if (frames === 0) return
     const used = frames * 4
     const start = this.playAt(frames)
-    const source = scheduleStereo(this.context, this.destination, this.pending.subarray(0, used), start, this.gain)
+    const source = scheduleStereo(this.context, this.destination, this.pending.subarray(0, used), start)
     this.playing.add(source)
     source.onended = () => this.playing.delete(source)
     this.pending = this.pending.subarray(used)
@@ -74,7 +69,6 @@ function scheduleStereo(
   destination: MediaStreamAudioDestinationNode,
   bytes: Uint8Array,
   start: number,
-  gain: number,
 ): AudioBufferSourceNode {
   const frames = bytes.length / 4
   const buffer = context.createBuffer(2, frames, CAPTURE_RATE)
@@ -82,8 +76,8 @@ function scheduleStereo(
   const right = buffer.getChannelData(1)
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
   for (let frame = 0; frame < frames; frame += 1) {
-    left[frame] = (view.getInt16(frame * 4, true) / 32768) * gain
-    right[frame] = (view.getInt16(frame * 4 + 2, true) / 32768) * gain
+    left[frame] = view.getInt16(frame * 4, true) / 32768
+    right[frame] = view.getInt16(frame * 4 + 2, true) / 32768
   }
   const source = context.createBufferSource()
   source.buffer = buffer
