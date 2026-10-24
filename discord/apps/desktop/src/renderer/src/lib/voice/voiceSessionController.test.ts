@@ -82,7 +82,7 @@ describe('VoiceSessionController', () => {
   let controller: VoiceSessionController
 
   beforeEach(() => {
-    useVoiceStore.setState({ connection: null, micMuted: false, deafened: false, lastError: null })
+    useVoiceStore.setState({ connection: null, micMuted: false, deafened: false, micMutedBeforeDeafen: false, lastError: null })
     useMicPrefsStore.setState({ deviceId: 'default', noiseSuppression: true, gateDb: -45 })
     room = new FakeVoiceRoom()
     controller = new VoiceSessionController(room, useVoiceStore, useMicPrefsStore)
@@ -110,7 +110,7 @@ describe('VoiceSessionController', () => {
     expect(room.log.filter((entry) => entry.startsWith('connect'))).toHaveLength(1)
   })
 
-  it('mutar e ensurdecer refletem no microfone da call', async () => {
+  it('mutar enquanto surdo republica o microfone e o áudio volta junto', async () => {
     await controller.join(new FakeVoiceTokens(), 'v1')
 
     useVoiceStore.getState().toggleMic()
@@ -118,7 +118,32 @@ describe('VoiceSessionController', () => {
     useVoiceStore.getState().toggleMic()
     await Promise.resolve()
 
-    expect(room.log.slice(3), 'só muda quando o estado efetivo muda').toEqual(['mic:false'])
+    expect(room.log.slice(3), 'o clique no microfone surdo desmuta os dois').toEqual(['mic:false', 'mic:true', 'gain'])
+    expect(useVoiceStore.getState()).toMatchObject({ micMuted: false, deafened: false })
+  })
+
+  it('desensurdecer devolve o mute anterior e não reabre o microfone', async () => {
+    await controller.join(new FakeVoiceTokens(), 'v1')
+    useVoiceStore.getState().toggleMic()
+    await Promise.resolve()
+
+    useVoiceStore.getState().toggleDeafen()
+    useVoiceStore.getState().toggleDeafen()
+    await Promise.resolve()
+
+    expect(room.log.filter((entry) => entry.startsWith('mic'))).toEqual(['mic:true', 'mic:false'])
+    expect(useVoiceStore.getState()).toMatchObject({ micMuted: true, deafened: false })
+  })
+
+  it('surdo não republica o microfone ao trocar a entrada', async () => {
+    await controller.join(new FakeVoiceTokens(), 'v1')
+    useVoiceStore.getState().toggleDeafen()
+    await Promise.resolve()
+
+    useMicPrefsStore.getState().setDeviceId('headset')
+    await Promise.resolve()
+
+    expect(room.log.filter((entry) => entry.startsWith('restart'))).toEqual([])
   })
 
   it('queda pelo servidor registra o motivo', async () => {

@@ -44,6 +44,17 @@ Não havia filtro passa-baixa nosso. O analyser do portão fica numa derivação
 
 A API e o LiveKit do host não entram nessa cadeia. Eles não reamostram a voz.
 
+## Mutar e ensurdecer
+
+A partir da **0.1.113** os dois botões usam um estado só, em `lib/voice/micDeafen.ts`. O store chama esse estado. Não há atalho de teclado.
+
+- Mutar alterna o microfone. Fica mutado até o próximo clique em mutar.
+- Ensurdecer cala, juntos, o microfone e o áudio que chega: as outras pessoas e o áudio de tela. O clique guarda se o microfone já estava mutado.
+- Não dá para ficar surdo e falando. Enquanto surdo, o microfone fica mutado. O LiveKit deixa de publicar a faixa, então quem está na call vê o mudo. O portão de sensibilidade não pede o microfone de novo.
+- Clicar em mutar enquanto surdo não fica travado. Esse clique sai do surdo: microfone e áudio voltam juntos, mesmo que o microfone estivesse mutado antes.
+- Clicar em ensurdecer de novo devolve o mute guardado. Se já estava mutado, continua mutado. Se não estava, volta a falar. O áudio dos outros volta nos dois casos.
+- Mutado ou surdo, o Me ouvir não abre. Se já estava aberto, para. O botão de microfone continua clicável; o texto passa a **Desmutar e ouvir**.
+
 ## Como comparar
 
 Nos dois PCs, reabra o app (`npm run desktop` a partir de `discord/`). A nitidez do microfone não passa pela API. A lista de quem está no canal, que entra na mesma versão, só aparece depois de reiniciar o host.

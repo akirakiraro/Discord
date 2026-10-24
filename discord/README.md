@@ -6,6 +6,8 @@ O desenho das partes está em [docs/arquitetura.md](docs/arquitetura.md). Quem e
 
 A versão 0.1.112 junta as três correções: a lista de quem está no canal, a voz nítida do microfone e o botão Me ouvir.
 
+A versão 0.1.113 ajusta mutar e ensurdecer. Surdo deixa o microfone mutado. Clicar em mutar nesse estado volta a ouvir e a falar juntos. Clicar em ensurdecer de novo devolve o mute que estava antes. O que mudou em cada versão está em [docs/changelog.md](docs/changelog.md).
+
 ## Pré-requisitos
 
 - Node.js com npm.

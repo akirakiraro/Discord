@@ -2,13 +2,14 @@
 
 O botão **Me ouvir**, na aba Voz das configurações, toca o microfone desta pessoa depois que o áudio volta do LiveKit. Não é o monitor da tela. O monitor da tela está em [audio-tela.md](audio-tela.md).
 
-O código que vale é o da versão **0.1.112**. Nesta versão a escuta entra junto com a voz nítida do microfone, em [audio-microfone.md](audio-microfone.md), e com a lista de quem está no canal sem entrar na call, em [arquitetura.md](arquitetura.md).
+O código que vale é o da versão **0.1.112**, com o mute e o surdo da **0.1.113**. Nesta versão a escuta entra junto com a voz nítida do microfone, em [audio-microfone.md](audio-microfone.md), e com a lista de quem está no canal sem entrar na call, em [arquitetura.md](arquitetura.md).
 
 ## O que tem que continuar verdade
 
 - Quem escuta entra de novo na mesma sala, com a identidade `id-do-usuário:monitor`. Essa conexão não publica e não aparece na lista do canal.
 - O som é o que os outros recebem, com o atraso da call e com o portão de sensibilidade. Abaixo do traço, o servidor manda silêncio.
 - Enquanto a escuta dura, o cancelamento de eco fica desligado. O isolamento de voz fica desligado o tempo todo, não só durante a escuta. O Chromium trata o retorno como eco e apaga o alto-falante.
+- Mutado ou surdo, o Me ouvir não abre e, se já estava aberto, para. O portão não pede o microfone de novo. Clicar em mutar enquanto surdo volta a falar e a ouvir; aí o botão pode abrir. Clicar em ensurdecer de novo só devolve o mute que estava antes.
 - A URL é a mesma da call, `ws://IP-do-Radmin:7880`. Não há caminho por `localhost` nem por `127.0.0.1`.
 
 ## O que aconteceu no teste com dois PCs

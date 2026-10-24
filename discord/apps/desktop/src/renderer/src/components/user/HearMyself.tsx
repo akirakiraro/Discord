@@ -4,7 +4,8 @@ import { EarClosed, EarFailure } from '../../lib/voice/earStatus'
 import { startServerEar, unlockEarOutput } from '../../lib/voice/serverEar'
 import { voiceSession } from '../../lib/voice/voiceSession'
 import { useSessionStore, type AuthSession } from '../../stores/sessionStore'
-import { isMicrophoneLive, useVoiceStore } from '../../stores/voiceStore'
+import { blockedEarReason } from '../../lib/voice/micDeafen'
+import { useVoiceStore } from '../../stores/voiceStore'
 
 /**
  * Liga e desliga a escuta da própria voz depois que ela volta do servidor.
@@ -57,11 +58,36 @@ function listenToSelf(setError: (message: string) => void, stopHearing: () => vo
     stopHearing()
     return () => {}
   }
-  if (!isMicrophoneLive(useVoiceStore.getState())) {
-    failEar(false, new Error('O microfone está mutado. Ligue ele para se ouvir.'), setError, stopHearing)
+  const blocked = blockedEarReason(useVoiceStore.getState())
+  if (blocked) {
+    failEar(false, new Error(blocked), setError, stopHearing)
     return () => {}
   }
-  return followEar(connection.channelId, session, setError, stopHearing)
+  return watchWhileHearing(connection.channelId, session, setError, stopHearing)
+}
+
+function watchWhileHearing(
+  channelId: string,
+  session: AuthSession,
+  setError: (message: string) => void,
+  stopHearing: () => void,
+): () => void {
+  const latch = { closed: false }
+  const stop = followEar(channelId, session, setError, stopHearing)
+  const unsubscribe = useVoiceStore.subscribe((state) => {
+    if (latch.closed) return
+    const reason = blockedEarReason(state)
+    if (!reason) return
+    latch.closed = true
+    failEar(false, new Error(reason), setError, stopHearing)
+  })
+  return () => closeEarWatch(latch, unsubscribe, stop)
+}
+
+function closeEarWatch(latch: { closed: boolean }, unsubscribe: () => void, stop: () => void): void {
+  latch.closed = true
+  unsubscribe()
+  stop()
 }
 
 function followEar(

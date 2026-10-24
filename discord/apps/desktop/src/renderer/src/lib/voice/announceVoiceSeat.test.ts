@@ -33,7 +33,7 @@ describe('bindVoiceAnnouncements', () => {
   let socket: FakeSeatSocket
 
   beforeEach(() => {
-    useVoiceStore.setState({ connection: null, micMuted: false, deafened: false, lastError: null })
+    useVoiceStore.setState({ connection: null, micMuted: false, deafened: false, micMutedBeforeDeafen: false, lastError: null })
     socket = new FakeSeatSocket()
   })
 
