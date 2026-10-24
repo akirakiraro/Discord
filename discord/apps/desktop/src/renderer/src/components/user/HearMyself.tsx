@@ -3,12 +3,14 @@ import { reportAppError } from '../../lib/report/reportAppError'
 import { EarClosed, EarFailure } from '../../lib/voice/earStatus'
 import { startServerEar, unlockEarOutput } from '../../lib/voice/serverEar'
 import { voiceSession } from '../../lib/voice/voiceSession'
+import { startLocalEar } from '../../lib/voice/localEar'
+import { useMicPrefsStore } from '../../stores/micPrefsStore'
 import { useSessionStore, type AuthSession } from '../../stores/sessionStore'
 import { blockedEarReason } from '../../lib/voice/micDeafen'
 import { useVoiceStore } from '../../stores/voiceStore'
 
 /**
- * Liga e desliga a escuta da própria voz depois que ela volta do servidor.
+ * Liga e desliga a escuta da própria voz. Fora da chamada toca o microfone neste PC.
  * Exemplo: `<HearMyself />` na aba de voz das configurações.
  */
 export function HearMyself(): React.JSX.Element {
@@ -18,10 +20,7 @@ export function HearMyself(): React.JSX.Element {
 
   useEffect(() => {
     if (!hearing) return undefined
-    if (!channelId) {
-      setHearing(false)
-      return undefined
-    }
+    if (!channelId) return listenLocal(setError, () => setHearing(false))
     return listenToSelf(setError, () => setHearing(false))
   }, [hearing, channelId])
 
@@ -30,7 +29,6 @@ export function HearMyself(): React.JSX.Element {
       <button
         type="button"
         className={hearing ? 'button button--success' : 'button button--primary'}
-        disabled={!channelId && !hearing}
         onClick={() => {
           setError(null)
           if (!hearing) unlockEarOutput()
@@ -46,9 +44,22 @@ export function HearMyself(): React.JSX.Element {
 }
 
 function hint(inCall: boolean, hearing: boolean): string {
-  if (!inCall) return 'Entre num canal de voz. O som volta pelo servidor, com o atraso da chamada.'
+  if (!inCall && hearing) return 'Você está se ouvindo neste PC, sem chamada. O portão de sensibilidade vale para esse retorno.'
+  if (!inCall) return 'Ouve o microfone neste PC, sem entrar num canal. Na chamada, o som volta pelo servidor.'
   if (hearing) return 'Você está se ouvindo pelo servidor. O eco fica pausado. Fale acima do traço da sensibilidade: abaixo dele o retorno também fica mudo.'
   return 'O som da sua voz volta pelo servidor para você conferir como os outros escutam. O portão de sensibilidade vale para esse retorno.'
+}
+
+function listenLocal(setError: (message: string) => void, stopHearing: () => void): () => void {
+  const latch = { stopped: false, close: () => {} }
+  void startLocalEar(useMicPrefsStore.getState(), () => useMicPrefsStore.getState()).then(
+    (stop) => keepEar(latch, stop),
+    (error: unknown) => failEar(latch.stopped, error, setError, stopHearing),
+  )
+  return () => {
+    latch.stopped = true
+    latch.close()
+  }
 }
 
 function listenToSelf(setError: (message: string) => void, stopHearing: () => void): () => void {
