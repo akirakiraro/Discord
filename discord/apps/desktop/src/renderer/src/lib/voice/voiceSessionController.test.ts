@@ -3,6 +3,7 @@ import { ConnectionState, DisconnectReason, RoomEvent, type AudioCaptureOptions,
 import type { VoiceTokenResponse } from '@radcord/shared'
 import { useMicPrefsStore } from '../../stores/micPrefsStore'
 import { useVoiceStore } from '../../stores/voiceStore'
+import type { CaptureProbe } from './earStatus'
 import type { SensitivityGate } from './sensitivityGate'
 import { VoiceSessionController, type VoiceRoomPort, type VoiceTokenSource } from './voiceSessionController'
 import type { MicrophonePort } from './liveKitMicrophone'
@@ -11,6 +12,7 @@ class FakeMicrophone implements MicrophonePort {
   readonly log: string[] = []
   processor: SensitivityGate | null = null
   lastRestart: AudioCaptureOptions | null = null
+  probe: CaptureProbe = { echoCancellation: false, voiceIsolation: false }
 
   async setEnabled(enabled: boolean, _options: AudioCaptureOptions): Promise<void> {
     this.log.push(`mic:${enabled}`)
@@ -24,6 +26,10 @@ class FakeMicrophone implements MicrophonePort {
   async attachGain(processor: TrackProcessor<Track.Kind.Audio, AudioProcessorOptions>): Promise<void> {
     this.processor = processor as SensitivityGate
     this.log.push('gain')
+  }
+
+  readCapture(): CaptureProbe {
+    return this.probe
   }
 }
 
@@ -140,7 +146,7 @@ describe('VoiceSessionController', () => {
     useMicPrefsStore.getState().setNoiseSuppression(false)
     await Promise.resolve()
 
-    expect(room.log.slice(3)).toEqual(['restart:headset:true', 'restart:headset:false'])
+    expect(room.log.slice(3)).toEqual(['restart:headset:true', 'restart:headset:false', 'gain', 'gain'])
   })
 
   it('com a call fechada, a preferência fica salva e o microfone não é republicado', async () => {
@@ -167,9 +173,27 @@ describe('VoiceSessionController', () => {
 
     await controller.setSelfMonitor(true)
     expect(room.microphone.lastRestart?.echoCancellation, 'eco pausado enquanto se ouve').toBe(false)
+    expect(room.microphone.lastRestart?.voiceIsolation, 'isolamento pausado enquanto se ouve').toBe(false)
 
     await controller.setSelfMonitor(false)
     expect(room.microphone.lastRestart?.echoCancellation, 'eco volta ao soltar').toBe(true)
+  })
+
+  it('escuta republica mesmo com o eco já desligado', async () => {
+    useMicPrefsStore.setState({ echoCancellation: false })
+    await controller.join(new FakeVoiceTokens(), 'v1')
+
+    await controller.setSelfMonitor(true)
+
+    expect(room.microphone.lastRestart).toMatchObject({ echoCancellation: false, voiceIsolation: false })
+  })
+
+  it('recusa a escuta se o Chromium mantém o eco ligado', async () => {
+    useMicPrefsStore.setState({ echoCancellation: true })
+    await controller.join(new FakeVoiceTokens(), 'v1')
+    room.microphone.probe = { echoCancellation: true }
+
+    await expect(controller.setSelfMonitor(true)).rejects.toThrow(/cancelamento de eco/)
   })
 
   it('microfone mutado não republica ao trocar a entrada', async () => {

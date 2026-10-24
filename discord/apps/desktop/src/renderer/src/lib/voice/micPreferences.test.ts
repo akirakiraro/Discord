@@ -68,6 +68,7 @@ describe('micPreferences', () => {
       noiseSuppression: false,
       echoCancellation: false,
       autoGainControl: true,
+      voiceIsolation: false,
     })
   })
 
@@ -83,7 +84,9 @@ describe('micPreferences', () => {
     const normal = monitorCapture(DEFAULT_MIC_PREFERENCES, false)
 
     expect(monitoring.echoCancellation, 'eco pausado para o retorno não ser apagado').toBe(false)
+    expect(monitoring.voiceIsolation, 'isolamento também apaga o retorno').toBe(false)
     expect(normal.echoCancellation, 'fora da escuta vale a preferência').toBe(true)
+    expect(normal.voiceIsolation, 'o padrão do SDK não volta a ligar o isolamento').toBe(false)
   })
 
   it('resolveDeviceId volta ao padrão se o aparelho sumiu', () => {

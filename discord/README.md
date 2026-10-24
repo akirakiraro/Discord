@@ -2,7 +2,7 @@
 
 Discord caseiro para jogar com os amigos pela rede do Radmin VPN. Um computador sobe o host. Os outros abrem o app e entram com o IP `26.x` que o host imprime.
 
-O desenho das partes está em [docs/arquitetura.md](docs/arquitetura.md).
+O desenho das partes está em [docs/arquitetura.md](docs/arquitetura.md). O botão de se ouvir está em [docs/escuta-propria.md](docs/escuta-propria.md).
 
 ## Pré-requisitos
 
