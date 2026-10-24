@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { ChannelDto, MemberDto, MessageDto, ServerToClientEvents } from '@radcord/shared'
 import { EMPTY_CHAT_STATE, withHistoryPrepended, withInitialData, type ChatState } from '../chat/chatState'
 import { activeTypistIds, type TypingState } from '../chat/typingState'
+import { EMPTY_VOICE_ROSTER, type VoiceRosterState } from '../voice/voiceRosterState'
 import { bindRealtimeEvents, type RealtimeEventSource } from './realtimeBindings'
 
 type ServerEventName = keyof ServerToClientEvents
@@ -21,6 +22,7 @@ class FakeRealtimeSource implements RealtimeEventSource {
 class StateHarness {
   chat: ChatState
   typing: TypingState = {}
+  roster: VoiceRosterState = EMPTY_VOICE_ROSTER
 
   constructor(initial: ChatState) {
     this.chat = initial
@@ -29,6 +31,7 @@ class StateHarness {
   readonly sinks = {
     applyChat: (update: (state: ChatState) => ChatState) => (this.chat = update(this.chat)),
     applyTyping: (update: (state: TypingState) => TypingState) => (this.typing = update(this.typing)),
+    applyRoster: (update: (state: VoiceRosterState) => VoiceRosterState) => (this.roster = update(this.roster)),
     nowMs: () => 1000,
   }
 }
@@ -77,5 +80,16 @@ describe('bindRealtimeEvents', () => {
     expect(harness.chat.channels.map((channel) => channel.name)).toEqual(['geral', 'memes'])
     expect(harness.chat.members['u-2']?.displayName).toBe('Bia')
     expect(harness.chat.members['u-1']?.online).toBe(true)
+  })
+
+  it('snapshot, entrada e saída de voz atualizam quem está no canal', () => {
+    const { source, harness } = setup()
+    const akira = { channelId: 'v', userId: 'u-1', displayName: 'Akira' }
+
+    source.deliver('voice:snapshot', { occupants: [akira] })
+    source.deliver('voice:joined', { channelId: 'v', userId: 'u-2', displayName: 'Bia' })
+    source.deliver('voice:left', { channelId: 'v', userId: 'u-1' })
+
+    expect(harness.roster.occupants).toEqual([{ channelId: 'v', userId: 'u-2', displayName: 'Bia' }])
   })
 })
