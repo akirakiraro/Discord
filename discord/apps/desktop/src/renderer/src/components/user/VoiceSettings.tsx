@@ -17,12 +17,21 @@ export function VoiceSettings(): React.JSX.Element {
       <NoiseToggle enabled={prefs.noiseSuppression} onChange={prefs.setNoiseSuppression} />
       <CaptureToggle label="Cancelamento de eco" enabled={prefs.echoCancellation} onChange={prefs.setEchoCancellation} />
       <CaptureToggle label="Ganho automático" enabled={prefs.autoGainControl} onChange={prefs.setAutoGainControl} />
+      <ProcessingHint />
       <VolumeSlider value={prefs.inputGain} onChange={prefs.setInputGain} />
       <SensitivitySlider value={prefs.gateDb} onChange={prefs.setGateDb} />
       <MicLevel prefs={prefs} />
       <HearMyself />
       {error && <p className="settings-modal__error">{error}</p>}
     </div>
+  )
+}
+
+function ProcessingHint(): React.JSX.Element {
+  return (
+    <p className="settings-modal__hint">
+      Supressão e ganho automático começam desligados. A supressão do navegador corta os agudos, e o volume do slider já controla o ganho.
+    </p>
   )
 }
 
