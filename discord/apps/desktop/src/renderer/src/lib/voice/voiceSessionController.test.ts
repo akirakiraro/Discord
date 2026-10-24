@@ -18,13 +18,19 @@ class FakeMicrophone implements MicrophonePort {
 
   async restart(options: AudioCaptureOptions): Promise<void> {
     this.lastRestart = options
-    this.log.push(`restart:${String(options.deviceId)}:${String(options.noiseSuppression)}`)
+    this.log.push(`restart:${String(options.deviceId)}:${captureFlag(options.noiseSuppression)}`)
   }
 
   async attachGain(processor: TrackProcessor<Track.Kind.Audio, AudioProcessorOptions>): Promise<void> {
     this.processor = processor as SensitivityGate
     this.log.push('gain')
   }
+}
+
+function captureFlag(value: AudioCaptureOptions['noiseSuppression']): string {
+  if (value === true) return 'true'
+  if (value === false || (typeof value === 'object' && value.exact === false)) return 'false'
+  return 'other'
 }
 
 class FakeVoiceRoom implements VoiceRoomPort {
@@ -166,7 +172,7 @@ describe('VoiceSessionController', () => {
     await controller.join(new FakeVoiceTokens(), 'v1')
 
     await controller.setSelfMonitor(true)
-    expect(room.microphone.lastRestart?.echoCancellation, 'eco pausado enquanto se ouve').toBe(false)
+    expect(room.microphone.lastRestart?.echoCancellation, 'eco pausado para o retorno não ser apagado').toEqual({ exact: false })
 
     await controller.setSelfMonitor(false)
     expect(room.microphone.lastRestart?.echoCancellation, 'eco volta ao soltar').toBe(true)

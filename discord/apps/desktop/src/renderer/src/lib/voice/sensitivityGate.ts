@@ -108,6 +108,7 @@ function connectGate(context: AudioContext, track: MediaStreamTrack, volume: num
   const gain = context.createGain()
   const analyser = context.createAnalyser()
   const destination = context.createMediaStreamDestination()
+  forceMonoOutput(destination)
   analyser.fftSize = 512
   level.gain.value = volume
   gain.gain.value = 0
@@ -117,6 +118,21 @@ function connectGate(context: AudioContext, track: MediaStreamTrack, volume: num
   gain.connect(destination)
   const samples = new Uint8Array(new ArrayBuffer(analyser.fftSize))
   return { source, gain, volume: level, analyser, destination, context, samples, state: CLOSED_GATE }
+}
+
+/**
+ * O destino do Web Audio nasce estéreo. O Opus divide o bitrate entre os canais
+ * e a voz, que é um canal só, perde agudo. Um canal usa o bitrate inteiro.
+ * Exemplo: `forceMonoOutput(context.createMediaStreamDestination())`
+ */
+export function forceMonoOutput(sink: MonoOutputSink): void {
+  sink.channelCountMode = 'explicit'
+  sink.channelCount = 1
+}
+
+interface MonoOutputSink {
+  channelCount: number
+  channelCountMode: 'max' | 'clamped-max' | 'explicit'
 }
 
 function outputTrack(destination: MediaStreamAudioDestinationNode): MediaStreamTrack {
