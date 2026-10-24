@@ -1,9 +1,9 @@
 {
   "name": "@radcord/desktop",
-  "productName": "Radcord",
-  "version": "0.1.117",
+  "productName": "SoundRoom",
+  "version": "0.1.118",
   "private": true,
-  "description": "Radcord - voz, vídeo e tela pela rede do Radmin",
+  "description": "SoundRoom - voz, vídeo e tela pela rede do Radmin",
   "author": "Akira",
   "main": "./out/main/index.js",
   "scripts": {
@@ -15,7 +15,7 @@
   },
   "build": {
     "appId": "dev.radcord.desktop",
-    "productName": "Radcord",
+    "productName": "SoundRoom",
     "directories": {
       "output": "release"
     },
@@ -23,7 +23,8 @@
       "out/**/*"
     ],
     "win": {
-      "target": "nsis"
+      "target": "nsis",
+      "icon": "build/icon.ico"
     },
     "nsis": {
       "oneClick": true,
@@ -31,12 +32,17 @@
       "allowToChangeInstallationDirectory": false,
       "createDesktopShortcut": "always",
       "createStartMenuShortcut": true,
-      "shortcutName": "Radcord"
+      "shortcutName": "SoundRoom",
+      "artifactName": "Radcord-Setup-${version}.${ext}"
     },
     "extraResources": [
       {
         "from": "resources/loopback",
         "to": "loopback"
+      },
+      {
+        "from": "build/icon.png",
+        "to": "icon.png"
       }
     ],
     "publish": {

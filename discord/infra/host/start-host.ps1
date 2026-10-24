@@ -1,4 +1,4 @@
-# Sobe o LiveKit (em outra janela) e a API do Radcord usando o IP do Radmin desta maquina.
+# Sobe o LiveKit (em outra janela) e a API do SoundRoom usando o IP do Radmin desta maquina.
 $ErrorActionPreference = 'Stop'
 
 $repoRoot = Split-Path (Split-Path $PSScriptRoot)
@@ -63,7 +63,7 @@ $env:LIVEKIT_API_SECRET = $secret
 $env:LIVEKIT_PUBLIC_URL = "ws://${radminIp}:7880"
 
 Write-Host ''
-Write-Host "Host do Radcord no ar. Seus amigos devem digitar: $radminIp" -ForegroundColor Green
+Write-Host "Host do SoundRoom no ar. Seus amigos devem digitar: $radminIp" -ForegroundColor Green
 Write-Host 'Feche esta janela e a do LiveKit para desligar.'
 Write-Host ''
 Set-Location $repoRoot

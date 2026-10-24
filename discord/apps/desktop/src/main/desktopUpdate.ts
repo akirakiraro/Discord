@@ -1,4 +1,5 @@
 import { isNewerRelease } from '@radcord/shared'
+import { PRODUCT_DISPLAY_NAME } from '../shared/appIdentity'
 import {
   SKIPPED_UPDATE,
   cleanProgress,
@@ -43,7 +44,7 @@ export interface QuitInstallTarget {
 }
 
 /**
- * NSIS oneClick reabre o Radcord quando o instalador recebe `--force-run`.
+ * NSIS oneClick reabre o SoundRoom quando o instalador recebe `--force-run`.
  * No electron-updater 6.8, `quitAndInstall(false, true)` ignora o segundo
  * argumento e usa `autoRunAppAfterInstall`. Ligar essa flag é o que faz o
  * instalador receber `--force-run` com `isSilent` falso.
@@ -76,9 +77,9 @@ const LIMIT_MARKERS = ['rate limit', 'api rate', 'status code 403', 'http 403', 
 export function describeUpdateFailure(raw: string, stage: 'check' | 'download'): string {
   const text = raw.toLowerCase()
   if (mentions(text, LIMIT_MARKERS)) return 'O GitHub limitou a consulta de atualizações. Espere um pouco e tente de novo.'
-  if (mentions(text, NETWORK_MARKERS)) return 'Sem conexão para atualizar o Radcord. Confira a internet e tente de novo.'
+  if (mentions(text, NETWORK_MARKERS)) return `Sem conexão para atualizar o ${PRODUCT_DISPLAY_NAME}. Confira a internet e tente de novo.`
   if (stage === 'download') return 'O download da atualização falhou. Tente de novo quando a conexão voltar.'
-  return 'Não foi possível verificar a atualização do Radcord. Tente de novo.'
+  return `Não foi possível verificar a atualização do ${PRODUCT_DISPLAY_NAME}. Tente de novo.`
 }
 
 /**

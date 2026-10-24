@@ -1,7 +1,7 @@
 {
   "name": "radcord",
   "private": true,
-  "description": "Discord caseiro para jogar com os amigos pela rede do Radmin VPN",
+  "description": "SoundRoom, Discord caseiro para jogar com os amigos pela rede do Radmin VPN",
   "workspaces": [
     "packages/*",
     "apps/*"

@@ -45,12 +45,22 @@ jobs:
         shell: pwsh
         run: |
           $version = (Get-Content package.json -Raw | ConvertFrom-Json).version
+          # O nome do arquivo fica Radcord-Setup: o latest.yml e o app já instalado usam esse path.
+          $setupName = "Radcord-Setup-$version.exe"
+          $blockName = "$setupName.blockmap"
           $stage = Join-Path $env:RUNNER_TEMP "radcord-release"
           New-Item -ItemType Directory -Force -Path $stage | Out-Null
-          $setup = Get-ChildItem release -Filter "*Setup*$version*.exe" | Where-Object { $_.Extension -eq ".exe" } | Select-Object -First 1
-          $block = Get-ChildItem release -Filter "*$version*.blockmap" | Select-Object -First 1
-          if (-not $setup -or -not $block -or -not (Test-Path "release\latest.yml")) { throw "Pacote $version incompleto em release/" }
-          Copy-Item -LiteralPath $setup.FullName -Destination (Join-Path $stage "Radcord-Setup-$version.exe")
-          Copy-Item -LiteralPath $block.FullName -Destination (Join-Path $stage "Radcord-Setup-$version.exe.blockmap")
-          Copy-Item -LiteralPath "release\latest.yml" -Destination (Join-Path $stage "latest.yml")
-          gh release create "v$version" --repo akirakiraro/Discord --title "Radcord $version" --notes "Atualização $version" (Join-Path $stage "latest.yml") (Join-Path $stage "Radcord-Setup-$version.exe") (Join-Path $stage "Radcord-Setup-$version.exe.blockmap")
+          $setupPath = Join-Path "release" $setupName
+          $blockPath = Join-Path "release" $blockName
+          $latestPath = Join-Path "release" "latest.yml"
+          if (-not (Test-Path -LiteralPath $setupPath) -or -not (Test-Path -LiteralPath $blockPath) -or -not (Test-Path -LiteralPath $latestPath)) {
+            throw "Pacote $version incompleto em release/. Esperado $setupName, $blockName e latest.yml."
+          }
+          $yml = Get-Content -LiteralPath $latestPath -Raw
+          if ($yml -notmatch [regex]::Escape($setupName)) {
+            throw "latest.yml não cita $setupName. O electron-updater baixaria um arquivo que a release não publica."
+          }
+          Copy-Item -LiteralPath $setupPath -Destination (Join-Path $stage $setupName)
+          Copy-Item -LiteralPath $blockPath -Destination (Join-Path $stage $blockName)
+          Copy-Item -LiteralPath $latestPath -Destination (Join-Path $stage "latest.yml")
+          gh release create "v$version" --repo akirakiraro/Discord --title "SoundRoom $version" --notes "Atualização $version" (Join-Path $stage "latest.yml") (Join-Path $stage $setupName) (Join-Path $stage $blockName)

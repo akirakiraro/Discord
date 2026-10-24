@@ -1,3 +1,4 @@
+import { PRODUCT_DISPLAY_NAME } from '../../../../shared/appIdentity'
 import type { UpdateProgress, UpdateSnapshot } from '../../../../shared/desktopUpdateSnapshot'
 
 /**
@@ -27,7 +28,7 @@ export function updatePercent(snapshot: UpdateSnapshot): number | null {
 }
 
 export function updateBlockBody(snapshot: UpdateSnapshot): string {
-  if (snapshot.phase === 'error') return snapshot.message ?? 'Não foi possível atualizar o Radcord. Tente de novo.'
+  if (snapshot.phase === 'error') return snapshot.message ?? `Não foi possível atualizar o ${PRODUCT_DISPLAY_NAME}. Tente de novo.`
   if (snapshot.phase === 'ready') return 'A atualização está pronta. Confirme para reiniciar.'
   return 'O login abre quando esta versão estiver em dia.'
 }

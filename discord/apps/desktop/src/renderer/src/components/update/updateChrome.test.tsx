@@ -16,10 +16,10 @@ describe('tela de atualização', () => {
       />,
     )
 
-    expect(html).toContain('Atualizando o Radcord...')
-    expect(html).toContain('Sem conexão para atualizar o Radcord')
+    expect(html).toContain('Atualizando o SoundRoom...')
+    expect(html).toContain('Sem conexão para atualizar o SoundRoom')
     expect(html).toContain('Tentar novamente')
-    expect(html).not.toContain('Entrar no Radcord')
+    expect(html).not.toContain('Entrar no SoundRoom')
   })
 
   it('mostra a barra e a porcentagem no cartão enquanto baixa', () => {
@@ -30,13 +30,13 @@ describe('tela de atualização', () => {
     expect(html).toContain('Baixando 0.1.117')
     expect(html).toContain('40%')
     expect(html).toContain('progressbar')
-    expect(html).not.toContain('Reiniciar o Radcord')
+    expect(html).not.toContain('Reiniciar o SoundRoom')
   })
 
   it('abre o modal com OK quando o download terminou', () => {
     const html = renderToStaticMarkup(<UpdateRestartModal version="0.1.117" onInstall={noop} />)
 
-    expect(html).toContain('Reiniciar o Radcord')
+    expect(html).toContain('Reiniciar o SoundRoom')
     expect(html).toContain('0.1.117')
     expect(html).toContain('>OK<')
   })
@@ -47,7 +47,7 @@ function errorSnapshot(): UpdateSnapshot {
     phase: 'error',
     version: null,
     progress: null,
-    message: 'Sem conexão para atualizar o Radcord. Confira a internet e tente de novo.',
+    message: 'Sem conexão para atualizar o SoundRoom. Confira a internet e tente de novo.',
   }
 }
 

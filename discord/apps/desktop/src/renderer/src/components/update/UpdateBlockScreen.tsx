@@ -1,3 +1,4 @@
+import { PRODUCT_DISPLAY_NAME } from '../../../../shared/appIdentity'
 import type { UpdateSnapshot } from '../../../../shared/desktopUpdateSnapshot'
 import { updateBlockBody } from '../../lib/update/updateView'
 
@@ -12,7 +13,7 @@ export function UpdateBlockScreen({ snapshot, onRetry }: UpdateBlockScreenProps)
   return (
     <div className="auth-screen update-block">
       <section className="auth-card update-block__card">
-        <h1>Atualizando o Radcord...</h1>
+        <h1>Atualizando o {PRODUCT_DISPLAY_NAME}...</h1>
         <p className="auth-card__subtitle">{updateBlockBody(snapshot)}</p>
         {failed && (
           <button type="button" className="button button--primary" onClick={onRetry}>

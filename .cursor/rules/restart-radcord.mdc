@@ -1,13 +1,13 @@
 ---
-description: Reiniciar o Radcord sozinho quando a mudança exigir
+description: Reiniciar o SoundRoom sozinho quando a mudança exigir
 alwaysApply: true
 ---
 
-# Reiniciar o Radcord
+# Reiniciar o SoundRoom
 
 Pedido permanente do dono: vale em qualquer chat deste projeto.
 
-Quando uma mudança no desktop só passa a valer depois de reabrir o app (processo principal do Electron, preload, janela, barra, permissões), reinicie o Radcord na hora. Não peça para o usuário fechar ou abrir.
+Quando uma mudança no desktop só passa a valer depois de reabrir o app (processo principal do Electron, preload, janela, barra, permissões), reinicie o SoundRoom na hora. Não peça para o usuário fechar ou abrir.
 
 No Windows, a partir de `discord/`:
 

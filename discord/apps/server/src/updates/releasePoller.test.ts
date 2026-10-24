@@ -153,7 +153,7 @@ describe('createGithubReleaseLookup', () => {
 
   it('recusa JSON sem tag_name', async () => {
     const http = new CapturingFetch()
-    http.body = { name: 'Radcord' }
+    http.body = { name: 'SoundRoom 0.1.9' }
 
     await expect(createGithubReleaseLookup(http.fetch).latestTag()).rejects.toThrow(/tag_name/)
   })

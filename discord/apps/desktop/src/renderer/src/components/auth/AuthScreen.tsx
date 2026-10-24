@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
+import { PRODUCT_DISPLAY_NAME } from '../../../../shared/appIdentity'
 import { authenticate } from '../../lib/auth/authenticate'
 import { loadSavedLogin, saveLogin } from '../../lib/savedLogin'
 import { useSessionStore } from '../../stores/sessionStore'
@@ -40,8 +41,8 @@ export function AuthScreen(): React.JSX.Element {
   return (
     <div className="auth-screen">
       <form className="auth-card" onSubmit={(event) => void handleSubmit(event)}>
-        <h1>Entrar no Radcord</h1>
-        <p className="auth-card__subtitle">Radcord · a call da galera pela rede do Radmin</p>
+        <h1>Entrar no {PRODUCT_DISPLAY_NAME}</h1>
+        <p className="auth-card__subtitle">{PRODUCT_DISPLAY_NAME} · a call da galera pela rede do Radmin</p>
         <AuthFields username={username} onChange={setUsername} />
         {error && <p className="auth-card__error">{error}</p>}
         <button type="submit" className="button button--primary" disabled={submitting}>
