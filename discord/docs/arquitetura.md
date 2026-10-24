@@ -1,6 +1,6 @@
 # Arquitetura
 
-O Radcord separa três processos. O host só os coloca no ar. A API guarda contas, mensagens e presença. O LiveKit carrega áudio, vídeo e tela. O desktop é o cliente.
+O SoundRoom separa três processos. O host só os coloca no ar. A API guarda contas, mensagens e presença. O LiveKit carrega áudio, vídeo e tela. O desktop é o cliente.
 
 ```mermaid
 flowchart LR

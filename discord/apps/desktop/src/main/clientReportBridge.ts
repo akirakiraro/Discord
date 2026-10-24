@@ -1,5 +1,6 @@
 import { ipcMain, type BrowserWindow } from 'electron'
 import { clientReportSchema, clipReportText, CLIENT_REPORT_MESSAGE_MAX } from '@radcord/shared'
+import { PRODUCT_DISPLAY_NAME } from '../shared/appIdentity'
 import { enqueuePendingReport, readPendingReports, toPendingReport, writePendingReports } from './pendingReports'
 
 const ABORTED_LOAD = -3
@@ -30,7 +31,7 @@ function listenForMainFailures(window: BrowserWindow, queuePath: string): void {
   const send = (message: string): void => forwardOrKeep(window, queuePath, message)
   process.on('uncaughtException', (error) => send(error.message))
   process.on('unhandledRejection', (reason: unknown) => send(reasonText(reason)))
-  window.webContents.on('unresponsive', () => send('A janela do Radcord travou'))
+  window.webContents.on('unresponsive', () => send(`A janela do ${PRODUCT_DISPLAY_NAME} travou`))
   window.webContents.on('render-process-gone', (_event, details) => keep(queuePath, `O renderer caiu: ${details.reason}`))
   window.webContents.on('did-fail-load', (_event, errorCode, errorDescription, _url, isMainFrame) => {
     if (!isMainFrame || errorCode === ABORTED_LOAD) return

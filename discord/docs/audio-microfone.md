@@ -1,6 +1,6 @@
 # Voz do microfone
 
-O que o desktop captura do microfone e publica na call. O código que vale é o da versão **0.1.112** em diante. Se a voz de alguém sair abafada no Radcord e nítida no Discord, com o mesmo microfone, comece por aqui.
+O que o desktop captura do microfone e publica na call. O código que vale é o da versão **0.1.112** em diante. Se a voz de alguém sair abafada no SoundRoom e nítida no Discord, com o mesmo microfone, comece por aqui.
 
 Na 0.1.112 esta captura entra junto com a lista de quem está no canal, em [arquitetura.md](arquitetura.md), e com o botão Me ouvir, em [escuta-propria.md](escuta-propria.md). O isolamento desligado com `{ exact: false }` serve às duas: tira o abafado e deixa o retorno da escuta passar.
 
@@ -13,12 +13,12 @@ Na 0.1.112 esta captura entra junto com a lista de quem está no canal, em [arqu
 
 ## Por que saía abafada
 
-Num teste com duas pessoas, em PCs Windows diferentes, a voz de uma chegava muito abafada. No Discord, o mesmo microfone saía nítido. Trocar o dispositivo e mexer nas configurações de voz do Radcord não resolvia.
+Num teste com duas pessoas, em PCs Windows diferentes, a voz de uma chegava muito abafada. No Discord, o mesmo microfone saía nítido. Trocar o dispositivo e mexer nas configurações de voz do SoundRoom não resolvia.
 
 A cadeia era esta:
 
 1. O `getUserMedia` do microfone passava supressão, eco e ganho automático como booleanos. No Chromium, `false` solto é só um ideal: o módulo de processamento (APM) pode continuar ligado. Com a supressão ligada, esse módulo trabalha em banda estreita, perto de 16 kHz, e corta os agudos. É o som de telefone. O Discord não usa esse APM.
-2. O padrão do `livekit-client` ainda liga `voiceIsolation: true`. O Radcord não mandava esse campo, então o merge do SDK preenchia com `true`. Quando o navegador aceita o isolamento, ele ignora a supressão que a pessoa desligou. O interruptor da tela não tinha efeito.
+2. O padrão do `livekit-client` ainda liga `voiceIsolation: true`. O SoundRoom não mandava esse campo, então o merge do SDK preenchia com `true`. Quando o navegador aceita o isolamento, ele ignora a supressão que a pessoa desligou. O interruptor da tela não tinha efeito.
 3. A publicação usava o preset `music` do LiveKit, 48 kbps. A voz nítida do Discord fica na casa de 64 a 96 kbps, mono. 48 kbps sozinho não explica o "muito abafada", mas não guarda o agudo que o APM já tinha tirado.
 4. O portão manda o microfone por um `MediaStreamAudioDestinationNode`. Esse nó nasce estéreo. O Opus estéreo divide o bitrate entre dois canais, e a voz é um canal só.
 
@@ -59,6 +59,6 @@ A partir da **0.1.113** os dois botões usam um estado só, em `lib/voice/micDea
 
 Nos dois PCs, reabra o app (`npm run desktop` a partir de `discord/`). A nitidez do microfone não passa pela API. A lista de quem está no canal, que entra na mesma versão, só aparece depois de reiniciar o host.
 
-As duas pessoas entram no mesmo canal de voz, com o microfone que já usavam. A que saía abafada fala. A outra compara com uma call do Discord no mesmo microfone: a voz no Radcord tem que sair nítida, com os agudos de volta, sem mudar o dispositivo.
+As duas pessoas entram no mesmo canal de voz, com o microfone que já usavam. A que saía abafada fala. A outra compara com uma call do Discord no mesmo microfone: a voz no SoundRoom tem que sair nítida, com os agudos de volta, sem mudar o dispositivo.
 
 Em Configurações de voz, supressão e ganho automático aparecem desligados. Ligar a supressão de propósito pode voltar a abafar: é o APM do navegador. O volume e a sensibilidade continuam iguais.

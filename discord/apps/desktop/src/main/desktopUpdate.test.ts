@@ -242,6 +242,8 @@ describe('describeUpdateFailure', () => {
   it('diferencia checagem e download quando o erro não é de rede', () => {
     expect(describeUpdateFailure('socket hang up', 'check')).toMatch(/verificar/)
     expect(describeUpdateFailure('socket hang up', 'download')).toMatch(/download/)
+    expect(describeUpdateFailure('ENOTFOUND', 'check')).toContain('SoundRoom')
+    expect(describeUpdateFailure('ENOTFOUND', 'check')).not.toContain('Radcord')
   })
 })
 

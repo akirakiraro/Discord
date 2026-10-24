@@ -10,7 +10,10 @@ import { findRadminIpv4 } from './radminAddress'
 import { exposeScreenAudioIpc } from './screenAudioCapture'
 import { exposeScreenAudioLog } from './screenAudioLog'
 import { exposeScreenShareIpc } from './screenShareSources'
+import { APP_USER_MODEL_ID, PRODUCT_DISPLAY_NAME } from '../shared/appIdentity'
+import { legacyUserDataPath } from './legacyUserData'
 import { windowChrome } from './windowChrome'
+import { windowIconFile } from './windowIcon'
 import {
   DEFAULT_WINDOW_SIZE,
   launchPlacement,
@@ -21,6 +24,11 @@ import {
   type PlacementMemory,
   type WindowPlacement,
 } from './windowPlacement'
+
+// productName SoundRoom faria o Electron abrir outra pasta e a sessão sumiria.
+app.setPath('userData', legacyUserDataPath(app.getPath('appData')))
+// O atalho NSIS grava este id. Sem ele o Windows agrupa pelo nome do exe.
+if (process.platform === 'win32') app.setAppUserModelId(APP_USER_MODEL_ID)
 
 // O Chromium troca os IPs locais por nomes mDNS ".local" nos candidatos WebRTC;
 // pela LAN virtual do Radmin esses nomes não resolvem e a mídia pode não conectar.
@@ -48,7 +56,8 @@ function mainWindowOptions(saved: WindowPlacement | null): BrowserWindowConstruc
     backgroundColor: windowChrome.backgroundColor,
     titleBarStyle: windowChrome.titleBarStyle,
     titleBarOverlay: windowChrome.titleBarOverlay,
-    title: 'Radcord',
+    title: PRODUCT_DISPLAY_NAME,
+    icon: windowIconFile(process.resourcesPath, app.getAppPath(), app.isPackaged),
     autoHideMenuBar: true,
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),

@@ -6,7 +6,7 @@ const ERROR: UpdateSnapshot = {
   phase: 'error',
   version: null,
   progress: null,
-  message: 'Sem conexão para atualizar o Radcord. Confira a internet e tente de novo.',
+  message: 'Sem conexão para atualizar o SoundRoom. Confira a internet e tente de novo.',
 }
 
 describe('updateView', () => {
