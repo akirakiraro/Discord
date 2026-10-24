@@ -46,6 +46,15 @@ describe('loadServerConfig', () => {
     expect(() => loadServerConfig({ ...VALID_ENV, LIVEKIT_API_SECRET: 'curto' })).toThrow(/pelo menos 32/)
   })
 
+  it('consulta o GitHub a cada 2 minutos e aceita RELEASE_POLL_MS', () => {
+    expect(loadServerConfig(VALID_ENV).releasePollMs, 'padrão de 2 minutos').toBe(120_000)
+    expect(loadServerConfig({ ...VALID_ENV, RELEASE_POLL_MS: '60000' }).releasePollMs).toBe(60_000)
+  })
+
+  it('falha mostrando o valor quando o intervalo da release é inválido', () => {
+    expect(() => loadServerConfig({ ...VALID_ENV, RELEASE_POLL_MS: '1' })).toThrow(/"1"/)
+  })
+
   it('falha quando a URL pública não é websocket', () => {
     expect(() => loadServerConfig({ ...VALID_ENV, LIVEKIT_PUBLIC_URL: 'http://x' })).toThrow(/"http:\/\/x"/)
   })

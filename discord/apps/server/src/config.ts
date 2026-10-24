@@ -1,6 +1,7 @@
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { SERVER_DEFAULT_PORT } from '@radcord/shared'
+import { DEFAULT_RELEASE_POLL_MS } from './updates/releasePoller'
 
 type ServerEnvKey =
   | 'PORT'
@@ -10,6 +11,7 @@ type ServerEnvKey =
   | 'LIVEKIT_API_SECRET'
   | 'LIVEKIT_PUBLIC_URL'
   | 'UPDATES_DIR'
+  | 'RELEASE_POLL_MS'
 
 export type ServerEnv = Readonly<Partial<Record<ServerEnvKey, string>>>
 
@@ -21,6 +23,7 @@ export interface ServerConfig {
   livekitApiSecret: string
   livekitPublicUrl: string
   updatesDir: string
+  releasePollMs: number
 }
 
 const DEFAULT_DATABASE_PATH = 'data/radcord.db'
@@ -44,6 +47,7 @@ export function loadServerConfig(env: ServerEnv): ServerConfig {
     livekitApiSecret: requireSecret(env),
     livekitPublicUrl: requireWebSocketUrl(env),
     updatesDir: env.UPDATES_DIR?.trim() || DEFAULT_UPDATES_DIR,
+    releasePollMs: parseReleasePoll(env.RELEASE_POLL_MS),
   }
 }
 
@@ -51,6 +55,15 @@ function requireEnv(env: ServerEnv, key: ServerEnvKey): string {
   const value = env[key]?.trim()
   if (!value) {
     throw new Error(`Variável ${key} ausente: recebido ${JSON.stringify(env[key])}, esperado texto não vazio`)
+  }
+  return value
+}
+
+function parseReleasePoll(raw: string | undefined): number {
+  if (raw === undefined || raw.trim() === '') return DEFAULT_RELEASE_POLL_MS
+  const value = Number(raw)
+  if (!Number.isInteger(value) || value < 10_000 || value > 3_600_000) {
+    throw new Error(`RELEASE_POLL_MS inválido: recebido ${JSON.stringify(raw)}, esperado inteiro entre 10000 e 3600000`)
   }
   return value
 }

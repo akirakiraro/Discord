@@ -92,4 +92,15 @@ describe('bindRealtimeEvents', () => {
 
     expect(harness.roster.occupants).toEqual([{ channelId: 'v', userId: 'u-2', displayName: 'Bia' }])
   })
+
+  it('repassa a versão publicada pelo host', () => {
+    const versions: string[] = []
+    const source = new FakeRealtimeSource()
+    const harness = new StateHarness(EMPTY_CHAT_STATE)
+    bindRealtimeEvents(source, { ...harness.sinks, onAppRelease: (version) => versions.push(version) })
+
+    source.deliver('app:release', { version: '0.1.117' })
+
+    expect(versions).toEqual(['0.1.117'])
+  })
 })

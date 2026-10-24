@@ -1,5 +1,6 @@
 import type { MemberDto } from './authContract'
 import type { ChannelDto, MessageDto } from './chatContract'
+import type { AppReleasePayload } from './releaseContract'
 import type { VoiceJoinPayload, VoiceLeftPayload, VoiceOccupantDto, VoiceSnapshotPayload } from './voiceContract'
 
 export interface MessageDeletedPayload {
@@ -30,6 +31,8 @@ export interface ServerToClientEvents {
   'voice:left': (payload: VoiceLeftPayload) => void
   /** Estado atual, mandado só para quem acabou de conectar. */
   'voice:snapshot': (payload: VoiceSnapshotPayload) => void
+  /** Release pública mais nova. No connect e quando a tag do GitHub muda. */
+  'app:release': (payload: AppReleasePayload) => void
 }
 
 export interface ClientToServerEvents {

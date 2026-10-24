@@ -1,10 +1,16 @@
+import type { UpdateSnapshot } from '../../shared/desktopUpdateSnapshot'
+
 export {}
 
 declare global {
   interface Window {
     radcord?: {
       radminIp(): Promise<string | null>
-      checkForUpdate(): Promise<string>
+      readUpdateState(): UpdateSnapshot
+      checkForUpdate(): Promise<UpdateSnapshot>
+      installUpdate(): Promise<void>
+      offerUpdate(version: string): Promise<UpdateSnapshot>
+      onUpdateState(listener: (snapshot: UpdateSnapshot) => void): () => void
       listScreenSources(): Promise<ScreenSourceOption[]>
       chooseScreenSource(sourceId: string): Promise<void>
       startScreenAudio(): Promise<void>
