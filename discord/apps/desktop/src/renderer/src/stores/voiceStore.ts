@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { applyDeafenToggle, applyMicToggle, OPEN_MIC, type MicDeafenState } from '../lib/voice/micDeafen'
 import { clampUnitVolume, OWN_SCREEN_LISTEN, REMOTE_SCREEN_LISTEN } from '../lib/voice/screenAudioVolume'
 
 export interface VoiceConnection {
@@ -11,6 +12,7 @@ export interface VoiceStore {
   connection: VoiceConnection | null
   micMuted: boolean
   deafened: boolean
+  micMutedBeforeDeafen: boolean
   showOwnShare: boolean
   showOwnTile: boolean
   ownScreenAudioVolume: number
@@ -28,8 +30,7 @@ export interface VoiceStore {
 
 export const useVoiceStore = create<VoiceStore>((set) => ({
   connection: null,
-  micMuted: false,
-  deafened: false,
+  ...OPEN_MIC,
   showOwnShare: true,
   showOwnTile: true,
   ownScreenAudioVolume: OWN_SCREEN_LISTEN,
@@ -37,12 +38,8 @@ export const useVoiceStore = create<VoiceStore>((set) => ({
   lastError: null,
   join: (connection) => set({ connection, lastError: null }),
   leave: (error) => set({ connection: null, lastError: error ?? null }),
-  toggleMic: () => set((store) => ({ micMuted: !store.micMuted })),
-  toggleDeafen: () =>
-    set((store) => {
-      const deafened = !store.deafened
-      return { deafened, micMuted: deafened || store.micMuted }
-    }),
+  toggleMic: () => set((store) => applyMicToggle(controlsOf(store))),
+  toggleDeafen: () => set((store) => applyDeafenToggle(controlsOf(store))),
   toggleOwnShare: () => set((store) => ({ showOwnShare: !store.showOwnShare })),
   toggleOwnTile: () => set((store) => ({ showOwnTile: !store.showOwnTile })),
   setOwnScreenAudioVolume: (volume) => set({ ownScreenAudioVolume: clampUnitVolume(volume) }),
@@ -52,4 +49,12 @@ export const useVoiceStore = create<VoiceStore>((set) => ({
 /** Ensurdecer também corta o microfone, como no Discord. */
 export function isMicrophoneLive(store: Pick<VoiceStore, 'micMuted' | 'deafened'>): boolean {
   return !store.micMuted && !store.deafened
+}
+
+function controlsOf(store: VoiceStore): MicDeafenState {
+  return {
+    micMuted: store.micMuted,
+    deafened: store.deafened,
+    micMutedBeforeDeafen: store.micMutedBeforeDeafen,
+  }
 }

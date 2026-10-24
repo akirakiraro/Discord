@@ -4,23 +4,41 @@ import { forgetLoginToken, loadSavedLogin } from '../lib/savedLogin'
 import { useSessionStore } from '../stores/sessionStore'
 
 /**
- * Na abertura do app tenta reaproveitar o token salvo; devolve `true` enquanto verifica.
- * Exemplo: `const restoring = useRestoreSession(); if (restoring) return <Splash />`
+ * Reaproveita o token salvo depois que a atualização libera o login.
+ * Devolve `true` enquanto verifica. Exemplo: `const restoring = useRestoreSession(!blocked)`
  */
-export function useRestoreSession(): boolean {
-  const [restoring, setRestoring] = useState(() => loadSavedLogin(window.localStorage).token !== null)
+export function useRestoreSession(allow: boolean): boolean {
+  const [settled, setSettled] = useState(false)
 
   useEffect(() => {
-    const { hostAddress, token } = loadSavedLogin(window.localStorage)
-    if (!token) return
-    restoreSession(hostAddress, token)
-      .then((session) => {
-        if (session) useSessionStore.getState().signIn(session)
-        else forgetLoginToken(window.localStorage)
-      })
-      .catch((error: unknown) => useSessionStore.getState().signOut(error instanceof Error ? error.message : String(error)))
-      .finally(() => setRestoring(false))
-  }, [])
+    if (!allow) return undefined
+    return restoreSavedSession(setSettled)
+  }, [allow])
 
-  return restoring
+  if (!allow || settled) return false
+  return loadSavedLogin(window.localStorage).token !== null
+}
+
+function restoreSavedSession(setSettled: (settled: boolean) => void): () => void {
+  const { hostAddress, token } = loadSavedLogin(window.localStorage)
+  if (!token) {
+    setSettled(true)
+    return () => undefined
+  }
+  let cancelled = false
+  restoreSession(hostAddress, token)
+    .then((session) => {
+      if (cancelled) return
+      if (session) useSessionStore.getState().signIn(session)
+      else forgetLoginToken(window.localStorage)
+    })
+    .catch((error: unknown) => {
+      if (!cancelled) useSessionStore.getState().signOut(error instanceof Error ? error.message : String(error))
+    })
+    .finally(() => {
+      if (!cancelled) setSettled(true)
+    })
+  return () => {
+    cancelled = true
+  }
 }

@@ -8,6 +8,8 @@ import { SensitivityGate } from './sensitivityGate'
 import { monitorCapture, type MicPreferences } from './micPreferences'
 import type { MicrophonePort } from './liveKitMicrophone'
 import { reportAppError } from '../report/reportAppError'
+import { earCaptureFailure } from './earStatus'
+import type { CallChimeGatePort } from './callChimeGate'
 
 /** O pedaço da `Room` do LiveKit que o controlador usa (permite um fake nos testes). */
 export interface VoiceRoomPort {
@@ -16,6 +18,19 @@ export interface VoiceRoomPort {
   connect(url: string, token: string): Promise<void>
   disconnect(): Promise<void>
   on(event: RoomEvent.Disconnected, listener: (reason?: DisconnectReason) => void): unknown
+  onParticipant(event: 'connected' | 'disconnected', listener: (identity: string, participantKind?: string | number) => void): void
+  onReconnecting(listener: () => void): void
+  onReconnected(listener: () => void): void
+  remoteIdentities(): readonly string[]
+}
+
+const SILENT_CHIMES: CallChimeGatePort = {
+  prime() {},
+  onJoined() {},
+  onLeft() {},
+  onRemote() {},
+  holdReconnect() {},
+  releaseReconnect() {},
 }
 
 export interface VoiceTokenSource {
@@ -38,12 +53,14 @@ export class VoiceSessionController {
     private readonly room: VoiceRoomPort,
     private readonly store: VoiceStoreApi,
     private readonly prefs: MicPrefsApi,
+    private readonly chimes: CallChimeGatePort = SILENT_CHIMES,
   ) {
     this.gate = new SensitivityGate(
       () => this.prefs.getState().gateDb,
       () => this.prefs.getState().inputGain,
     )
     room.on(RoomEvent.Disconnected, (reason) => this.handleDisconnected(reason))
+    this.bindCallChimes(room)
     store.subscribe((state, previous) => {
       if (isMicrophoneLive(state) !== isMicrophoneLive(previous)) void this.syncMicrophone()
     })
@@ -51,6 +68,8 @@ export class VoiceSessionController {
   }
 
   async join(tokens: VoiceTokenSource, channelId: string): Promise<void> {
+    // Ainda no clique: o Chromium só deixa o AudioContext seguir se nascer neste gesto.
+    this.chimes.prime()
     if (this.store.getState().connection?.channelId === channelId) return
     try {
       await this.enterChannel(tokens, channelId)
@@ -60,33 +79,52 @@ export class VoiceSessionController {
   }
 
   async leave(): Promise<void> {
+    this.chimes.prime()
+    this.chimes.onLeft()
     this.monitoring = false
     this.store.getState().leave()
-    await this.room.disconnect()
+    if (this.room.state !== ConnectionState.Disconnected) await this.room.disconnect()
   }
 
   /**
-   * Liga a escuta da própria voz e tira o cancelamento de eco enquanto ela durar.
+   * Liga a escuta da própria voz e tira o eco enquanto ela durar.
    * Sem isso o Chromium apaga o áudio que volta do servidor.
+   * Republica mesmo com o eco já desligado: o isolamento de voz do SDK também apaga.
    * Exemplo: `await controller.setSelfMonitor(true)`.
    */
   async setSelfMonitor(on: boolean): Promise<void> {
     this.monitoring = on
-    if (!this.prefs.getState().echoCancellation) return
     await this.republishCapture()
+    if (!on) return
+    const blocked = earCaptureFailure(this.room.microphone.readCapture())
+    if (blocked) throw blocked
   }
 
   private async enterChannel(tokens: VoiceTokenSource, channelId: string): Promise<void> {
     const { token, livekitUrl } = await tokens.requestVoiceToken(channelId)
-    if (this.room.state !== ConnectionState.Disconnected) await this.room.disconnect()
+    await this.leavePreviousRoom()
     try {
       await this.room.connect(livekitUrl, token)
     } catch (error) {
       this.failJoin(error, livekitUrl)
       return
     }
+    this.chimes.onJoined(this.room.remoteIdentities())
     this.store.getState().join({ channelId, token, livekitUrl })
     await this.syncMicrophone()
+  }
+
+  private async leavePreviousRoom(): Promise<void> {
+    const occupied = this.store.getState().connection !== null || this.room.state !== ConnectionState.Disconnected
+    if (occupied) this.chimes.onLeft()
+    if (this.room.state !== ConnectionState.Disconnected) await this.room.disconnect()
+  }
+
+  private bindCallChimes(room: VoiceRoomPort): void {
+    room.onParticipant('connected', (identity, participantKind) => this.chimes.onRemote('join', identity, participantKind))
+    room.onParticipant('disconnected', (identity, participantKind) => this.chimes.onRemote('leave', identity, participantKind))
+    room.onReconnecting(() => this.chimes.holdReconnect())
+    room.onReconnected(() => this.chimes.releaseReconnect(room.remoteIdentities()))
   }
 
   private failJoin(error: unknown, livekitUrl: string | undefined): void {
@@ -99,6 +137,7 @@ export class VoiceSessionController {
   private handleDisconnected(reason: DisconnectReason | undefined): void {
     const message = describeVoiceDisconnect(reason)
     if (!message) return
+    this.chimes.onLeft()
     reportAppError(message)
     this.store.getState().leave(message)
   }
@@ -124,6 +163,7 @@ export class VoiceSessionController {
     const state = this.store.getState()
     if (!state.connection || !isMicrophoneLive(state)) return
     await this.room.microphone.restart(this.captureNow())
+    await this.room.microphone.attachGain(this.gate)
   }
 
   private async syncMicrophone(): Promise<void> {

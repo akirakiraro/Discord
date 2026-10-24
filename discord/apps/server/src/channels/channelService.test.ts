@@ -40,6 +40,15 @@ describe('ChannelService', () => {
     expect(() => service.create({ name: 'memes', kind: 'text' })).toThrow(/Já existe.*"memes"/)
   })
 
+  it('isVoiceChannel só aceita canal de voz que existe', () => {
+    const voice = service.create({ name: 'call', kind: 'voice' })
+    const text = service.create({ name: 'memes', kind: 'text' })
+
+    expect(service.isVoiceChannel(voice.id), 'voz').toBe(true)
+    expect(service.isVoiceChannel(text.id), 'texto não entra na lista da call').toBe(false)
+    expect(service.isVoiceChannel('nada'), 'id inexistente').toBe(false)
+  })
+
   it('requireChannel valida existência e tipo', () => {
     const voice = service.create({ name: 'call', kind: 'voice' })
 

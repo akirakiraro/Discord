@@ -5,6 +5,7 @@ import { HeadsetIcon, MicIcon } from '../common/AudioIcons'
 import { screenShareSettings } from '../../lib/voice/screenSharePresets'
 import { publishFilteredScreenAudio, stopFilteredScreenAudio } from '../../lib/voice/filteredScreenAudio'
 import { voiceSession } from '../../lib/voice/voiceSession'
+import { deafenButtonTitle, micButtonTitle } from '../../lib/voice/micDeafen'
 import { useVoiceStore } from '../../stores/voiceStore'
 import { ScreenSharePicker, type ShareSelection } from './ScreenSharePicker'
 import { ScreenVolumeSlider } from './ScreenVolumeSlider'
@@ -52,10 +53,10 @@ export function VoiceControlBar(): React.JSX.Element {
   return (
     <div className="voice-controls">
       <div className="voice-controls__row">
-        <button className={micMuted ? 'round-button round-button--off' : 'round-button'} title="Mutar" onClick={toggleMic}>
+        <button type="button" className={micMuted ? 'round-button round-button--off' : 'round-button'} title={micButtonTitle({ micMuted, deafened })} onClick={toggleMic}>
           <MicIcon off={micMuted} size={22} />
         </button>
-        <button className={deafened ? 'round-button round-button--off' : 'round-button'} title="Ensurdecer" onClick={toggleDeafen}>
+        <button type="button" className={deafened ? 'round-button round-button--off' : 'round-button'} title={deafenButtonTitle(deafened)} onClick={toggleDeafen}>
           <HeadsetIcon off={deafened} size={22} />
         </button>
         <button

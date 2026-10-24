@@ -1,17 +1,39 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useState } from 'react'
+import { SKIPPED_UPDATE, parseUpdateSnapshot, type UpdateSnapshot } from '../../../shared/desktopUpdateSnapshot'
+
+export interface DesktopUpdateController {
+  snapshot: UpdateSnapshot
+  retry: () => void
+  install: () => void
+}
 
 /**
- * Uma vez por abertura, pergunta aos releases do GitHub se há um Radcord mais novo.
- * Exemplo: `useDesktopUpdate()`
+ * Espelha a máquina de estados do processo principal. A checagem em si começa lá, na abertura.
+ * Exemplo: `const update = useDesktopUpdate()`
  */
-export function useDesktopUpdate(): void {
-  const started = useRef(false)
+export function useDesktopUpdate(): DesktopUpdateController {
+  const [snapshot, setSnapshot] = useState<UpdateSnapshot>(readInitialSnapshot)
 
-  useEffect(() => {
-    if (started.current) return
-    const check = window.radcord?.checkForUpdate
-    if (!check) return
-    started.current = true
-    void check().catch(() => undefined)
-  }, [])
+  useEffect(() => window.radcord?.onUpdateState((next) => setSnapshot(parseUpdateSnapshot(next))), [])
+
+  return {
+    snapshot,
+    retry: () => applySnapshot(window.radcord?.checkForUpdate, setSnapshot),
+    install: () => {
+      void window.radcord?.installUpdate()
+    },
+  }
+}
+
+function readInitialSnapshot(): UpdateSnapshot {
+  const read = window.radcord?.readUpdateState
+  if (!read) return SKIPPED_UPDATE
+  return parseUpdateSnapshot(read())
+}
+
+function applySnapshot(read: (() => Promise<UpdateSnapshot>) | undefined, setSnapshot: (snapshot: UpdateSnapshot) => void): void {
+  if (!read) return
+  void read()
+    .then((snapshot) => setSnapshot(parseUpdateSnapshot(snapshot)))
+    .catch(() => undefined)
 }

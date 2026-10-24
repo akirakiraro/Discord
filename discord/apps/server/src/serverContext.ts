@@ -10,6 +10,7 @@ import { MessageService } from './messages/messageService'
 import type { Clock, IdGenerator } from './platform/runtime'
 import { PresenceTracker } from './realtime/presenceTracker'
 import { SocketIoBroadcaster } from './realtime/realtimeBroadcaster'
+import { VoiceRoster } from './realtime/voiceRoster'
 import { SqliteUserRepository, type UserRepository } from './users/userRepository'
 import type { VoiceTokenIssuer } from './voice/voiceTokenIssuer'
 
@@ -28,6 +29,7 @@ export interface ServerContext {
   messages: MessageService
   users: UserRepository
   presence: PresenceTracker
+  voiceRoster: VoiceRoster
   broadcaster: SocketIoBroadcaster
   tokenIssuer: VoiceTokenIssuer
   livekitPublicUrl: string
@@ -54,6 +56,7 @@ export function createServerContext(inputs: ServerContextInputs): ServerContext 
     messages,
     users,
     presence: new PresenceTracker(),
+    voiceRoster: new VoiceRoster(),
     broadcaster,
     tokenIssuer: inputs.tokenIssuer,
     livekitPublicUrl: inputs.livekitPublicUrl,

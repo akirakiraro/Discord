@@ -9,6 +9,7 @@ import {
   type ChatState,
 } from '../chat/chatState'
 import { withTypingStarted, withTypingStopped, type TypingState } from '../chat/typingState'
+import { withVoiceJoined, withVoiceLeft, withVoiceSnapshot, type VoiceRosterState } from '../voice/voiceRosterState'
 
 type ServerEventName = keyof ServerToClientEvents
 
@@ -19,15 +20,17 @@ export interface RealtimeEventSource {
 export interface RealtimeSinks {
   applyChat: (update: (state: ChatState) => ChatState) => void
   applyTyping: (update: (state: TypingState) => TypingState) => void
+  applyRoster: (update: (state: VoiceRosterState) => VoiceRosterState) => void
   nowMs: () => number
+  onAppRelease?: (version: string) => void
 }
 
 /**
- * Liga cada evento do host a uma atualização pura do estado do chat.
- * Exemplo: `bindRealtimeEvents(socket, { applyChat, applyTyping, nowMs: Date.now })`
+ * Liga cada evento do host a uma atualização pura do chat ou da presença de voz.
+ * Exemplo: `bindRealtimeEvents(socket, { applyChat, applyTyping, applyRoster, nowMs: Date.now })`
  */
 export function bindRealtimeEvents(source: RealtimeEventSource, sinks: RealtimeSinks): void {
-  const { applyChat, applyTyping } = sinks
+  const { applyChat, applyTyping, applyRoster } = sinks
   source.on('message:created', (message) => {
     applyChat((state) => withMessageUpserted(state, message))
     applyTyping((state) => withTypingStopped(state, { channelId: message.channelId, userId: message.authorId }))
@@ -39,4 +42,8 @@ export function bindRealtimeEvents(source: RealtimeEventSource, sinks: RealtimeS
   source.on('member:updated', (member) => applyChat((state) => withMemberProfile(state, member)))
   source.on('presence:changed', (payload) => applyChat((state) => withPresence(state, payload)))
   source.on('typing:started', (payload) => applyTyping((state) => withTypingStarted(state, payload, sinks.nowMs())))
+  source.on('voice:snapshot', (payload) => applyRoster((state) => withVoiceSnapshot(state, payload)))
+  source.on('voice:joined', (occupant) => applyRoster((state) => withVoiceJoined(state, occupant)))
+  source.on('voice:left', (payload) => applyRoster((state) => withVoiceLeft(state, payload)))
+  source.on('app:release', (payload) => sinks.onAppRelease?.(payload.version))
 }

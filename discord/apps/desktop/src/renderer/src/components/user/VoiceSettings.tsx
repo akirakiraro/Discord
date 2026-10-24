@@ -17,12 +17,65 @@ export function VoiceSettings(): React.JSX.Element {
       <NoiseToggle enabled={prefs.noiseSuppression} onChange={prefs.setNoiseSuppression} />
       <CaptureToggle label="Cancelamento de eco" enabled={prefs.echoCancellation} onChange={prefs.setEchoCancellation} />
       <CaptureToggle label="Ganho automático" enabled={prefs.autoGainControl} onChange={prefs.setAutoGainControl} />
+      <ProcessingHint />
       <VolumeSlider value={prefs.inputGain} onChange={prefs.setInputGain} />
       <SensitivitySlider value={prefs.gateDb} onChange={prefs.setGateDb} />
       <MicLevel prefs={prefs} />
       <HearMyself />
+      <CallSoundSettings
+        enabled={prefs.callSounds}
+        volume={prefs.callSoundVolume}
+        onEnabled={prefs.setCallSounds}
+        onVolume={prefs.setCallSoundVolume}
+      />
       {error && <p className="settings-modal__error">{error}</p>}
     </div>
+  )
+}
+
+function CallSoundSettings({
+  enabled,
+  volume,
+  onEnabled,
+  onVolume,
+}: {
+  enabled: boolean
+  volume: number
+  onEnabled: (enabled: boolean) => void
+  onVolume: (volume: number) => void
+}): React.JSX.Element {
+  return (
+    <>
+      <CaptureToggle label="Sons de entrar e sair da call" enabled={enabled} onChange={onEnabled} />
+      <p className="settings-modal__hint">Toca para você e para quem entra ou sai da call em que você está. Surdo deixa estes sons mudos.</p>
+      <CallSoundVolume volume={volume} onVolume={onVolume} />
+    </>
+  )
+}
+
+function CallSoundVolume({ volume, onVolume }: { volume: number; onVolume: (volume: number) => void }): React.JSX.Element {
+  const percent = Math.round(volume * 100)
+  return (
+    <label className="settings-modal__field">
+      Volume dos sons · {percent}%
+      <input
+        type="range"
+        min={0}
+        max={1}
+        step={0.05}
+        value={volume}
+        style={sliderFill(percent)}
+        onChange={(event) => onVolume(Number(event.target.value))}
+      />
+    </label>
+  )
+}
+
+function ProcessingHint(): React.JSX.Element {
+  return (
+    <p className="settings-modal__hint">
+      Supressão e ganho automático começam desligados. A supressão do navegador corta os agudos, e o volume do slider já controla o ganho.
+    </p>
   )
 }
 

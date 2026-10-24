@@ -4,8 +4,11 @@ import type { RadcordApiClient } from '../lib/api/apiClient'
 import { withInitialData } from '../lib/chat/chatState'
 import { bindRealtimeEvents } from '../lib/realtime/realtimeBindings'
 import { connectRealtime, type RadcordClientSocket } from '../lib/realtime/realtimeClient'
+import { bindVoiceAnnouncements, voiceChannelSource } from '../lib/voice/announceVoiceSeat'
 import { useChatStore } from '../stores/chatStore'
 import { useSessionStore, type AuthSession } from '../stores/sessionStore'
+import { useVoiceRosterStore } from '../stores/voiceRosterStore'
+import { useVoiceStore } from '../stores/voiceStore'
 
 export interface RealtimeConnection {
   socket: RadcordClientSocket | null
@@ -19,7 +22,8 @@ async function loadInitialChatData(api: RadcordApiClient): Promise<void> {
 
 /**
  * Mantém o Socket.IO aberto enquanto há sessão e recarrega canais/membros a cada (re)conexão,
- * já que eventos perdidos durante a queda não são reenviados.
+ * já que eventos perdidos durante a queda não são reenviados. A presença de voz volta no
+ * `voice:snapshot` que o host manda ao conectar.
  * Exemplo: `const { socket, connected } = useRealtimeConnection(session)`
  */
 export function useRealtimeConnection(session: AuthSession): RealtimeConnection {
@@ -28,7 +32,17 @@ export function useRealtimeConnection(session: AuthSession): RealtimeConnection 
   useEffect(() => {
     const socket = connectRealtime(session.api.baseUrl, session.token)
     const { applyChat, applyTyping } = useChatStore.getState()
-    bindRealtimeEvents(socket, { applyChat, applyTyping, nowMs: Date.now })
+    const { applyRoster } = useVoiceRosterStore.getState()
+    bindRealtimeEvents(socket, {
+      applyChat,
+      applyTyping,
+      applyRoster,
+      nowMs: Date.now,
+      onAppRelease: (version) => {
+        void window.radcord?.offerUpdate(version)
+      },
+    })
+    const stopVoice = bindVoiceAnnouncements(socket, voiceChannelSource(useVoiceStore))
     socket.on('connect', () => {
       setConnection({ socket, connected: true })
       void loadInitialChatData(session.api)
@@ -39,6 +53,7 @@ export function useRealtimeConnection(session: AuthSession): RealtimeConnection 
     })
     setConnection({ socket, connected: false })
     return () => {
+      stopVoice()
       socket.disconnect()
     }
   }, [session])

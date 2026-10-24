@@ -1,9 +1,10 @@
 import { networkInterfaces } from 'node:os'
 import { join } from 'node:path'
-import { app, BrowserWindow, dialog, ipcMain, screen, shell, type BrowserWindowConstructorOptions } from 'electron'
+import { app, BrowserWindow, ipcMain, screen, shell, type BrowserWindowConstructorOptions } from 'electron'
 import { autoUpdater, type UpdateCheckResult } from 'electron-updater'
 import { bindClientReports } from './clientReportBridge'
-import { installBlockUpdate, type BlockUpdateClient } from './desktopUpdate'
+import { DesktopUpdateMachine, armQuitAndInstall, type BlockUpdateClient } from './desktopUpdate'
+import { cleanProgress, type UpdateProgress, type UpdateSnapshot } from '../shared/desktopUpdateSnapshot'
 import { allowMediaPermissions, handleScreenShareRequests } from './mediaPermissions'
 import { findRadminIpv4 } from './radminAddress'
 import { exposeScreenAudioIpc } from './screenAudioCapture'
@@ -172,23 +173,42 @@ function exposeRadminIp(): void {
 }
 
 function exposeDesktopUpdate(): void {
-  ipcMain.handle('radcord:check-update', async () => {
-    try {
-      return await installBlockUpdate({
-        packaged: app.isPackaged,
-        confirm: confirmDesktopUpdate,
-        client: blockUpdateClient(),
-      })
-    } catch (error: unknown) {
-      dialog.showErrorBox('Atualização do Radcord', error instanceof Error ? error.message : String(error))
-      return 'failed'
-    }
+  const machine = new DesktopUpdateMachine({
+    packaged: app.isPackaged,
+    installedVersion: app.getVersion(),
+    client: blockUpdateClient(),
+    onChange: publishUpdateSnapshot,
   })
+  registerUpdateIpc(machine)
+  void machine.start()
+}
+
+function publishUpdateSnapshot(snapshot: UpdateSnapshot): void {
+  for (const window of BrowserWindow.getAllWindows()) {
+    if (!window.isDestroyed()) window.webContents.send('radcord:update-state', snapshot)
+  }
+}
+
+function registerUpdateIpc(machine: DesktopUpdateMachine): void {
+  ipcMain.on('radcord:update-snapshot', (event) => {
+    event.returnValue = machine.view()
+  })
+  ipcMain.handle('radcord:check-update', () => machine.requestCheck())
+  ipcMain.handle('radcord:install-update', () => {
+    machine.install()
+  })
+  ipcMain.handle('radcord:offer-update', (_event, version: unknown) => offerAnnouncedUpdate(machine, version))
+}
+
+function offerAnnouncedUpdate(machine: DesktopUpdateMachine, version: unknown): Promise<UpdateSnapshot> {
+  if (typeof version !== 'string') return Promise.resolve(machine.view())
+  return machine.announce(version)
 }
 
 function blockUpdateClient(): BlockUpdateClient {
   autoUpdater.autoDownload = false
   autoUpdater.autoInstallOnAppQuit = false
+  const listeners = bindUpdaterListeners()
   return {
     setFeed(feed) {
       autoUpdater.setFeedURL(feed)
@@ -200,26 +220,43 @@ function blockUpdateClient(): BlockUpdateClient {
       await autoUpdater.downloadUpdate()
     },
     quitAndInstall() {
-      autoUpdater.quitAndInstall(false, true)
+      armQuitAndInstall(autoUpdater)
+    },
+    onDownloadProgress(listener) {
+      listeners.onProgress = listener
+    },
+    onUpdateError(listener) {
+      listeners.onError = listener
+    },
+    onUpdateDownloaded(listener) {
+      listeners.onDownloaded = listener
     },
   }
+}
+
+function bindUpdaterListeners(): UpdaterListeners {
+  const listeners: UpdaterListeners = { onProgress: null, onError: null, onDownloaded: null }
+  autoUpdater.on('download-progress', (progress) => {
+    listeners.onProgress?.(cleanProgress(progress))
+  })
+  autoUpdater.on('error', (error) => {
+    listeners.onError?.(error instanceof Error ? error.message : String(error))
+  })
+  autoUpdater.on('update-downloaded', (info) => {
+    listeners.onDownloaded?.(info.version)
+  })
+  return listeners
+}
+
+interface UpdaterListeners {
+  onProgress: ((progress: UpdateProgress) => void) | null
+  onError: ((message: string) => void) | null
+  onDownloaded: ((version: string) => void) | null
 }
 
 function availableVersion(result: UpdateCheckResult | null): { version: string } | null {
   if (!result?.isUpdateAvailable) return null
   return { version: result.updateInfo.version }
-}
-
-function confirmDesktopUpdate(version: string): Promise<boolean> {
-  return dialog.showMessageBox({
-    type: 'info',
-    buttons: ['Agora não', 'Baixar e reiniciar'],
-    defaultId: 1,
-    cancelId: 0,
-    title: 'Atualização do Radcord',
-    message: `A versão ${version} está no host`,
-    detail: 'O app baixa só a parte que mudou, fecha e abre de novo. Quem estiver na chamada cai nesse intervalo.',
-  }).then((choice) => choice.response === 1)
 }
 
 app.whenReady().then(() => {

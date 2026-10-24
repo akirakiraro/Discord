@@ -10,6 +10,7 @@ describe('voiceStore', () => {
       connection: null,
       micMuted: false,
       deafened: false,
+      micMutedBeforeDeafen: false,
       showOwnShare: true,
       showOwnTile: true,
       ownScreenAudioVolume: OWN_SCREEN_LISTEN,
@@ -72,6 +73,21 @@ describe('voiceStore', () => {
     useVoiceStore.getState().toggleDeafen()
 
     expect(useVoiceStore.getState()).toMatchObject({ micMuted: true, deafened: true })
+  })
+
+  it('mutar enquanto surdo desmuta o microfone e o áudio', () => {
+    useVoiceStore.getState().toggleDeafen()
+    useVoiceStore.getState().toggleMic()
+
+    expect(useVoiceStore.getState()).toMatchObject({ micMuted: false, deafened: false, micMutedBeforeDeafen: false })
+  })
+
+  it('desensurdecer devolve o mute que estava antes', () => {
+    useVoiceStore.getState().toggleMic()
+    useVoiceStore.getState().toggleDeafen()
+    useVoiceStore.getState().toggleDeafen()
+
+    expect(useVoiceStore.getState()).toMatchObject({ micMuted: true, deafened: false, micMutedBeforeDeafen: false })
   })
 })
 
