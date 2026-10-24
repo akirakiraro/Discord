@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.1.116
+
+Sons curtos de entrada e saída na call em que você está.
+
+- Entrar toca duas notas subindo, uma vez. Quem já estava na sala não toca junto.
+- Outra pessoa entrando ou saindo toca o som correspondente. Quem está fora da call não ouve.
+- Sair, cair ou trocar de canal toca a descida. O canal novo toca a subida.
+- A escuta `:monitor`, a faixa de tela e uma identidade auxiliar ficam mudas. Reconexão rápida do LiveKit não repete a sala.
+- Configurações → Voz: chave "Sons de entrar e sair da call" (ligada) e o volume. Surdo deixa esses sons mudos.
+- O áudio é gerado no app. Não há arquivo de som de terceiro.
+
 ## 0.1.113
 
 Mutar e ensurdecer passam a seguir uma máquina só.

@@ -37,6 +37,26 @@ describe('micPrefsStore', () => {
     expect(store.getState().gateDb).toBe(-30)
   })
 
+  it('grava a chave e o volume dos sons da call sem perder o microfone', () => {
+    const storage = new InMemoryStorage()
+    const store = createMicPrefsStore(storage)
+
+    store.getState().setDeviceId('headset')
+    store.getState().setCallSounds(false)
+    store.getState().setCallSoundVolume(0.25)
+
+    expect(store.getState()).toMatchObject({ deviceId: 'headset', callSounds: false, callSoundVolume: 0.25 })
+    const again = createMicPrefsStore(storage)
+    expect(again.getState()).toMatchObject({ deviceId: 'headset', callSounds: false, callSoundVolume: 0.25 })
+  })
+
+  it('começa com os sons da call ligados', () => {
+    const store = createMicPrefsStore(new InMemoryStorage())
+
+    expect(store.getState().callSounds).toBe(true)
+    expect(store.getState().callSoundVolume).toBeGreaterThan(0)
+  })
+
   it('mantém o id quando o aparelho continua conectado', () => {
     const store = createMicPrefsStore(new InMemoryStorage())
 

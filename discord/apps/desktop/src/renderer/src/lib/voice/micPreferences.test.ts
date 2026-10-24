@@ -3,6 +3,8 @@ import { describe, expect, it } from 'vitest'
 import type { KeyValueStorage } from '../savedLogin'
 import {
   captureOptions,
+  clampCallSoundVolume,
+  DEFAULT_CALL_SOUND_VOLUME,
   DEFAULT_MIC_PREFERENCES,
   loadMicPreferences,
   MIC_DEFAULTS_REVISION,
@@ -40,6 +42,8 @@ describe('micPreferences', () => {
       autoGainControl: true,
       gateDb: -5,
       inputGain: 9,
+      callSounds: false,
+      callSoundVolume: 2,
     })
 
     expect(loadMicPreferences(storage)).toEqual({
@@ -49,6 +53,8 @@ describe('micPreferences', () => {
       autoGainControl: true,
       gateDb: -10,
       inputGain: 4,
+      callSounds: false,
+      callSoundVolume: 1,
     })
   })
 
@@ -67,6 +73,8 @@ describe('micPreferences', () => {
       autoGainControl: true,
       gateDb: -45,
       inputGain: 1,
+      callSounds: true,
+      callSoundVolume: DEFAULT_CALL_SOUND_VOLUME,
     })).toEqual({
       deviceId: 'headset',
       channelCount: { ideal: 1 },
@@ -142,6 +150,19 @@ describe('micPreferences', () => {
     expect(monitoring.voiceIsolation, 'isolamento também apaga o retorno').toEqual({ exact: false })
     expect(normal.echoCancellation, 'fora da escuta vale a preferência').toBe(true)
     expect(normal.voiceIsolation, 'o padrão do SDK não volta a ligar o isolamento').toEqual({ exact: false })
+  })
+
+  it('preferência antiga liga os sons da call no volume padrão', () => {
+    const storage = new InMemoryStorage()
+    storage.setItem('radcord.mic', JSON.stringify({ deviceId: 'headset', defaultsRevision: 1 }))
+
+    expect(loadMicPreferences(storage)).toMatchObject({
+      callSounds: true,
+      callSoundVolume: DEFAULT_CALL_SOUND_VOLUME,
+      noiseSuppression: false,
+    })
+    expect(clampCallSoundVolume(Number.NaN)).toBe(DEFAULT_CALL_SOUND_VOLUME)
+    expect(clampCallSoundVolume(0), 'mudo é um volume válido').toBe(0)
   })
 
   it('resolveDeviceId volta ao padrão se o aparelho sumiu', () => {

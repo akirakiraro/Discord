@@ -22,8 +22,52 @@ export function VoiceSettings(): React.JSX.Element {
       <SensitivitySlider value={prefs.gateDb} onChange={prefs.setGateDb} />
       <MicLevel prefs={prefs} />
       <HearMyself />
+      <CallSoundSettings
+        enabled={prefs.callSounds}
+        volume={prefs.callSoundVolume}
+        onEnabled={prefs.setCallSounds}
+        onVolume={prefs.setCallSoundVolume}
+      />
       {error && <p className="settings-modal__error">{error}</p>}
     </div>
+  )
+}
+
+function CallSoundSettings({
+  enabled,
+  volume,
+  onEnabled,
+  onVolume,
+}: {
+  enabled: boolean
+  volume: number
+  onEnabled: (enabled: boolean) => void
+  onVolume: (volume: number) => void
+}): React.JSX.Element {
+  return (
+    <>
+      <CaptureToggle label="Sons de entrar e sair da call" enabled={enabled} onChange={onEnabled} />
+      <p className="settings-modal__hint">Toca para você e para quem entra ou sai da call em que você está. Surdo deixa estes sons mudos.</p>
+      <CallSoundVolume volume={volume} onVolume={onVolume} />
+    </>
+  )
+}
+
+function CallSoundVolume({ volume, onVolume }: { volume: number; onVolume: (volume: number) => void }): React.JSX.Element {
+  const percent = Math.round(volume * 100)
+  return (
+    <label className="settings-modal__field">
+      Volume dos sons · {percent}%
+      <input
+        type="range"
+        min={0}
+        max={1}
+        step={0.05}
+        value={volume}
+        style={sliderFill(percent)}
+        onChange={(event) => onVolume(Number(event.target.value))}
+      />
+    </label>
   )
 }
 
