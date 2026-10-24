@@ -1,0 +1,7 @@
+node_modules/
+
+# Logs de sessão do agente; as regras em .cursor/rules continuam versionadas
+.cursor/debug-*.log
+
+# Lockfile gerado ao rodar npm na raiz, fora do app em discord/
+/package-lock.json
