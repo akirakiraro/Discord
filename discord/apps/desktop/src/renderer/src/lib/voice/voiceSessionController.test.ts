@@ -5,6 +5,7 @@ import { useMicPrefsStore } from '../../stores/micPrefsStore'
 import { useVoiceStore } from '../../stores/voiceStore'
 import type { CaptureProbe } from './earStatus'
 import type { SensitivityGate } from './sensitivityGate'
+import type { CallChimeGatePort } from './callChimeGate'
 import { VoiceSessionController, type VoiceRoomPort, type VoiceTokenSource } from './voiceSessionController'
 import type { MicrophonePort } from './liveKitMicrophone'
 
@@ -39,11 +40,46 @@ function captureFlag(value: AudioCaptureOptions['noiseSuppression']): string {
   return 'other'
 }
 
+class RecordingChimes implements CallChimeGatePort {
+  readonly log: string[] = []
+
+  prime(): void {
+    this.log.push('prime')
+  }
+
+  onJoined(identities: readonly string[]): void {
+    this.log.push(`joined:${identities.join('+')}`)
+  }
+
+  onLeft(): void {
+    this.log.push('left')
+  }
+
+  onRemote(kind: 'join' | 'leave', identity: string, participantKind?: string | number): void {
+    this.log.push(`${kind}:${identity}:${String(participantKind ?? '')}`)
+  }
+
+  holdReconnect(): void {
+    this.log.push('hold')
+  }
+
+  releaseReconnect(identities: readonly string[]): void {
+    this.log.push(`release:${identities.join('+')}`)
+  }
+}
+
 class FakeVoiceRoom implements VoiceRoomPort {
   state: ConnectionState = ConnectionState.Disconnected
   readonly microphone = new FakeMicrophone()
   failNextConnect = false
+  remotes: string[] = []
   private disconnectedListener: ((reason?: DisconnectReason) => void) | null = null
+  private readonly participants: Record<'connected' | 'disconnected', Array<(identity: string, participantKind?: string | number) => void>> = {
+    connected: [],
+    disconnected: [],
+  }
+  private reconnecting: Array<() => void> = []
+  private reconnected: Array<() => void> = []
 
   get log(): string[] {
     return this.microphone.log
@@ -63,6 +99,34 @@ class FakeVoiceRoom implements VoiceRoomPort {
 
   on(_event: RoomEvent.Disconnected, listener: (reason?: DisconnectReason) => void): void {
     this.disconnectedListener = listener
+  }
+
+  onParticipant(event: 'connected' | 'disconnected', listener: (identity: string, participantKind?: string | number) => void): void {
+    this.participants[event].push(listener)
+  }
+
+  onReconnecting(listener: () => void): void {
+    this.reconnecting.push(listener)
+  }
+
+  onReconnected(listener: () => void): void {
+    this.reconnected.push(listener)
+  }
+
+  remoteIdentities(): readonly string[] {
+    return this.remotes
+  }
+
+  emitParticipant(event: 'connected' | 'disconnected', identity: string, participantKind?: string | number): void {
+    for (const listener of this.participants[event]) listener(identity, participantKind)
+  }
+
+  emitReconnecting(): void {
+    for (const listener of this.reconnecting) listener()
+  }
+
+  emitReconnected(): void {
+    for (const listener of this.reconnected) listener()
   }
 
   dropFromServer(reason: DisconnectReason): void {
@@ -229,6 +293,43 @@ describe('VoiceSessionController', () => {
     room.microphone.probe = { echoCancellation: true }
 
     await expect(controller.setSelfMonitor(true)).rejects.toThrow(/cancelamento de eco/)
+  })
+
+  it('entrar, trocar e sair avisam o sino com quem já está na sala', async () => {
+    const chimes = new RecordingChimes()
+    room.remotes = ['ana', 'eu:monitor']
+    const session = new VoiceSessionController(room, useVoiceStore, useMicPrefsStore, chimes)
+
+    await session.join(new FakeVoiceTokens(), 'v1')
+    room.emitParticipant('connected', 'bia', 0)
+    room.emitReconnecting()
+    room.remotes = ['ana']
+    room.emitReconnected()
+    await session.join(new FakeVoiceTokens(), 'v2')
+    await session.leave()
+
+    expect(chimes.log, 'a própria troca de canal sai de um e entra no outro').toEqual([
+      'prime',
+      'joined:ana+eu:monitor',
+      'join:bia:0',
+      'hold',
+      'release:ana',
+      'prime',
+      'left',
+      'joined:ana',
+      'prime',
+      'left',
+    ])
+  })
+
+  it('queda da call toca a saída uma vez', async () => {
+    const chimes = new RecordingChimes()
+    const session = new VoiceSessionController(room, useVoiceStore, useMicPrefsStore, chimes)
+    await session.join(new FakeVoiceTokens(), 'v1')
+
+    room.dropFromServer(DisconnectReason.SERVER_SHUTDOWN)
+
+    expect(chimes.log).toEqual(['prime', 'joined:', 'left'])
   })
 
   it('microfone mutado não republica ao trocar a entrada', async () => {

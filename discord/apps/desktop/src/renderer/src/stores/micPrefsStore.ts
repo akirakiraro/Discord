@@ -14,6 +14,8 @@ export interface MicPrefsStore extends MicPreferences {
   setAutoGainControl: (autoGainControl: boolean) => void
   setGateDb: (gateDb: number) => void
   setInputGain: (inputGain: number) => void
+  setCallSounds: (callSounds: boolean) => void
+  setCallSoundVolume: (callSoundVolume: number) => void
   alignDevice: (knownIds: readonly string[]) => void
 }
 
@@ -30,6 +32,8 @@ export function createMicPrefsStore(storage: KeyValueStorage): UseBoundStore<Sto
     setAutoGainControl: (autoGainControl) => writePrefs(set, storage, { ...snapshot(get()), autoGainControl }),
     setGateDb: (gateDb) => writePrefs(set, storage, { ...snapshot(get()), gateDb }),
     setInputGain: (inputGain) => writePrefs(set, storage, { ...snapshot(get()), inputGain }),
+    setCallSounds: (callSounds) => writePrefs(set, storage, { ...snapshot(get()), callSounds }),
+    setCallSoundVolume: (callSoundVolume) => writePrefs(set, storage, { ...snapshot(get()), callSoundVolume }),
     alignDevice: (knownIds) => alignSavedDevice(set, get, storage, knownIds),
   }))
 }
@@ -51,6 +55,8 @@ function snapshot(state: MicPrefsStore): MicPreferences {
     autoGainControl: state.autoGainControl,
     gateDb: state.gateDb,
     inputGain: state.inputGain,
+    callSounds: state.callSounds,
+    callSoundVolume: state.callSoundVolume,
   }
 }
 

@@ -11,6 +11,11 @@ const MAX_GAIN = 4
  */
 export const MIC_DEFAULTS_REVISION = 2
 const VOICE_SAMPLE_RATE = 48_000
+const MIN_CALL_SOUND = 0
+const MAX_CALL_SOUND = 1
+
+/** Volume dos sinos de entrar e sair. 1 é o teto do slider, não o pico do oscilador. */
+export const DEFAULT_CALL_SOUND_VOLUME = 0.7
 
 export interface MicPreferences {
   deviceId: string
@@ -19,6 +24,8 @@ export interface MicPreferences {
   autoGainControl: boolean
   gateDb: number
   inputGain: number
+  callSounds: boolean
+  callSoundVolume: number
 }
 
 export const DEFAULT_MIC_PREFERENCES: MicPreferences = {
@@ -28,6 +35,8 @@ export const DEFAULT_MIC_PREFERENCES: MicPreferences = {
   autoGainControl: false,
   gateDb: DEFAULT_GATE_DB,
   inputGain: 1,
+  callSounds: true,
+  callSoundVolume: DEFAULT_CALL_SOUND_VOLUME,
 }
 
 /**
@@ -37,6 +46,15 @@ export const DEFAULT_MIC_PREFERENCES: MicPreferences = {
 export function clampInputGain(value: number): number {
   if (!Number.isFinite(value)) return DEFAULT_MIC_PREFERENCES.inputGain
   return Math.min(MAX_GAIN, Math.max(MIN_GAIN, value))
+}
+
+/**
+ * Volume dos sons de entrar e sair, entre 0 e 1.
+ * Exemplo: `clampCallSoundVolume(9)` devolve `1`.
+ */
+export function clampCallSoundVolume(value: number): number {
+  if (!Number.isFinite(value)) return DEFAULT_CALL_SOUND_VOLUME
+  return Math.min(MAX_CALL_SOUND, Math.max(MIN_CALL_SOUND, value))
 }
 
 /**
@@ -153,6 +171,11 @@ function disabledProcessing(): { exact: false } {
   return { exact: false }
 }
 
+function storedCallSoundVolume(value: unknown): number {
+  if (typeof value !== 'number') return DEFAULT_CALL_SOUND_VOLUME
+  return value
+}
+
 function sanitizeMicPreferences(raw: Partial<MicPreferences>): MicPreferences {
   return {
     deviceId: typeof raw.deviceId === 'string' && raw.deviceId !== '' ? raw.deviceId : 'default',
@@ -161,5 +184,7 @@ function sanitizeMicPreferences(raw: Partial<MicPreferences>): MicPreferences {
     autoGainControl: raw.autoGainControl === true,
     gateDb: clampGateDb(typeof raw.gateDb === 'number' ? raw.gateDb : DEFAULT_GATE_DB),
     inputGain: clampInputGain(typeof raw.inputGain === 'number' ? raw.inputGain : 1),
+    callSounds: raw.callSounds !== false,
+    callSoundVolume: clampCallSoundVolume(storedCallSoundVolume(raw.callSoundVolume)),
   }
 }

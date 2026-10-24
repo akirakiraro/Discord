@@ -8,6 +8,8 @@ A versão 0.1.112 junta as três correções: a lista de quem está no canal, a 
 
 A versão 0.1.113 ajusta mutar e ensurdecer. Surdo deixa o microfone mutado. Clicar em mutar nesse estado volta a ouvir e a falar juntos. Clicar em ensurdecer de novo devolve o mute que estava antes. O que mudou em cada versão está em [docs/changelog.md](docs/changelog.md).
 
+A versão 0.1.116 toca um som quando alguém entra ou sai da call em que você está. Quem já estava na sala não toca de novo. A chave e o volume ficam em Configurações → Voz. O detalhe está em [docs/sons-da-call.md](docs/sons-da-call.md).
+
 ## Pré-requisitos
 
 - Node.js com npm.
