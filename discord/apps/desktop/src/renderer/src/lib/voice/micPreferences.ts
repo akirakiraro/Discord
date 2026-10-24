@@ -71,6 +71,8 @@ export function captureOptions(prefs: MicPreferences): AudioCaptureOptions {
     noiseSuppression: prefs.noiseSuppression,
     echoCancellation: prefs.echoCancellation,
     autoGainControl: prefs.autoGainControl,
+    // O padrão do livekit-client liga voiceIsolation. O módulo trata o retorno como eco.
+    voiceIsolation: false,
   }
 }
 
@@ -82,7 +84,8 @@ export function captureOptions(prefs: MicPreferences): AudioCaptureOptions {
 export function monitorCapture(prefs: MicPreferences, monitoring: boolean): AudioCaptureOptions {
   const options = captureOptions(prefs)
   if (!monitoring) return options
-  return { ...options, echoCancellation: false }
+  // Eco e isolamento continuam apagando o áudio que volta do servidor.
+  return { ...options, echoCancellation: false, voiceIsolation: false }
 }
 
 /**

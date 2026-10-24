@@ -1,9 +1,11 @@
 import { Track, type AudioCaptureOptions, type AudioProcessorOptions, type LocalAudioTrack, type Room, type TrackProcessor } from 'livekit-client'
+import type { CaptureProbe } from './earStatus'
 
 export interface MicrophonePort {
   setEnabled(enabled: boolean, options: AudioCaptureOptions): Promise<void>
   restart(options: AudioCaptureOptions): Promise<void>
   attachGain(processor: TrackProcessor<Track.Kind.Audio, AudioProcessorOptions>): Promise<void>
+  readCapture(): CaptureProbe
 }
 
 /**
@@ -15,18 +17,33 @@ export function liveKitMicrophone(room: Room): MicrophonePort {
   const withGain = new WeakSet<LocalAudioTrack>()
   return {
     setEnabled: (enabled, options) => room.localParticipant.setMicrophoneEnabled(enabled, options).then(() => undefined),
-    restart: (options) => restartMicrophone(room, options),
+    restart: (options) => restartMicrophone(room, options, withGain),
     attachGain: (processor) => attachGainOnce(room, processor, withGain),
+    readCapture: () => readCapture(room),
   }
 }
 
-async function restartMicrophone(room: Room, options: AudioCaptureOptions): Promise<void> {
+async function restartMicrophone(room: Room, options: AudioCaptureOptions, withGain: WeakSet<LocalAudioTrack>): Promise<void> {
   const track = microphoneTrack(room)
-  if (track) {
-    await track.restartTrack(options)
+  if (!track) {
+    await room.localParticipant.setMicrophoneEnabled(true, options)
     return
   }
-  await room.localParticipant.setMicrophoneEnabled(true, options)
+  // O portão segura o dispositivo. Sem soltar, o Windows ignora echoCancellation: false.
+  await track.stopProcessor()
+  withGain.delete(track)
+  await track.restartTrack(options)
+}
+
+function readCapture(room: Room): CaptureProbe {
+  const track = microphoneTrack(room)
+  if (!track) return {}
+  const settings = track.getSourceTrackSettings() as MediaTrackSettings & { voiceIsolation?: unknown }
+  return { echoCancellation: asBool(settings.echoCancellation), voiceIsolation: asBool(settings.voiceIsolation) }
+}
+
+function asBool(value: unknown): boolean | undefined {
+  return typeof value === 'boolean' ? value : undefined
 }
 
 async function attachGainOnce(

@@ -8,6 +8,7 @@ import { SensitivityGate } from './sensitivityGate'
 import { monitorCapture, type MicPreferences } from './micPreferences'
 import type { MicrophonePort } from './liveKitMicrophone'
 import { reportAppError } from '../report/reportAppError'
+import { earCaptureFailure } from './earStatus'
 
 /** O pedaço da `Room` do LiveKit que o controlador usa (permite um fake nos testes). */
 export interface VoiceRoomPort {
@@ -66,14 +67,17 @@ export class VoiceSessionController {
   }
 
   /**
-   * Liga a escuta da própria voz e tira o cancelamento de eco enquanto ela durar.
+   * Liga a escuta da própria voz e tira o eco enquanto ela durar.
    * Sem isso o Chromium apaga o áudio que volta do servidor.
+   * Republica mesmo com o eco já desligado: o isolamento de voz do SDK também apaga.
    * Exemplo: `await controller.setSelfMonitor(true)`.
    */
   async setSelfMonitor(on: boolean): Promise<void> {
     this.monitoring = on
-    if (!this.prefs.getState().echoCancellation) return
     await this.republishCapture()
+    if (!on) return
+    const blocked = earCaptureFailure(this.room.microphone.readCapture())
+    if (blocked) throw blocked
   }
 
   private async enterChannel(tokens: VoiceTokenSource, channelId: string): Promise<void> {
@@ -124,6 +128,7 @@ export class VoiceSessionController {
     const state = this.store.getState()
     if (!state.connection || !isMicrophoneLive(state)) return
     await this.room.microphone.restart(this.captureNow())
+    await this.room.microphone.attachGain(this.gate)
   }
 
   private async syncMicrophone(): Promise<void> {
