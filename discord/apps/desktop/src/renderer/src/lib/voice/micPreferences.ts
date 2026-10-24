@@ -113,12 +113,14 @@ export function microphonePublishOptions(): TrackPublishOptions {
 /**
  * Captura usada na call. Com a escuta da própria voz, o eco sai.
  * O Chromium cancela o retorno do servidor porque ele parece eco do microfone.
+ * O isolamento fica `{ exact: false }` em toda captura: `false` solto não desliga o módulo.
  * Exemplo: `monitorCapture(prefs, true).echoCancellation` devolve `{ exact: false }`.
  */
 export function monitorCapture(prefs: MicPreferences, monitoring: boolean): AudioCaptureOptions {
   const options = captureOptions(prefs)
   if (!monitoring) return options
-  return { ...options, echoCancellation: disabledProcessing() }
+  // Eco e isolamento apagam o áudio que volta do servidor. `exact` desliga de verdade.
+  return { ...options, echoCancellation: disabledProcessing(), voiceIsolation: disabledProcessing() }
 }
 
 /**

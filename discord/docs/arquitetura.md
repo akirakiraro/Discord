@@ -40,6 +40,8 @@ O LiveKit aqui é um servidor de mídia à parte, o executável `livekit-server`
 
 O desktop entra na sala com `livekit-client`. A API usa `livekit-server-sdk` só para assinar o token. Quem encaminha áudio, vídeo e compartilhamento de tela é o processo do LiveKit, no IP do Radmin.
 
+O botão "Me ouvir" abre uma segunda conexão na mesma sala, com identidade `userId:monitor`, só para assinar o próprio microfone. O endereço é o mesmo `ws://IP:7880` que a call já usa. O que essa escuta faz, e por que ela ficava muda num PC que não é o host, está em [escuta-propria.md](escuta-propria.md).
+
 ## Quem está no canal de voz
 
 A sala do LiveKit só existe para quem entrou na call. O cliente que está só olhando a barra não recebe os participantes por ali. A lista da barra, igual à do Discord, sai pelo gateway.

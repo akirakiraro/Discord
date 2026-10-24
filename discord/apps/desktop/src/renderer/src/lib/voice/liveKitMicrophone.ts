@@ -1,10 +1,12 @@
 import { Track, type AudioCaptureOptions, type AudioProcessorOptions, type LocalAudioTrack, type Room, type TrackProcessor } from 'livekit-client'
+import type { CaptureProbe } from './earStatus'
 import { microphonePublishOptions } from './micPreferences'
 
 export interface MicrophonePort {
   setEnabled(enabled: boolean, options: AudioCaptureOptions): Promise<void>
   restart(options: AudioCaptureOptions): Promise<void>
   attachGain(processor: TrackProcessor<Track.Kind.Audio, AudioProcessorOptions>): Promise<void>
+  readCapture(): CaptureProbe
 }
 
 /**
@@ -16,18 +18,27 @@ export function liveKitMicrophone(room: Room): MicrophonePort {
   const withGain = new WeakSet<LocalAudioTrack>()
   return {
     setEnabled: (enabled, options) => publishMicrophone(room, enabled, options),
-    restart: (options) => restartMicrophone(room, options),
+    restart: (options) => restartMicrophone(room, options, withGain),
     attachGain: (processor) => attachGainOnce(room, processor, withGain),
+    readCapture: () => readCapture(room),
   }
 }
 
-async function restartMicrophone(room: Room, options: AudioCaptureOptions): Promise<void> {
+async function restartMicrophone(
+  room: Room,
+  options: AudioCaptureOptions,
+  withGain: WeakSet<LocalAudioTrack>,
+): Promise<void> {
   const track = microphoneTrack(room)
-  if (track) {
-    await track.restartTrack(options)
-    return
-  }
-  await publishMicrophone(room, true, options)
+  if (!track) return publishMicrophone(room, true, options)
+  await releaseGate(track, withGain)
+  await track.restartTrack(options)
+}
+
+async function releaseGate(track: LocalAudioTrack, withGain: WeakSet<LocalAudioTrack>): Promise<void> {
+  // O portão segura o dispositivo. Sem soltar, o Windows ignora o eco desligado.
+  await track.stopProcessor()
+  withGain.delete(track)
 }
 
 function publishMicrophone(room: Room, enabled: boolean, options: AudioCaptureOptions): Promise<void> {
@@ -35,6 +46,17 @@ function publishMicrophone(room: Room, enabled: boolean, options: AudioCaptureOp
   return room.localParticipant
     .setMicrophoneEnabled(enabled, options, microphonePublishOptions())
     .then(() => undefined)
+}
+
+function readCapture(room: Room): CaptureProbe {
+  const track = microphoneTrack(room)
+  if (!track) return {}
+  const settings = track.getSourceTrackSettings() as MediaTrackSettings & { voiceIsolation?: unknown }
+  return { echoCancellation: asBool(settings.echoCancellation), voiceIsolation: asBool(settings.voiceIsolation) }
+}
+
+function asBool(value: unknown): boolean | undefined {
+  return typeof value === 'boolean' ? value : undefined
 }
 
 async function attachGainOnce(
