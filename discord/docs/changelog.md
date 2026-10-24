@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.1.118
+
+O app passa a se chamar SoundRoom e troca o ícone.
+
+- Janela, login, barra, textos de atualização, atalho, instalador e regras do firewall mostram SoundRoom.
+- O ícone é o quadrado arredondado em gradiente verde-azulado, com fone e balão brancos. A fonte é `apps/desktop/build/icon.svg`. O `.ico` e os PNG saem desse arquivo.
+- A sessão continua em `%APPDATA%\Radcord`. Mudar o `productName` sozinho faria o Electron abrir `%APPDATA%\SoundRoom`.
+- O instalador publicado continua `Radcord-Setup-<versão>.exe`, o mesmo nome no `latest.yml` e no `.blockmap`. O `appId` continua `dev.radcord.desktop`.
+- O executável dentro da pasta de instalação passa a `SoundRoom.exe`. A atualização acha a pasta antiga pelo registro desse `appId`.
+- Pacotes `@radcord/*`, `RadcordLoopback.exe`, `radcord.db`, a chave `radcord`, o `User-Agent` `radcord-host` e o `localStorage` (`radcord.login`, `radcord.mic`) não mudam de nome.
+- O título da release no GitHub passa a SoundRoom seguido da versão. A tag continua `v0.1.N`. O host lê a tag, não o título.
+
 ## 0.1.117
 
 A atualização do app instalado acontece dentro da janela.

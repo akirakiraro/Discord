@@ -22,4 +22,4 @@ Get-ChildItem $updatesDir -File | Remove-Item -Force
 Copy-Item -LiteralPath $latestYml -Destination (Join-Path $updatesDir 'latest.yml') -Force
 Copy-Item -LiteralPath $setup.FullName -Destination (Join-Path $updatesDir $setup.Name) -Force
 Copy-Item -LiteralPath $blockmap.FullName -Destination (Join-Path $updatesDir $blockmap.Name) -Force
-Write-Host "Radcord $version publicado em $updatesDir. O electron-updater le /updates/latest.yml."
+Write-Host "SoundRoom $version publicado em $updatesDir. O electron-updater le /updates/latest.yml."
