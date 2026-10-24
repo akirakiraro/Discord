@@ -1,5 +1,6 @@
 import type { MemberDto } from './authContract'
 import type { ChannelDto, MessageDto } from './chatContract'
+import type { VoiceJoinPayload, VoiceLeftPayload, VoiceOccupantDto, VoiceSnapshotPayload } from './voiceContract'
 
 export interface MessageDeletedPayload {
   id: string
@@ -25,10 +26,16 @@ export interface ServerToClientEvents {
   'member:updated': (member: MemberDto) => void
   'presence:changed': (payload: PresenceChangedPayload) => void
   'typing:started': (payload: TypingPayload) => void
+  'voice:joined': (occupant: VoiceOccupantDto) => void
+  'voice:left': (payload: VoiceLeftPayload) => void
+  /** Estado atual, mandado só para quem acabou de conectar. */
+  'voice:snapshot': (payload: VoiceSnapshotPayload) => void
 }
 
 export interface ClientToServerEvents {
   'typing:start': (payload: { channelId: string }) => void
+  'voice:join': (payload: VoiceJoinPayload) => void
+  'voice:leave': () => void
 }
 
 export const REALTIME_UNAUTHORIZED = 'unauthorized'

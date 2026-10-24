@@ -30,7 +30,7 @@ O script não mistura mídia. Ele não encaminha áudio nem vídeo.
 
 [apps/server/src/index.ts](../apps/server/src/index.ts) sobe um Fastify. A porta padrão é `3000` (`SERVER_DEFAULT_PORT`). `npm run host` define o endereço de escuta; sem `BIND_HOST`, a API escuta em `0.0.0.0`.
 
-A API trata contas, sessão, canais e mensagens. O Socket.IO leva presença e o tempo real do chat. Para voz, ela só assina um token com `livekit-server-sdk` (`LiveKitTokenIssuer`) e devolve a URL pública do LiveKit. O áudio não passa por esse processo.
+A API trata contas, sessão, canais e mensagens. O Socket.IO leva presença, o tempo real do chat e quem está em cada canal de voz. Para a mídia, ela só assina um token com `livekit-server-sdk` (`LiveKitTokenIssuer`) e devolve a URL pública do LiveKit. O áudio não passa por esse processo.
 
 O mesmo servidor entrega os arquivos de atualização do desktop a partir de `infra/host/updates`.
 
@@ -39,6 +39,16 @@ O mesmo servidor entrega os arquivos de atualização do desktop a partir de `in
 O LiveKit aqui é um servidor de mídia à parte, o executável `livekit-server`. Não é uma biblioteca embutida na API.
 
 O desktop entra na sala com `livekit-client`. A API usa `livekit-server-sdk` só para assinar o token. Quem encaminha áudio, vídeo e compartilhamento de tela é o processo do LiveKit, no IP do Radmin.
+
+## Quem está no canal de voz
+
+A sala do LiveKit só existe para quem entrou na call. O cliente que está só olhando a barra não recebe os participantes por ali. A lista da barra, igual à do Discord, sai pelo gateway.
+
+Depois que a sala conecta, o desktop emite `voice:join` com o id do canal. O host guarda um assento por usuário (canal, socket e nome) em `VoiceRoster` e publica `voice:joined` / `voice:left` para todo mundo logado. Quem abre o app no meio da call recebe `voice:snapshot` na conexão, com o estado atual.
+
+Sair da call emite `voice:leave`. Se o app cai, o `disconnect` do socket tira o assento. O assento fica preso ao socket que entrou: fechar uma segunda janela, que só está no chat, não apaga a call. A escuta invisível (`userId:monitor`) não ocupa assento. Se a API reinicia e o LiveKit continua, o desktop reanuncia o canal quando o socket volta.
+
+Quem está na mesma call ainda vê fala, mudo e qualidade pelo LiveKit. Quem está fora vê nome e foto. Uma queda que não fecha o TCP espera o ping do Socket.IO, na casa de dezenas de segundos, para o host perceber.
 
 ## Desktop
 

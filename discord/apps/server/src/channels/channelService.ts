@@ -42,6 +42,11 @@ export class ChannelService {
     DEFAULT_CHANNELS.forEach((request) => this.insertChannel(request))
   }
 
+  /** True só quando o id é de um canal de voz que existe. */
+  isVoiceChannel(channelId: string): boolean {
+    return this.deps.channels.findById(channelId)?.kind === 'voice'
+  }
+
   requireChannel(channelId: string, kind: ChannelKind): ChannelRecord {
     const channel = this.deps.channels.findById(channelId)
     if (!channel) {
