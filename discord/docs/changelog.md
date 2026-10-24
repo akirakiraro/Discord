@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.1.117
+
+A atualização do app instalado acontece dentro da janela.
+
+- Na abertura, o app empacotado consulta os Releases do GitHub. `npm run desktop` não consulta e não bloqueia o login.
+- Enquanto não está em dia, a tela de entrar não aparece. No lugar, "Atualizando o Radcord...".
+- O canto inferior direito mostra a fase, a barra e, quando o updater manda, a velocidade e o tamanho.
+- O download começa sozinho. No fim, um modal do app pede OK. OK instala e reabre.
+- Sem internet, com o GitHub fora ou no limite da API, a tela continua bloqueada e oferece "Tentar novamente". Falha de download faz o mesmo. O login não abre por causa da falha.
+- O host consulta `https://api.github.com/repos/akirakiraro/Discord/releases/latest` a cada 2 minutos (`RELEASE_POLL_MS`). Sem token. Se a versão `0.1.N` sobe, o socket emite `app:release` para quem está logado e de novo para quem conecta depois.
+- O app só baixa se a versão anunciada for maior que a instalada. Vale no meio de uma call.
+- Um app já instalado numa versão anterior a esta ainda usa o diálogo nativo nessa única atualização.
+
 ## 0.1.116
 
 Sons curtos de entrada e saída na call em que você está.

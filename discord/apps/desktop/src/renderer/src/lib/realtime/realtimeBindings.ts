@@ -22,6 +22,7 @@ export interface RealtimeSinks {
   applyTyping: (update: (state: TypingState) => TypingState) => void
   applyRoster: (update: (state: VoiceRosterState) => VoiceRosterState) => void
   nowMs: () => number
+  onAppRelease?: (version: string) => void
 }
 
 /**
@@ -44,4 +45,5 @@ export function bindRealtimeEvents(source: RealtimeEventSource, sinks: RealtimeS
   source.on('voice:snapshot', (payload) => applyRoster((state) => withVoiceSnapshot(state, payload)))
   source.on('voice:joined', (occupant) => applyRoster((state) => withVoiceJoined(state, occupant)))
   source.on('voice:left', (payload) => applyRoster((state) => withVoiceLeft(state, payload)))
+  source.on('app:release', (payload) => sinks.onAppRelease?.(payload.version))
 }

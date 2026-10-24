@@ -33,7 +33,15 @@ export function useRealtimeConnection(session: AuthSession): RealtimeConnection 
     const socket = connectRealtime(session.api.baseUrl, session.token)
     const { applyChat, applyTyping } = useChatStore.getState()
     const { applyRoster } = useVoiceRosterStore.getState()
-    bindRealtimeEvents(socket, { applyChat, applyTyping, applyRoster, nowMs: Date.now })
+    bindRealtimeEvents(socket, {
+      applyChat,
+      applyTyping,
+      applyRoster,
+      nowMs: Date.now,
+      onAppRelease: (version) => {
+        void window.radcord?.offerUpdate(version)
+      },
+    })
     const stopVoice = bindVoiceAnnouncements(socket, voiceChannelSource(useVoiceStore))
     socket.on('connect', () => {
       setConnection({ socket, connected: true })

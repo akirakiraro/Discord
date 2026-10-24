@@ -32,7 +32,7 @@ O script não mistura mídia. Ele não encaminha áudio nem vídeo.
 
 A API trata contas, sessão, canais e mensagens. O Socket.IO leva presença, o tempo real do chat e quem está em cada canal de voz. Para a mídia, ela só assina um token com `livekit-server-sdk` (`LiveKitTokenIssuer`) e devolve a URL pública do LiveKit. O áudio não passa por esse processo.
 
-O mesmo servidor entrega os arquivos de atualização do desktop a partir de `infra/host/updates`.
+O mesmo servidor entrega os arquivos de atualização do desktop a partir de `infra/host/updates`. O app instalado, a partir da 0.1.117, não usa essa pasta: ele consulta os Releases do GitHub. O host só avisa, pelo socket, quando a tag pública muda. O que a tela faz está em [atualizacao-do-app.md](atualizacao-do-app.md).
 
 ## LiveKit
 
@@ -69,3 +69,5 @@ Na 0.1.112 a lista do canal, a captura do microfone e o botão Me ouvir entram j
 Na 0.1.113 mutar e ensurdecer passam pelo mesmo estado no desktop. Surdo cala o microfone publicado no LiveKit e o áudio que chega, inclusive o da tela. Clicar em mutar enquanto surdo liga os dois de novo. Clicar em ensurdecer de novo devolve o mute anterior. O detalhe está em [audio-microfone.md](audio-microfone.md).
 
 Na 0.1.116 os sons de entrar e sair moram no app. Reabra o desktop nos dois PCs. O host não entra nisso.
+
+Na 0.1.117 a atualização mora no app e no host. O app instalado bloqueia o login até baixar a release. O host passa a consultar o GitHub: reinicie o host para o aviso `app:release` existir. Quem já tem o app antigo ainda vê o diálogo nativo nessa única troca de versão.

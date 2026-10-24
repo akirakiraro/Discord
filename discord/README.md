@@ -10,6 +10,8 @@ A versão 0.1.113 ajusta mutar e ensurdecer. Surdo deixa o microfone mutado. Cli
 
 A versão 0.1.116 toca um som quando alguém entra ou sai da call em que você está. Quem já estava na sala não toca de novo. A chave e o volume ficam em Configurações → Voz. O detalhe está em [docs/sons-da-call.md](docs/sons-da-call.md).
 
+A versão 0.1.117 traz a atualização para dentro do app. No programa instalado, a tela de entrar fica bloqueada até baixar a versão nova, com o progresso no canto e um OK para reiniciar. O detalhe está em [docs/atualizacao-do-app.md](docs/atualizacao-do-app.md).
+
 ## Pré-requisitos
 
 - Node.js com npm.

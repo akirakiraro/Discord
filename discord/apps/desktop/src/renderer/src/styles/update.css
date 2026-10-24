@@ -1,0 +1,72 @@
+.update-block__card {
+  text-align: center;
+}
+
+.update-block__card h1,
+.update-block__card .auth-card__subtitle {
+  text-align: center;
+}
+
+.update-corner {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 30;
+  width: 280px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: var(--bg-dark);
+  color: var(--text-normal);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+}
+
+.update-corner__title,
+.update-corner__detail {
+  margin: 0;
+}
+
+.update-corner__title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+.update-corner__detail {
+  font-size: 12px;
+  color: var(--text-muted);
+  word-break: break-word;
+}
+
+.update-corner__bar {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--bg-darkest);
+  overflow: hidden;
+}
+
+.update-corner__fill {
+  height: 100%;
+  border-radius: 3px;
+  background: var(--brand);
+}
+
+.update-corner__retry {
+  align-self: flex-start;
+}
+
+.update-modal-backdrop {
+  z-index: 40;
+}
+
+.update-modal {
+  width: 420px;
+  text-align: center;
+}
+
+.update-modal p {
+  margin: 0;
+  color: var(--text-muted);
+}
