@@ -1,8 +1,11 @@
 import { useEffect, useState } from 'react'
-import { startServerEar } from '../../lib/voice/serverEar'
+import { reportAppError } from '../../lib/report/reportAppError'
+import { EarClosed, EarFailure } from '../../lib/voice/earStatus'
+import { startServerEar, unlockEarOutput } from '../../lib/voice/serverEar'
 import { voiceSession } from '../../lib/voice/voiceSession'
 import { useSessionStore, type AuthSession } from '../../stores/sessionStore'
-import { isMicrophoneLive, useVoiceStore } from '../../stores/voiceStore'
+import { blockedEarReason } from '../../lib/voice/micDeafen'
+import { useVoiceStore } from '../../stores/voiceStore'
 
 /**
  * Liga e desliga a escuta da própria voz depois que ela volta do servidor.
@@ -30,6 +33,7 @@ export function HearMyself(): React.JSX.Element {
         disabled={!channelId && !hearing}
         onClick={() => {
           setError(null)
+          if (!hearing) unlockEarOutput()
           setHearing((current) => !current)
         }}
       >
@@ -43,8 +47,8 @@ export function HearMyself(): React.JSX.Element {
 
 function hint(inCall: boolean, hearing: boolean): string {
   if (!inCall) return 'Entre num canal de voz. O som volta pelo servidor, com o atraso da chamada.'
-  if (hearing) return 'Você está se ouvindo pelo servidor. O cancelamento de eco fica pausado enquanto isso.'
-  return 'O som da sua voz volta pelo servidor para você conferir como os outros escutam.'
+  if (hearing) return 'Você está se ouvindo pelo servidor. O eco fica pausado. Fale acima do traço da sensibilidade: abaixo dele o retorno também fica mudo.'
+  return 'O som da sua voz volta pelo servidor para você conferir como os outros escutam. O portão de sensibilidade vale para esse retorno.'
 }
 
 function listenToSelf(setError: (message: string) => void, stopHearing: () => void): () => void {
@@ -54,12 +58,36 @@ function listenToSelf(setError: (message: string) => void, stopHearing: () => vo
     stopHearing()
     return () => {}
   }
-  if (!isMicrophoneLive(useVoiceStore.getState())) {
-    setError('O microfone está mutado. Ligue ele para se ouvir.')
-    stopHearing()
+  const blocked = blockedEarReason(useVoiceStore.getState())
+  if (blocked) {
+    failEar(false, new Error(blocked), setError, stopHearing)
     return () => {}
   }
-  return followEar(connection.channelId, session, setError, stopHearing)
+  return watchWhileHearing(connection.channelId, session, setError, stopHearing)
+}
+
+function watchWhileHearing(
+  channelId: string,
+  session: AuthSession,
+  setError: (message: string) => void,
+  stopHearing: () => void,
+): () => void {
+  const latch = { closed: false }
+  const stop = followEar(channelId, session, setError, stopHearing)
+  const unsubscribe = useVoiceStore.subscribe((state) => {
+    if (latch.closed) return
+    const reason = blockedEarReason(state)
+    if (!reason) return
+    latch.closed = true
+    failEar(false, new Error(reason), setError, stopHearing)
+  })
+  return () => closeEarWatch(latch, unsubscribe, stop)
+}
+
+function closeEarWatch(latch: { closed: boolean }, unsubscribe: () => void, stop: () => void): void {
+  latch.closed = true
+  unsubscribe()
+  stop()
 }
 
 function followEar(
@@ -69,12 +97,14 @@ function followEar(
   stopHearing: () => void,
 ): () => void {
   const latch = { stopped: false, close: () => {} }
-  void openEar(channelId, session, () => latch.stopped).then(
+  const abort = new AbortController()
+  void openEar(channelId, session, () => latch.stopped, abort.signal).then(
     (stop) => keepEar(latch, stop),
     (error: unknown) => failEar(latch.stopped, error, setError, stopHearing),
   )
   return () => {
     latch.stopped = true
+    abort.abort()
     latch.close()
   }
 }
@@ -90,28 +120,41 @@ function failEar(
   setError: (message: string) => void,
   stopHearing: () => void,
 ): void {
-  if (stopped) return
-  setError(error instanceof Error ? error.message : String(error))
+  if (stopped || error instanceof EarClosed) return
+  const message = error instanceof Error ? error.message : String(error)
+  setError(message)
+  reportAppError(`Escuta da própria voz: ${message}`, error instanceof EarFailure ? error.detail : undefined)
   stopHearing()
 }
 
-async function openEar(channelId: string, session: AuthSession, isStopped: () => boolean): Promise<() => void> {
+async function openEar(
+  channelId: string,
+  session: AuthSession,
+  isStopped: () => boolean,
+  signal: AbortSignal,
+): Promise<() => void> {
   try {
-    await voiceSession.setSelfMonitor(true)
-    const { token, livekitUrl } = await session.api.requestVoiceToken(channelId, true)
-    const stopEar = await startServerEar(livekitUrl, token, session.user.id)
+    const stopEar = await connectEar(channelId, session, signal)
     if (isStopped()) {
       stopEar()
       return restoreMonitor
     }
-    return () => {
-      stopEar()
-      void restoreMonitor()
-    }
+    return () => stopBoth(stopEar)
   } catch (error) {
     await restoreMonitor()
     throw error
   }
+}
+
+async function connectEar(channelId: string, session: AuthSession, signal: AbortSignal): Promise<() => void> {
+  await voiceSession.setSelfMonitor(true)
+  const issued = await session.api.requestVoiceToken(channelId, true)
+  return startServerEar(issued.livekitUrl, issued.token, session.user.id, signal)
+}
+
+function stopBoth(stopEar: () => void): void {
+  stopEar()
+  void restoreMonitor()
 }
 
 function restoreMonitor(): Promise<void> {

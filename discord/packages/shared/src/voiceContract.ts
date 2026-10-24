@@ -34,3 +34,26 @@ export interface HostHealthResponse {
   status: 'ok'
   livekitUrl: string
 }
+
+/** Pedido do desktop depois que a sala do LiveKit conectou. */
+export const voiceJoinPayloadSchema = z.object({
+  channelId: z.uuid(),
+})
+
+export type VoiceJoinPayload = z.infer<typeof voiceJoinPayloadSchema>
+
+/** Quem aparece debaixo de um canal de voz para todo mundo logado. */
+export interface VoiceOccupantDto {
+  channelId: string
+  userId: string
+  displayName: string
+}
+
+export interface VoiceLeftPayload {
+  channelId: string
+  userId: string
+}
+
+export interface VoiceSnapshotPayload {
+  occupants: VoiceOccupantDto[]
+}

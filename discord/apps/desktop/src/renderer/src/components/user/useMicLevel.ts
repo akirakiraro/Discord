@@ -61,12 +61,7 @@ async function openPreview(prefs: MicPreferences, gainRef: { current: number }):
 function previewConstraints(prefs: MicPreferences): MediaTrackConstraints {
   const options = captureOptions(prefs)
   const deviceId = options.deviceId === 'default' ? undefined : { exact: String(options.deviceId) }
-  return {
-    deviceId,
-    noiseSuppression: options.noiseSuppression,
-    echoCancellation: options.echoCancellation,
-    autoGainControl: options.autoGainControl,
-  }
+  return { ...options, deviceId }
 }
 
 function tapTrack(track: MediaStreamTrack, gainRef: { current: number }): PreviewTap {

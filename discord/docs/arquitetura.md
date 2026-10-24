@@ -30,7 +30,7 @@ O script não mistura mídia. Ele não encaminha áudio nem vídeo.
 
 [apps/server/src/index.ts](../apps/server/src/index.ts) sobe um Fastify. A porta padrão é `3000` (`SERVER_DEFAULT_PORT`). `npm run host` define o endereço de escuta; sem `BIND_HOST`, a API escuta em `0.0.0.0`.
 
-A API trata contas, sessão, canais e mensagens. O Socket.IO leva presença e o tempo real do chat. Para voz, ela só assina um token com `livekit-server-sdk` (`LiveKitTokenIssuer`) e devolve a URL pública do LiveKit. O áudio não passa por esse processo.
+A API trata contas, sessão, canais e mensagens. O Socket.IO leva presença, o tempo real do chat e quem está em cada canal de voz. Para a mídia, ela só assina um token com `livekit-server-sdk` (`LiveKitTokenIssuer`) e devolve a URL pública do LiveKit. O áudio não passa por esse processo.
 
 O mesmo servidor entrega os arquivos de atualização do desktop a partir de `infra/host/updates`.
 
@@ -40,6 +40,22 @@ O LiveKit aqui é um servidor de mídia à parte, o executável `livekit-server`
 
 O desktop entra na sala com `livekit-client`. A API usa `livekit-server-sdk` só para assinar o token. Quem encaminha áudio, vídeo e compartilhamento de tela é o processo do LiveKit, no IP do Radmin.
 
+O botão "Me ouvir" abre uma segunda conexão na mesma sala, com identidade `userId:monitor`, só para assinar o próprio microfone. O endereço é o mesmo `ws://IP:7880` que a call já usa. O que essa escuta faz, e por que ela ficava muda num PC que não é o host, está em [escuta-propria.md](escuta-propria.md).
+
+## Quem está no canal de voz
+
+A sala do LiveKit só existe para quem entrou na call. O cliente que está só olhando a barra não recebe os participantes por ali. A lista da barra, igual à do Discord, sai pelo gateway.
+
+Depois que a sala conecta, o desktop emite `voice:join` com o id do canal. O host guarda um assento por usuário (canal, socket e nome) em `VoiceRoster` e publica `voice:joined` / `voice:left` para todo mundo logado. Quem abre o app no meio da call recebe `voice:snapshot` na conexão, com o estado atual.
+
+Sair da call emite `voice:leave`. Se o app cai, o `disconnect` do socket tira o assento. O assento fica preso ao socket que entrou: fechar uma segunda janela, que só está no chat, não apaga a call. A escuta invisível (`userId:monitor`) não ocupa assento. Se a API reinicia e o LiveKit continua, o desktop reanuncia o canal quando o socket volta.
+
+Quem está na mesma call ainda vê fala, mudo e qualidade pelo LiveKit. Quem está fora vê nome e foto. Uma queda que não fecha o TCP espera o ping do Socket.IO, na casa de dezenas de segundos, para o host perceber.
+
 ## Desktop
 
-O app é Electron, em `apps/desktop`. O áudio que acompanha a tela não vem do loopback do sistema: o helper WASAPI captura o processo da janela, e o que já quebrou nessa captura está em [audio-tela.md](audio-tela.md). `npm run desktop` sobe o modo de desenvolvimento com `electron-vite`. `npm run desktop:dist` gera o instalador NSIS do Windows com `electron-builder`, em `apps/desktop/release`. `npm run desktop:publish` copia esse pacote para a pasta que a API serve.
+O app é Electron, em `apps/desktop`. O áudio que acompanha a tela não vem do loopback do sistema: o helper WASAPI captura o processo da janela, e o que já quebrou nessa captura está em [audio-tela.md](audio-tela.md). A voz do microfone, e por que ela saía abafada, está em [audio-microfone.md](audio-microfone.md). `npm run desktop` sobe o modo de desenvolvimento com `electron-vite`. `npm run desktop:dist` gera o instalador NSIS do Windows com `electron-builder`, em `apps/desktop/release`. `npm run desktop:publish` copia esse pacote para a pasta que a API serve.
+
+Na 0.1.112 a lista do canal, a captura do microfone e o botão Me ouvir entram juntos. A lista mora na API: reinicie o host para ela passar a valer. O microfone e o Me ouvir moram no app: reabra o desktop nos dois PCs.
+
+Na 0.1.113 mutar e ensurdecer passam pelo mesmo estado no desktop. Surdo cala o microfone publicado no LiveKit e o áudio que chega, inclusive o da tela. Clicar em mutar enquanto surdo liga os dois de novo. Clicar em ensurdecer de novo devolve o mute anterior. O detalhe está em [audio-microfone.md](audio-microfone.md).

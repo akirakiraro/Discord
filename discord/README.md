@@ -2,7 +2,11 @@
 
 Discord caseiro para jogar com os amigos pela rede do Radmin VPN. Um computador sobe o host. Os outros abrem o app e entram com o IP `26.x` que o host imprime.
 
-O desenho das partes está em [docs/arquitetura.md](docs/arquitetura.md).
+O desenho das partes está em [docs/arquitetura.md](docs/arquitetura.md). Quem está num canal de voz aparece embaixo do canal para todo mundo logado, mesmo sem entrar na call. A voz da call está em [docs/audio-microfone.md](docs/audio-microfone.md). O botão de se ouvir está em [docs/escuta-propria.md](docs/escuta-propria.md).
+
+A versão 0.1.112 junta as três correções: a lista de quem está no canal, a voz nítida do microfone e o botão Me ouvir.
+
+A versão 0.1.113 ajusta mutar e ensurdecer. Surdo deixa o microfone mutado. Clicar em mutar nesse estado volta a ouvir e a falar juntos. Clicar em ensurdecer de novo devolve o mute que estava antes. O que mudou em cada versão está em [docs/changelog.md](docs/changelog.md).
 
 ## Pré-requisitos
 

@@ -2,11 +2,13 @@ import { Room, ScreenSharePresets, type RoomOptions } from 'livekit-client'
 import { useMicPrefsStore } from '../../stores/micPrefsStore'
 import { useVoiceStore } from '../../stores/voiceStore'
 import { liveKitMicrophone } from './liveKitMicrophone'
+import { roomAudioCaptureDefaults } from './micPreferences'
 import { VoiceSessionController, type VoiceRoomPort } from './voiceSessionController'
 
 const ROOM_OPTIONS: RoomOptions = {
   adaptiveStream: true,
   dynacast: true,
+  audioCaptureDefaults: roomAudioCaptureDefaults(),
   publishDefaults: { screenShareEncoding: ScreenSharePresets.h1080fps30.encoding },
 }
 
