@@ -4,6 +4,8 @@ Discord caseiro para jogar com os amigos pela rede do Radmin VPN. Um computador 
 
 O desenho das partes está em [docs/arquitetura.md](docs/arquitetura.md). Quem está num canal de voz aparece embaixo do canal para todo mundo logado, mesmo sem entrar na call. A voz da call está em [docs/audio-microfone.md](docs/audio-microfone.md). O botão de se ouvir está em [docs/escuta-propria.md](docs/escuta-propria.md).
 
+A versão 0.1.112 junta as três correções: a lista de quem está no canal, a voz nítida do microfone e o botão Me ouvir.
+
 ## Pré-requisitos
 
 - Node.js com npm.

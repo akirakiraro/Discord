@@ -1,6 +1,8 @@
 # Voz do microfone
 
-O que o desktop captura do microfone e publica na call. O código que vale é o da versão **0.1.110** em diante. Se a voz de alguém sair abafada no Radcord e nítida no Discord, com o mesmo microfone, comece por aqui.
+O que o desktop captura do microfone e publica na call. O código que vale é o da versão **0.1.112** em diante. Se a voz de alguém sair abafada no Radcord e nítida no Discord, com o mesmo microfone, comece por aqui.
+
+Na 0.1.112 esta captura entra junto com a lista de quem está no canal, em [arquitetura.md](arquitetura.md), e com o botão Me ouvir, em [escuta-propria.md](escuta-propria.md). O isolamento desligado com `{ exact: false }` serve às duas: tira o abafado e deixa o retorno da escuta passar.
 
 ## O que tem que continuar verdade
 
@@ -44,7 +46,7 @@ A API e o LiveKit do host não entram nessa cadeia. Eles não reamostram a voz.
 
 ## Como comparar
 
-Nos dois PCs, reabra o app (`npm run desktop` a partir de `discord/`). Não precisa reiniciar o host nem a API.
+Nos dois PCs, reabra o app (`npm run desktop` a partir de `discord/`). A nitidez do microfone não passa pela API. A lista de quem está no canal, que entra na mesma versão, só aparece depois de reiniciar o host.
 
 As duas pessoas entram no mesmo canal de voz, com o microfone que já usavam. A que saía abafada fala. A outra compara com uma call do Discord no mesmo microfone: a voz no Radcord tem que sair nítida, com os agudos de volta, sem mudar o dispositivo.
 
