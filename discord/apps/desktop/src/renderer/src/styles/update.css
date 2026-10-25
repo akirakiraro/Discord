@@ -53,6 +53,35 @@
   background: var(--brand);
 }
 
+.update-corner__fill--indeterminate {
+  width: 38%;
+  animation: update-indeterminate 1.2s ease-in-out infinite;
+}
+
+.update-block__progress {
+  width: 100%;
+  max-width: 220px;
+  margin: 0 auto;
+}
+
+@keyframes update-indeterminate {
+  0% {
+    transform: translateX(-120%);
+  }
+
+  100% {
+    transform: translateX(320%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .update-corner__fill--indeterminate {
+    width: 100%;
+    animation: none;
+    opacity: 0.85;
+  }
+}
+
 .update-corner__retry {
   align-self: flex-start;
 }

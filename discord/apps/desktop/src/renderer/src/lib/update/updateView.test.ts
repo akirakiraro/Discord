@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { updateBlocksLogin, type UpdateSnapshot } from '../../../../shared/desktopUpdateSnapshot'
-import { formatByteSize, formatUpdateProgress, updateBlockBody, updateCardDetail, updateCardTitle, updatePercent } from './updateView'
+import { formatByteSize, formatUpdateProgress, updateBlockBody, updateCardDetail, updateCardTitle, updateIsIndeterminate, updatePercent } from './updateView'
 
 const ERROR: UpdateSnapshot = {
   phase: 'error',
@@ -11,7 +11,7 @@ const ERROR: UpdateSnapshot = {
 
 describe('updateView', () => {
   it('bloqueia o login em todas as fases que ainda não estão em dia', () => {
-    const phases: UpdateSnapshot['phase'][] = ['checking', 'downloading', 'ready', 'error']
+    const phases: UpdateSnapshot['phase'][] = ['checking', 'downloading', 'ready', 'installing', 'error']
     for (const phase of phases) {
       expect(updateBlocksLogin({ phase, version: null, progress: null, message: null }), phase).toBe(true)
     }
@@ -46,6 +46,17 @@ describe('updateView', () => {
 
     expect(updateCardTitle(ready)).toBe('Pronto para instalar')
     expect(updatePercent(ready)).toBe(100)
+    expect(updateIsIndeterminate(ready)).toBe(false)
     expect(updateBlockBody(ready)).toMatch(/reiniciar/)
+  })
+
+  it('instalando avisa que o app fecha sozinho e não inventa porcentagem', () => {
+    const installing: UpdateSnapshot = { phase: 'installing', version: '0.1.119', progress: null, message: null }
+
+    expect(updateCardTitle(installing)).toBe('Instalando...')
+    expect(updateCardDetail(installing)).toBe('O SoundRoom vai fechar e reabrir sozinho.')
+    expect(updateBlockBody(installing)).toBe('Instalando... o SoundRoom vai fechar e reabrir sozinho.')
+    expect(updatePercent(installing)).toBeNull()
+    expect(updateIsIndeterminate(installing)).toBe(true)
   })
 })

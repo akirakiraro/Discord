@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { updateBlocksLogin, type UpdateProgress, type UpdateSnapshot } from '../shared/desktopUpdateSnapshot'
 import {
   GITHUB_UPDATE_FEED,
+  INSTALL_PAUSE_MS,
   DesktopUpdateMachine,
   armQuitAndInstall,
   describeUpdateFailure,
@@ -79,10 +80,12 @@ async function untilPhase(machine: DesktopUpdateMachine, phase: UpdateSnapshot['
 
 describe('DesktopUpdateMachine', () => {
   afterEach(() => {
+    vi.useRealTimers()
     vi.restoreAllMocks()
   })
 
   it('baixa a release e só reinicia quando a pessoa confirma no app', async () => {
+    vi.useFakeTimers()
     vi.spyOn(console, 'error').mockImplementation(() => undefined)
     const client = new FakeBlockUpdateClient()
     const machine = packaged(client)
@@ -93,7 +96,14 @@ describe('DesktopUpdateMachine', () => {
 
     expect(client.feed).toEqual(GITHUB_UPDATE_FEED)
     expect(client.downloads, 'um download').toBe(1)
-    expect(machine.view()).toMatchObject({ phase: 'ready', version: '0.1.117' })
+    expect(machine.view()).toMatchObject({ phase: 'installing', version: '0.1.117' })
+    expect(updateBlocksLogin(machine.view()), 'instalando continua sem login').toBe(true)
+    expect(client.installed, 'a tela precisa aparecer antes de fechar').toBe(0)
+    await machine.requestCheck()
+    expect(machine.view().phase, 'um retry no meio da instalação não recomeça').toBe('installing')
+    expect(client.checks).toBe(1)
+
+    await vi.advanceTimersByTimeAsync(INSTALL_PAUSE_MS)
     expect(client.installed, 'o segundo OK não dispara outro instalador').toBe(1)
   })
 
@@ -248,13 +258,14 @@ describe('describeUpdateFailure', () => {
 })
 
 describe('armQuitAndInstall', () => {
-  it('pede instalador visível e --force-run para o NSIS reabrir o app', () => {
+  it('instala em silêncio e pede --force-run para o NSIS reabrir o app', () => {
     const quitAndInstall = vi.fn()
     const updater = { autoRunAppAfterInstall: false, quitAndInstall }
 
     armQuitAndInstall(updater)
 
-    expect(updater.autoRunAppAfterInstall, 'electron-updater 6.8 só manda --force-run por esta flag quando não é silencioso').toBe(true)
-    expect(quitAndInstall).toHaveBeenCalledWith(false, true)
+    expect(INSTALL_PAUSE_MS, 'a tela de instalando fica tempo bastante para ser lida').toBe(1500)
+    expect(updater.autoRunAppAfterInstall, 'só entra se um dia a chamada deixar de ser silenciosa').toBe(true)
+    expect(quitAndInstall).toHaveBeenCalledWith(true, true)
   })
 })
