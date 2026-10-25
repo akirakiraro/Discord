@@ -1,4 +1,4 @@
-import { AudioPresets, type AudioCaptureOptions, type TrackPublishOptions } from 'livekit-client'
+import { type AudioCaptureOptions, type TrackPublishOptions } from 'livekit-client'
 import type { KeyValueStorage } from '../savedLogin'
 import { clampGateDb, DEFAULT_GATE_DB } from './micLevel'
 
@@ -11,6 +11,8 @@ const MAX_GAIN = 4
  */
 export const MIC_DEFAULTS_REVISION = 2
 const VOICE_SAMPLE_RATE = 48_000
+/** Opus mono com folga para o RED. 96 kbps era o piso; o RED come um pouco disso. */
+export const VOICE_BITRATE = 128_000
 const MIN_CALL_SOUND = 0
 const MAX_CALL_SOUND = 1
 
@@ -86,7 +88,7 @@ export function saveMicPreferences(storage: KeyValueStorage, prefs: MicPreferenc
 
 /**
  * Opções de captura do LiveKit a partir do que o usuário escolheu.
- * O portão de sensibilidade fica num processador à parte.
+ * O ganho automático da tela não entra aqui: o AGC do Chromium abafa.
  * Exemplo: `captureOptions(DEFAULT_MIC_PREFERENCES).voiceIsolation`
  */
 export function captureOptions(prefs: MicPreferences): AudioCaptureOptions {
@@ -95,7 +97,6 @@ export function captureOptions(prefs: MicPreferences): AudioCaptureOptions {
     deviceId: prefs.deviceId,
     noiseSuppression: optionalProcessing(prefs.noiseSuppression),
     echoCancellation: optionalProcessing(prefs.echoCancellation),
-    autoGainControl: optionalProcessing(prefs.autoGainControl),
   }
 }
 
@@ -108,20 +109,19 @@ export function roomAudioCaptureDefaults(): AudioCaptureOptions {
   return {
     ...voiceCaptureShape(),
     noiseSuppression: disabledProcessing(),
-    echoCancellation: true,
-    autoGainControl: disabledProcessing(),
+    echoCancellation: disabledProcessing(),
   }
 }
 
 /**
- * Publicação do microfone. 96 kbps mono é a faixa nítida do Opus; 48 kbps era o padrão do LiveKit.
+ * Publicação do microfone. 128 kbps mono deixa o Opus nítido mesmo com RED.
  * DTX fica desligado: na rede do Radmin o silêncio não precisa economizar, e a consoante some.
  * RED continua, para um pacote UDP perdido não virar buraco.
  * Exemplo: `microphonePublishOptions().forceStereo` devolve `false`.
  */
 export function microphonePublishOptions(): TrackPublishOptions {
   return {
-    audioPreset: AudioPresets.musicHighQuality,
+    audioPreset: { maxBitrate: VOICE_BITRATE },
     dtx: false,
     red: true,
     forceStereo: false,
@@ -154,6 +154,8 @@ function voiceCaptureShape(): AudioCaptureOptions {
   return {
     channelCount: { ideal: 1 },
     sampleRate: { ideal: VOICE_SAMPLE_RATE },
+    // O AGC do Chromium liga o mesmo APM que corta agudo. O nível sobe no Web Audio.
+    autoGainControl: disabledProcessing(),
     voiceIsolation: disabledProcessing(),
   }
 }

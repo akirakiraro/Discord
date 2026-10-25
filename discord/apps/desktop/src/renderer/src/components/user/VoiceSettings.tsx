@@ -74,7 +74,7 @@ function CallSoundVolume({ volume, onVolume }: { volume: number; onVolume: (volu
 function ProcessingHint(): React.JSX.Element {
   return (
     <p className="settings-modal__hint">
-      Supressão e ganho automático começam desligados. A supressão do navegador corta os agudos, e o volume do slider já controla o ganho.
+      Com as três opções desligadas, o navegador não trata o microfone. A call ainda passa pelo volume e pelo portão, sem filtro. Ganho automático aumenta o nível aqui: o do navegador abafa e fica desligado.
     </p>
   )
 }
@@ -108,7 +108,7 @@ function VolumeSlider({ value, onChange }: { value: number; onChange: (value: nu
   const percent = Math.round(value * 100)
   return (
     <label className="settings-modal__field">
-      Volume · {percent}%
+      Volume do microfone · {percent}%
       <input
         type="range"
         min={0}
@@ -119,8 +119,8 @@ function VolumeSlider({ value, onChange }: { value: number; onChange: (value: nu
         onChange={(event) => onChange(Number(event.target.value))}
       />
       <span className="settings-modal__scale">
-        <span>Esquerda: mais baixo</span>
-        <span>Direita: mais alto</span>
+        <span>100%: sem alteração</span>
+        <span>400%: mais alto para quem ouve</span>
       </span>
     </label>
   )

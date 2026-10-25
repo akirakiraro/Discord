@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.120
+
+Com as três opções de voz desligadas, o microfone deixa de passar pelo AGC do Chromium. O slider de volume passa a valer para quem ouve.
+
+- Supressão, eco, ganho automático do navegador e `voiceIsolation` saem `{ exact: false }` quando a opção está desligada. O ganho automático da tela não pede `autoGainControl`: esse módulo abafa.
+- O slider grava o ganho com `setValueAtTime`. 100% não altera. 400% é quatro vezes, com limiter só no pico. Não recaptura a faixa.
+- A publicação do microfone sobe para 128 kbps mono, sem DTX, com RED.
+- O detalhe do que vai cru e do que ainda passa pelo portão está em [audio-microfone.md](audio-microfone.md).
+
 ## 0.1.119
 
 A atualização do app instalado não mostra a janela do NSIS.

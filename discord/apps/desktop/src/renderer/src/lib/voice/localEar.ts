@@ -1,6 +1,7 @@
 import type { MicPreferences } from './micPreferences'
 import { monitorCapture } from './micPreferences'
 import { CLOSED_GATE, rmsToDb, stepGate, type GateState } from './micLevel'
+import { aimGateOpen, createMicChain, followLeveler, setSliderGain, type MicChain } from './micGain'
 import { rmsLevel } from './speakingLevel'
 
 const TICK_MS = 32
@@ -8,6 +9,7 @@ const TICK_MS = 32
 export interface LocalEarPrefs {
   inputGain: number
   gateDb: number
+  autoGainControl: boolean
 }
 
 /**
@@ -37,38 +39,27 @@ export async function startLocalEar(prefs: MicPreferences, readPrefs: () => Loca
 
 function playTrack(track: MediaStreamTrack, readPrefs: () => LocalEarPrefs): () => void {
   const context = new AudioContext()
-  const source = context.createMediaStreamSource(new MediaStream([track]))
-  const volume = context.createGain()
-  const gate = context.createGain()
-  const analyser = context.createAnalyser()
-  analyser.fftSize = 512
-  const samples = new Uint8Array(analyser.fftSize)
+  const chain = createMicChain(context, track, readPrefs().inputGain)
+  chain.gate.connect(context.destination)
   let gateState: GateState = CLOSED_GATE
-  source.connect(volume)
-  volume.connect(analyser)
-  volume.connect(gate)
-  gate.connect(context.destination)
-  const timer = window.setInterval(() => tickLocalEar(readPrefs(), volume, gate, analyser, samples, gateState, (next) => {
-    gateState = next
-  }), TICK_MS)
-  void context.resume()
-  return () => stopLocalEar(timer, source, context, track)
+  const timer = window.setInterval(() => {
+    gateState = tickLocalEar(readPrefs(), chain, gateState)
+  }, TICK_MS)
+  return () => stopLocalEar(timer, chain.source, context, track)
 }
 
-function tickLocalEar(
-  prefs: LocalEarPrefs,
-  volume: GainNode,
-  gate: GainNode,
-  analyser: AnalyserNode,
-  samples: Uint8Array,
-  state: GateState,
-  setState: (next: GateState) => void,
-): void {
-  volume.gain.value = prefs.inputGain
-  analyser.getByteTimeDomainData(samples)
-  const next = stepGate(state, rmsToDb(rmsLevel(samples)), prefs.gateDb, TICK_MS)
-  setState(next)
-  gate.gain.value = next.open ? 1 : 0
+function tickLocalEar(prefs: LocalEarPrefs, chain: MicChain, state: GateState): GateState {
+  if (chain.sliderGain !== prefs.inputGain) setSliderGain(chain, prefs.inputGain)
+  chain.analyser.getByteTimeDomainData(chain.samples)
+  const post = rmsLevel(chain.samples)
+  followLeveler(chain, post, prefs.autoGainControl)
+  return stepLocalGate(chain, state, rmsToDb(post), prefs.gateDb)
+}
+
+function stepLocalGate(chain: MicChain, state: GateState, levelDb: number, gateDb: number): GateState {
+  const next = stepGate(state, levelDb, gateDb, TICK_MS)
+  if (next.open !== state.open) aimGateOpen(chain.gate.gain, next.open, chain.context.currentTime)
+  return next
 }
 
 function stopLocalEar(timer: number, source: MediaStreamAudioSourceNode, context: AudioContext, track: MediaStreamTrack): void {

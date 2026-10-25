@@ -1,4 +1,3 @@
-import { AudioPresets } from 'livekit-client'
 import { describe, expect, it } from 'vitest'
 import type { KeyValueStorage } from '../savedLogin'
 import {
@@ -13,6 +12,8 @@ import {
   resolveDeviceId,
   roomAudioCaptureDefaults,
   saveMicPreferences,
+  VOICE_BITRATE,
+  type MicPreferences,
 } from './micPreferences'
 
 class InMemoryStorage implements KeyValueStorage {
@@ -81,9 +82,19 @@ describe('micPreferences', () => {
       sampleRate: { ideal: 48_000 },
       noiseSuppression: { exact: false },
       echoCancellation: { exact: false },
-      autoGainControl: true,
+      autoGainControl: { exact: false },
       voiceIsolation: { exact: false },
     })
+  })
+
+  it('cada combinação deixa o Chromium cru no que está desligado e nunca pede o AGC dele', () => {
+    for (const noiseSuppression of [false, true]) {
+      for (const echoCancellation of [false, true]) {
+        for (const autoGainControl of [false, true]) {
+          expectCapture(noiseSuppression, echoCancellation, autoGainControl)
+        }
+      }
+    }
   })
 
   it('voiceIsolation fica desligado mesmo com a supressão ligada', () => {
@@ -93,11 +104,18 @@ describe('micPreferences', () => {
     expect(captured.voiceIsolation).toEqual({ exact: false })
     expect(roomAudioCaptureDefaults()).toMatchObject({
       noiseSuppression: { exact: false },
+      echoCancellation: { exact: false },
       autoGainControl: { exact: false },
       voiceIsolation: { exact: false },
       channelCount: { ideal: 1 },
       sampleRate: { ideal: 48_000 },
     })
+  })
+
+  it('escuta com tudo desligado não acrescenta tratamento', () => {
+    const prefs = rawPrefs()
+    expect(monitorCapture(prefs, true)).toEqual(captureOptions(prefs))
+    expect(monitorCapture(prefs, false)).toEqual(captureOptions(prefs))
   })
 
   it('preferência antiga desliga a supressão e o ganho que abafavam', () => {
@@ -132,14 +150,14 @@ describe('micPreferences', () => {
     expect(loadMicPreferences(storage)).toMatchObject({ noiseSuppression: true, autoGainControl: true })
   })
 
-  it('publica a voz a 96 kbps mono, com RED e sem DTX', () => {
+  it('publica a voz a 128 kbps mono, com RED e sem DTX', () => {
     expect(microphonePublishOptions()).toEqual({
-      audioPreset: AudioPresets.musicHighQuality,
+      audioPreset: { maxBitrate: VOICE_BITRATE },
       dtx: false,
       red: true,
       forceStereo: false,
     })
-    expect(AudioPresets.musicHighQuality.maxBitrate, 'preset alto do Opus em mono').toBe(96_000)
+    expect(VOICE_BITRATE, 'folga para o Opus mono com RED').toBe(128_000)
   })
 
   it('escuta da própria voz desliga o cancelamento de eco', () => {
@@ -148,8 +166,10 @@ describe('micPreferences', () => {
 
     expect(monitoring.echoCancellation, 'eco pausado para o retorno não ser apagado').toEqual({ exact: false })
     expect(monitoring.voiceIsolation, 'isolamento também apaga o retorno').toEqual({ exact: false })
+    expect(monitoring.autoGainControl, 'a escuta não liga o AGC do Chromium').toEqual({ exact: false })
     expect(normal.echoCancellation, 'fora da escuta vale a preferência').toBe(true)
     expect(normal.voiceIsolation, 'o padrão do SDK não volta a ligar o isolamento').toEqual({ exact: false })
+    expect(normal.autoGainControl, 'fora da escuta o AGC do Chromium continua desligado').toEqual({ exact: false })
   })
 
   it('preferência antiga liga os sons da call no volume padrão', () => {
@@ -170,3 +190,23 @@ describe('micPreferences', () => {
     expect(resolveDeviceId('built-in', ['built-in'])).toBe('built-in')
   })
 })
+
+function rawPrefs(): MicPreferences {
+  return {
+    ...DEFAULT_MIC_PREFERENCES,
+    noiseSuppression: false,
+    echoCancellation: false,
+    autoGainControl: false,
+  }
+}
+
+function expectCapture(noiseSuppression: boolean, echoCancellation: boolean, autoGainControl: boolean): void {
+  const label = `ruído=${noiseSuppression} eco=${echoCancellation} ganho=${autoGainControl}`
+  const captured = captureOptions({ ...rawPrefs(), noiseSuppression, echoCancellation, autoGainControl })
+  expect(captured.autoGainControl, label).toEqual({ exact: false })
+  expect(captured.voiceIsolation, label).toEqual({ exact: false })
+  expect(captured.noiseSuppression, label).toEqual(noiseSuppression ? true : { exact: false })
+  expect(captured.echoCancellation, label).toEqual(echoCancellation ? true : { exact: false })
+  expect(captured.channelCount, label).toEqual({ ideal: 1 })
+  expect(captured.sampleRate, label).toEqual({ ideal: 48_000 })
+}

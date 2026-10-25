@@ -73,3 +73,5 @@ Na 0.1.116 os sons de entrar e sair moram no app. Reabra o desktop nos dois PCs.
 Na 0.1.117 a atualização mora no app e no host. O app instalado bloqueia o login até baixar a release. O host passa a consultar o GitHub: reinicie o host para o aviso `app:release` existir. Quem já tem o app antigo ainda vê o diálogo nativo nessa única troca de versão.
 
 Na 0.1.119 o OK não abre a janela do NSIS. A tela avisa que o SoundRoom vai fechar e reabrir, e o instalador roda em silêncio. O detalhe está em [atualizacao-do-app.md](atualizacao-do-app.md).
+
+Na 0.1.120 o microfone, com as três opções desligadas, não pede processamento ao Chromium. O que a call recebe ainda passa pelo volume e pelo portão, sem filtro. O ganho automático da tela não liga o AGC do navegador. O detalhe está em [audio-microfone.md](audio-microfone.md).

@@ -16,6 +16,8 @@ A versão 0.1.118 troca o nome visível para SoundRoom e o ícone. A fonte do í
 
 A versão 0.1.119 instala a atualização sem a janela do NSIS. Depois do OK, a própria tela avisa que o SoundRoom vai fechar e reabrir. O detalhe está em [docs/atualizacao-do-app.md](docs/atualizacao-do-app.md).
 
+A versão 0.1.120 deixa o microfone cru quando supressão, eco e ganho automático estão desligados. O ganho automático da tela não usa mais o do navegador, que abafava. O slider de volume do microfone passa a alterar o que os outros ouvem: 100% não muda, 400% aumenta. O detalhe está em [docs/audio-microfone.md](docs/audio-microfone.md).
+
 ## Pré-requisitos
 
 - Node.js com npm.
