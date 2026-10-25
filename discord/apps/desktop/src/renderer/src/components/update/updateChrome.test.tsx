@@ -40,6 +40,24 @@ describe('tela de atualização', () => {
     expect(html).toContain('0.1.117')
     expect(html).toContain('>OK<')
   })
+
+  it('depois do OK a tela e o cartão avisam que o app fecha sozinho, sem porcentagem', () => {
+    const html = renderToStaticMarkup(
+      <>
+        <UpdateBlockScreen snapshot={installingSnapshot()} onRetry={noop} />
+        <UpdateChrome snapshot={installingSnapshot()} onRetry={noop} onInstall={noop} />
+      </>,
+    )
+
+    expect(html).toContain('Instalando... o SoundRoom vai fechar e reabrir sozinho.')
+    expect(html).toContain('Instalando...')
+    expect(html).toContain('O SoundRoom vai fechar e reabrir sozinho.')
+    expect(html).toContain('progressbar')
+    expect(html).toContain('update-corner__fill--indeterminate')
+    expect(html).not.toContain('aria-valuenow')
+    expect(html).not.toContain('Reiniciar o SoundRoom')
+    expect(html).not.toContain('>OK<')
+  })
 })
 
 function errorSnapshot(): UpdateSnapshot {
@@ -49,6 +67,10 @@ function errorSnapshot(): UpdateSnapshot {
     progress: null,
     message: 'Sem conexão para atualizar o SoundRoom. Confira a internet e tente de novo.',
   }
+}
+
+function installingSnapshot(): UpdateSnapshot {
+  return { phase: 'installing', version: '0.1.119', progress: null, message: null }
 }
 
 function downloadingSnapshot(): UpdateSnapshot {

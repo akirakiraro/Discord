@@ -4,9 +4,12 @@ import { parseUpdateSnapshot, updateBlocksLogin, SKIPPED_UPDATE, UNREADABLE_UPDA
 describe('parseUpdateSnapshot', () => {
   it('aceita o estado que o processo principal publica', () => {
     const snapshot = { phase: 'downloading' as const, version: '0.1.117', progress: null, message: null }
+    const installing = { phase: 'installing' as const, version: '0.1.119', progress: null, message: null }
 
     expect(parseUpdateSnapshot(snapshot)).toEqual(snapshot)
     expect(updateBlocksLogin(snapshot)).toBe(true)
+    expect(parseUpdateSnapshot(installing)).toEqual(installing)
+    expect(updateBlocksLogin(installing), 'instalando não libera o login').toBe(true)
   })
 
   it('IPC ilegível continua bloqueando o login', () => {

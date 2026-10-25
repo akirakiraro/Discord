@@ -8,29 +8,44 @@ export function updateCardTitle(snapshot: UpdateSnapshot): string {
   if (snapshot.phase === 'checking') return 'Verificando atualização'
   if (snapshot.phase === 'downloading') return snapshot.version ? `Baixando ${snapshot.version}` : 'Baixando atualização'
   if (snapshot.phase === 'ready') return 'Pronto para instalar'
+  if (snapshot.phase === 'installing') return 'Instalando...'
   return 'Atualização pendente'
 }
 
-/** Linha de detalhe do cartão. `null` quando a fase não tem número. */
+/** Linha de detalhe do cartão. `null` quando a fase não tem o que mostrar. */
 export function updateCardDetail(snapshot: UpdateSnapshot): string | null {
   if (snapshot.phase === 'checking') return 'Consultando os releases do GitHub…'
   if (snapshot.phase === 'downloading') return formatUpdateProgress(snapshot.progress)
   if (snapshot.phase === 'ready') return '100%'
+  if (snapshot.phase === 'installing') return installingDetail()
   if (snapshot.phase === 'error') return snapshot.message
   return null
 }
 
-/** Barra só enquanto baixa ou quando já pode instalar. */
+/** Porcentagem da barra. `null` fora do download e do pronto, inclusive em `installing`. */
 export function updatePercent(snapshot: UpdateSnapshot): number | null {
   if (snapshot.phase === 'ready') return 100
   if (snapshot.phase !== 'downloading') return null
   return snapshot.progress?.percent ?? 0
 }
 
+/**
+ * A fase instalando não tem porcentagem: o NSIS não informa o progresso da troca.
+ * Exemplo: `updateIsIndeterminate(snapshot)`
+ */
+export function updateIsIndeterminate(snapshot: UpdateSnapshot): boolean {
+  return snapshot.phase === 'installing'
+}
+
 export function updateBlockBody(snapshot: UpdateSnapshot): string {
   if (snapshot.phase === 'error') return snapshot.message ?? `Não foi possível atualizar o ${PRODUCT_DISPLAY_NAME}. Tente de novo.`
+  if (snapshot.phase === 'installing') return `Instalando... o ${PRODUCT_DISPLAY_NAME} vai fechar e reabrir sozinho.`
   if (snapshot.phase === 'ready') return 'A atualização está pronta. Confirme para reiniciar.'
   return 'O login abre quando esta versão estiver em dia.'
+}
+
+function installingDetail(): string {
+  return `O ${PRODUCT_DISPLAY_NAME} vai fechar e reabrir sozinho.`
 }
 
 /**
