@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { captureOptions, type MicPreferences } from '../../lib/voice/micPreferences'
+import { createMicChain, followLeveler, setSliderGain, type MicChain } from '../../lib/voice/micGain'
 import { METER_MIN_DB, rmsToDb } from '../../lib/voice/micLevel'
 import { rmsLevel } from '../../lib/voice/speakingLevel'
 import { voiceSession } from '../../lib/voice/voiceSession'
@@ -13,12 +14,12 @@ const METER_MS = 32
  */
 export function useMicLevel(prefs: MicPreferences, inCall: boolean): number {
   const [levelDb, setLevelDb] = useState(METER_MIN_DB)
-  const gainRef = useRef(prefs.inputGain)
-  gainRef.current = prefs.inputGain
+  const prefsRef = useRef(prefs)
+  prefsRef.current = prefs
 
   useEffect(() => {
     if (inCall) return pollCallLevel(setLevelDb)
-    return pollPreview(prefs, gainRef, setLevelDb)
+    return pollPreview(prefs, prefsRef, setLevelDb)
   }, [prefs.deviceId, prefs.noiseSuppression, prefs.echoCancellation, prefs.autoGainControl, inCall])
 
   return levelDb
@@ -31,10 +32,10 @@ function pollCallLevel(setLevelDb: (db: number) => void): () => void {
   return () => window.clearInterval(timer)
 }
 
-function pollPreview(prefs: MicPreferences, gainRef: { current: number }, setLevelDb: (db: number) => void): () => void {
+function pollPreview(prefs: MicPreferences, prefsRef: { current: MicPreferences }, setLevelDb: (db: number) => void): () => void {
   let closed = false
   let tap: PreviewTap | undefined
-  void openPreview(prefs, gainRef).then((opened) => {
+  void openPreview(prefs, prefsRef).then((opened) => {
     if (closed) opened.close()
     else tap = opened
   }).catch(() => setLevelDb(METER_MIN_DB))
@@ -48,14 +49,14 @@ function pollPreview(prefs: MicPreferences, gainRef: { current: number }, setLev
   }
 }
 
-async function openPreview(prefs: MicPreferences, gainRef: { current: number }): Promise<PreviewTap> {
+async function openPreview(prefs: MicPreferences, prefsRef: { current: MicPreferences }): Promise<PreviewTap> {
   const stream = await navigator.mediaDevices.getUserMedia({ audio: previewConstraints(prefs) })
   const track = stream.getAudioTracks()[0]
   if (!track) {
     stream.getTracks().forEach((item) => item.stop())
     throw new Error('getUserMedia devolveu stream sem faixa de áudio; esperado um microfone')
   }
-  return tapTrack(track, gainRef)
+  return tapTrack(track, prefsRef)
 }
 
 function previewConstraints(prefs: MicPreferences): MediaTrackConstraints {
@@ -64,29 +65,27 @@ function previewConstraints(prefs: MicPreferences): MediaTrackConstraints {
   return { ...options, deviceId }
 }
 
-function tapTrack(track: MediaStreamTrack, gainRef: { current: number }): PreviewTap {
+function tapTrack(track: MediaStreamTrack, prefsRef: { current: MicPreferences }): PreviewTap {
   const context = new AudioContext()
-  const source = context.createMediaStreamSource(new MediaStream([track]))
-  const gain = context.createGain()
-  const analyser = context.createAnalyser()
-  analyser.fftSize = 512
-  gain.gain.value = gainRef.current
-  source.connect(gain)
-  gain.connect(analyser)
-  void context.resume()
-  const samples = new Uint8Array(analyser.fftSize)
+  const chain = createMicChain(context, track, prefsRef.current.inputGain)
   return {
-    readDb: () => {
-      gain.gain.value = gainRef.current
-      analyser.getByteTimeDomainData(samples)
-      return rmsToDb(rmsLevel(samples))
-    },
-    close: () => {
-      source.disconnect()
-      void context.close()
-      track.stop()
-    },
+    readDb: () => readPreview(chain, prefsRef.current),
+    close: () => closePreview(chain, context, track),
   }
+}
+
+function readPreview(chain: MicChain, prefs: MicPreferences): number {
+  if (chain.sliderGain !== prefs.inputGain) setSliderGain(chain, prefs.inputGain)
+  chain.analyser.getByteTimeDomainData(chain.samples)
+  const post = rmsLevel(chain.samples)
+  followLeveler(chain, post, prefs.autoGainControl)
+  return rmsToDb(post)
+}
+
+function closePreview(chain: MicChain, context: AudioContext, track: MediaStreamTrack): void {
+  chain.source.disconnect()
+  void context.close()
+  track.stop()
 }
 
 interface PreviewTap {

@@ -8,7 +8,7 @@ O código que vale é o da versão **0.1.112**, com o mute e o surdo da **0.1.11
 
 - Quem escuta entra de novo na mesma sala, com a identidade `id-do-usuário:monitor`. Essa conexão não publica e não aparece na lista do canal.
 - O som é o que os outros recebem, com o atraso da call e com o portão de sensibilidade. Abaixo do traço, o servidor manda silêncio.
-- Enquanto a escuta dura, o cancelamento de eco fica desligado. O isolamento de voz fica desligado o tempo todo, não só durante a escuta. O Chromium trata o retorno como eco e apaga o alto-falante.
+- Enquanto a escuta dura, o cancelamento de eco fica desligado. O isolamento de voz fica desligado o tempo todo, não só durante a escuta. O Chromium trata o retorno como eco e apaga o alto-falante. A escuta não liga o ganho automático do navegador: com as três opções já desligadas, as constraints são as mesmas da call.
 - Mutado ou surdo, o Me ouvir não abre e, se já estava aberto, para. O portão não pede o microfone de novo. Clicar em mutar enquanto surdo volta a falar e a ouvir; aí o botão pode abrir. Clicar em ensurdecer de novo só devolve o mute que estava antes.
 - A URL é a mesma da call, `ws://IP-do-Radmin:7880`. Não há caminho por `localhost` nem por `127.0.0.1`.
 

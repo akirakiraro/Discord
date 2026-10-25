@@ -58,6 +58,7 @@ export class VoiceSessionController {
     this.gate = new SensitivityGate(
       () => this.prefs.getState().gateDb,
       () => this.prefs.getState().inputGain,
+      () => this.prefs.getState().autoGainControl,
     )
     room.on(RoomEvent.Disconnected, (reason) => this.handleDisconnected(reason))
     this.bindCallChimes(room)
@@ -151,12 +152,8 @@ export class VoiceSessionController {
   private onPrefsChange(state: MicPreferences, previous: MicPreferences): void {
     if (state.gateDb !== previous.gateDb) this.gate.setThreshold(state.gateDb)
     if (state.inputGain !== previous.inputGain) this.gate.setVolume(state.inputGain)
-    const captureChanged =
-      state.deviceId !== previous.deviceId ||
-      state.noiseSuppression !== previous.noiseSuppression ||
-      state.echoCancellation !== previous.echoCancellation ||
-      state.autoGainControl !== previous.autoGainControl
-    if (captureChanged) void this.republishCapture()
+    if (state.autoGainControl !== previous.autoGainControl) this.gate.setAutoGain(state.autoGainControl)
+    if (captureChanged(state, previous)) void this.republishCapture()
   }
 
   private async republishCapture(): Promise<void> {
@@ -177,4 +174,10 @@ export class VoiceSessionController {
   private captureNow(): AudioCaptureOptions {
     return monitorCapture(this.prefs.getState(), this.monitoring)
   }
+}
+
+function captureChanged(state: MicPreferences, previous: MicPreferences): boolean {
+  if (state.deviceId !== previous.deviceId) return true
+  if (state.noiseSuppression !== previous.noiseSuppression) return true
+  return state.echoCancellation !== previous.echoCancellation
 }

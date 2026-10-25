@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.1.120
+
+Com as três opções de voz desligadas, o microfone deixa de passar pelo AGC do Chromium. O slider de volume passa a valer para quem ouve.
+
+- Supressão, eco, ganho automático do navegador e `voiceIsolation` saem `{ exact: false }` quando a opção está desligada. O ganho automático da tela não pede `autoGainControl`: esse módulo abafa.
+- O slider grava o ganho com `setValueAtTime`. 100% não altera. 400% é quatro vezes, com limiter só no pico. Não recaptura a faixa.
+- A publicação do microfone sobe para 128 kbps mono, sem DTX, com RED.
+- O detalhe do que vai cru e do que ainda passa pelo portão está em [audio-microfone.md](audio-microfone.md).
+
+## 0.1.119
+
+A atualização do app instalado não mostra a janela do NSIS.
+
+- Depois do OK, a tela e o cartão entram em "Instalando..." e avisam que o SoundRoom vai fechar e reabrir sozinho. A barra dessa fase não tem porcentagem.
+- Cerca de 1,5 s depois, o app chama `quitAndInstall(true, true)`. O instalador recebe `/S` e `--force-run`: a janela some e o SoundRoom abre de novo.
+- O `installer.nsh` continua criando o atalho que falta e apagando `Radcord.lnk`, também no silencioso.
+- Se a janela ainda aparecer (primeira instalação, ou se o silencioso falhar), o ícone é o do SoundRoom e os textos saem em português. O `appId`, o arquivo `Radcord-Setup-<versão>.exe` e a pasta `%APPDATA%\Radcord` não mudam.
+
 ## 0.1.118
 
 O app passa a se chamar SoundRoom e troca o ícone.

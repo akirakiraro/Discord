@@ -44,15 +44,22 @@ export interface QuitInstallTarget {
 }
 
 /**
- * NSIS oneClick reabre o SoundRoom quando o instalador recebe `--force-run`.
- * No electron-updater 6.8, `quitAndInstall(false, true)` ignora o segundo
- * argumento e usa `autoRunAppAfterInstall`. Ligar essa flag é o que faz o
- * instalador receber `--force-run` com `isSilent` falso.
+ * Tempo com a fase `installing` na tela antes de fechar. O NSIS precisa que o
+ * processo saia para trocar os arquivos, então a barra de verdade não cabe aqui.
+ * Exemplo: `setTimeout(quit, INSTALL_PAUSE_MS)`
+ */
+export const INSTALL_PAUSE_MS = 1500
+
+/**
+ * NSIS oneClick some a janela com `/S` e reabre com `--force-run`.
+ * No electron-updater 6.8.9 o segundo argumento de `quitAndInstall` só é
+ * usado quando o primeiro é true; com false ele troca por `autoRunAppAfterInstall`.
+ * `customInstall` do installer.nsh roda na mesma seção, fora do `IfNot Silent`.
  * Exemplo: `armQuitAndInstall(autoUpdater)`
  */
 export function armQuitAndInstall(updater: QuitInstallTarget): void {
   updater.autoRunAppAfterInstall = true
-  updater.quitAndInstall(false, true)
+  updater.quitAndInstall(true, true)
 }
 
 const NETWORK_MARKERS = [
@@ -125,10 +132,15 @@ export class DesktopUpdateMachine {
     return this.requestCheck()
   }
 
+  /**
+   * Depois do OK: publica a fase instalando e só então fecha para o NSIS.
+   * Exemplo: `machine.install()`
+   */
   install(): void {
     if (this.snapshot.phase !== 'ready' || this.installing) return
     this.installing = true
-    this.options.client.quitAndInstall()
+    this.publish(installingSnapshot(this.snapshot.version))
+    this.scheduleQuit(INSTALL_PAUSE_MS)
   }
 
   private hold(): boolean {
@@ -136,7 +148,7 @@ export class DesktopUpdateMachine {
       this.publish(SKIPPED_UPDATE)
       return true
     }
-    if (this.busy || this.snapshot.phase === 'downloading' || this.snapshot.phase === 'ready') return true
+    if (this.busy || this.keepsCurrentWork()) return true
     this.busy = true
     return false
   }
@@ -211,6 +223,17 @@ export class DesktopUpdateMachine {
     return this.publish(next)
   }
 
+  private keepsCurrentWork(): boolean {
+    const phase = this.snapshot.phase
+    return phase === 'downloading' || phase === 'ready' || phase === 'installing'
+  }
+
+  private scheduleQuit(pauseMs: number): void {
+    setTimeout(() => {
+      this.options.client.quitAndInstall()
+    }, pauseMs)
+  }
+
   private publish(next: UpdateSnapshot): UpdateSnapshot {
     this.snapshot = next
     this.options.onChange?.(next)
@@ -248,6 +271,10 @@ function downloadingSnapshot(version: string): UpdateSnapshot {
 
 function readySnapshot(version: string | null): UpdateSnapshot {
   return { phase: 'ready', version, progress: null, message: null }
+}
+
+function installingSnapshot(version: string | null): UpdateSnapshot {
+  return { phase: 'installing', version, progress: null, message: null }
 }
 
 function errorSnapshot(message: string): UpdateSnapshot {

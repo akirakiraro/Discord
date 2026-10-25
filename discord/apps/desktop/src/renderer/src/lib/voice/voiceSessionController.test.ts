@@ -13,13 +13,16 @@ class FakeMicrophone implements MicrophonePort {
   readonly log: string[] = []
   processor: SensitivityGate | null = null
   lastRestart: AudioCaptureOptions | null = null
+  lastOptions: AudioCaptureOptions | null = null
   probe: CaptureProbe = { echoCancellation: false, voiceIsolation: false }
 
-  async setEnabled(enabled: boolean, _options: AudioCaptureOptions): Promise<void> {
+  async setEnabled(enabled: boolean, options: AudioCaptureOptions): Promise<void> {
+    this.lastOptions = options
     this.log.push(`mic:${enabled}`)
   }
 
   async restart(options: AudioCaptureOptions): Promise<void> {
+    this.lastOptions = options
     this.lastRestart = options
     this.log.push(`restart:${String(options.deviceId)}:${captureFlag(options.noiseSuppression)}`)
   }
@@ -147,7 +150,14 @@ describe('VoiceSessionController', () => {
 
   beforeEach(() => {
     useVoiceStore.setState({ connection: null, micMuted: false, deafened: false, micMutedBeforeDeafen: false, lastError: null })
-    useMicPrefsStore.setState({ deviceId: 'default', noiseSuppression: true, gateDb: -45 })
+    useMicPrefsStore.setState({
+      deviceId: 'default',
+      noiseSuppression: true,
+      echoCancellation: true,
+      autoGainControl: false,
+      gateDb: -45,
+      inputGain: 1,
+    })
     room = new FakeVoiceRoom()
     controller = new VoiceSessionController(room, useVoiceStore, useMicPrefsStore)
   })
@@ -250,6 +260,48 @@ describe('VoiceSessionController', () => {
 
     expect(room.log).toEqual([])
     expect(useMicPrefsStore.getState().deviceId).toBe('headset')
+  })
+
+  it('volume do microfone chega no portão e não recaptura', async () => {
+    await controller.join(new FakeVoiceTokens(), 'v1')
+
+    useMicPrefsStore.getState().setInputGain(4)
+    await Promise.resolve()
+
+    expect(room.log.filter((entry) => entry.startsWith('restart')), 'slider não recria a faixa').toEqual([])
+    expect(room.microphone.processor?.inputGain, '400% é ganho 4 no track publicado').toBe(4)
+  })
+
+  it('ganho automático não recaptura nem pede o AGC do Chromium', async () => {
+    useMicPrefsStore.setState({ noiseSuppression: false, echoCancellation: false, autoGainControl: false })
+    await controller.join(new FakeVoiceTokens(), 'v1')
+
+    useMicPrefsStore.getState().setAutoGainControl(true)
+    await Promise.resolve()
+
+    expect(room.log.filter((entry) => entry.startsWith('restart')), 'ligar o ganho não recria com o padrão').toEqual([])
+    expect(room.microphone.processor?.autoGain).toBe(true)
+    expect(room.microphone.lastOptions).toMatchObject({
+      autoGainControl: { exact: false },
+      noiseSuppression: { exact: false },
+      echoCancellation: { exact: false },
+      voiceIsolation: { exact: false },
+    })
+  })
+
+  it('religar a supressão mantém o isolamento e o AGC do Chromium desligados', async () => {
+    useMicPrefsStore.setState({ autoGainControl: true, noiseSuppression: false, echoCancellation: false })
+    await controller.join(new FakeVoiceTokens(), 'v1')
+
+    useMicPrefsStore.getState().setNoiseSuppression(true)
+    await Promise.resolve()
+
+    expect(room.microphone.lastRestart).toMatchObject({
+      noiseSuppression: true,
+      autoGainControl: { exact: false },
+      echoCancellation: { exact: false },
+      voiceIsolation: { exact: false },
+    })
   })
 
   it('sensibilidade só move o portão, sem recapturar', async () => {

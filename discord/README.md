@@ -14,6 +14,10 @@ A versão 0.1.117 traz a atualização para dentro do app. No programa instalado
 
 A versão 0.1.118 troca o nome visível para SoundRoom e o ícone. A fonte do ícone é `apps/desktop/build/icon.svg` (quadrado arredondado, gradiente verde-azulado, fone e balão brancos). Quem já instalou o app continua atualizando pelo arquivo `Radcord-Setup-<versão>.exe`, e a sessão continua em `%APPDATA%\Radcord`. O que foi preservado está em [docs/atualizacao-do-app.md](docs/atualizacao-do-app.md) e em [docs/changelog.md](docs/changelog.md).
 
+A versão 0.1.119 instala a atualização sem a janela do NSIS. Depois do OK, a própria tela avisa que o SoundRoom vai fechar e reabrir. O detalhe está em [docs/atualizacao-do-app.md](docs/atualizacao-do-app.md).
+
+A versão 0.1.120 deixa o microfone cru quando supressão, eco e ganho automático estão desligados. O ganho automático da tela não usa mais o do navegador, que abafava. O slider de volume do microfone passa a alterar o que os outros ouvem: 100% não muda, 400% aumenta. O detalhe está em [docs/audio-microfone.md](docs/audio-microfone.md).
+
 ## Pré-requisitos
 
 - Node.js com npm.

@@ -1,32 +1,29 @@
 import { Track, type AudioProcessorOptions, type TrackProcessor } from 'livekit-client'
 import { clampInputGain } from './micPreferences'
 import { CLOSED_GATE, clampGateDb, rmsToDb, stepGate, type GateState } from './micLevel'
+import { aimGain, aimGateOpen, createMicChain, followLeveler, setSliderGain, type MicChain } from './micGain'
 import { rmsLevel } from './speakingLevel'
 
 const TICK_MS = 32
 
 interface GateNodes {
-  source: MediaStreamAudioSourceNode
-  gain: GainNode
-  volume: GainNode
-  analyser: AnalyserNode
+  chain: MicChain
   destination: MediaStreamAudioDestinationNode
-  context: AudioContext
-  samples: Uint8Array<ArrayBuffer>
   state: GateState
+  autoGain: boolean
 }
 
 /**
  * Portão do microfone: abaixo do limite em dB o som não segue para a chamada.
- * O nível lido aqui é o de antes do portão, para a barra mostrar ruído e voz.
- * O volume vem antes do portão: subir o som também ajuda a voz a passar do limite.
- * Exemplo: `gate.setVolume(2)` deixa a voz duas vezes mais alta.
+ * O volume e o nivelador ficam antes do portão. 1 no slider é o microfone cru.
+ * Exemplo: `gate.setVolume(2)` deixa a voz duas vezes mais alta, sem recapturar.
  */
 export class SensitivityGate implements TrackProcessor<Track.Kind.Audio, AudioProcessorOptions> {
   name = 'radcord-sensitivity-gate'
   processedTrack?: MediaStreamTrack
   thresholdDb: number
   inputGain: number
+  autoGain = false
   levelDb = -80
   private nodes?: GateNodes
   private timer?: number
@@ -34,9 +31,11 @@ export class SensitivityGate implements TrackProcessor<Track.Kind.Audio, AudioPr
   constructor(
     private readonly readThreshold: () => number,
     private readonly readGain: () => number,
+    private readonly readAutoGain: () => boolean = () => false,
   ) {
     this.thresholdDb = clampGateDb(readThreshold())
     this.inputGain = clampInputGain(readGain())
+    this.autoGain = readAutoGain()
   }
 
   get listening(): boolean {
@@ -58,17 +57,30 @@ export class SensitivityGate implements TrackProcessor<Track.Kind.Audio, AudioPr
     this.thresholdDb = clampGateDb(value)
   }
 
-  /** Ajusta o volume antes do portão, sem recapturar. */
+  /** Ajusta o volume antes do portão, sem recapturar. 1 não altera. */
   setVolume(value: number): void {
     this.inputGain = clampInputGain(value)
-    if (this.nodes) this.nodes.volume.gain.value = this.inputGain
+    if (!this.nodes) return
+    setSliderGain(this.nodes.chain, this.inputGain)
+  }
+
+  /**
+   * Liga o nivelador nosso. Não pede `autoGainControl` ao Chromium:
+   * esse módulo reabre o processamento que abafa.
+   * Exemplo: `gate.setAutoGain(true)`.
+   */
+  setAutoGain(enabled: boolean): void {
+    this.autoGain = enabled
+    if (!this.nodes) return
+    this.nodes.autoGain = enabled
+    if (enabled) return
+    this.nodes.chain.levelerGain = 1
+    aimGain(this.nodes.chain.leveler.gain, 1, this.nodes.chain.context.currentTime)
   }
 
   async destroy(): Promise<void> {
     if (this.timer !== undefined) window.clearInterval(this.timer)
-    this.nodes?.source.disconnect()
-    this.nodes?.gain.disconnect()
-    this.nodes?.volume.disconnect()
+    this.nodes?.chain.source.disconnect()
     this.processedTrack?.stop()
     this.timer = undefined
     this.nodes = undefined
@@ -76,23 +88,37 @@ export class SensitivityGate implements TrackProcessor<Track.Kind.Audio, AudioPr
   }
 
   private wire(opts: AudioProcessorOptions): void {
-    this.nodes = connectGate(audioContextOf(opts), opts.track, this.inputGain)
-    this.thresholdDb = clampGateDb(this.readThreshold())
+    const context = audioContextOf(opts)
     this.inputGain = clampInputGain(this.readGain())
-    this.nodes.volume.gain.value = this.inputGain
-    this.processedTrack = outputTrack(this.nodes.destination)
+    this.autoGain = this.readAutoGain()
+    const chain = createMicChain(context, opts.track, this.inputGain)
+    const destination = context.createMediaStreamDestination()
+    forceMonoOutput(destination)
+    chain.gate.connect(destination)
+    this.nodes = { chain, destination, state: CLOSED_GATE, autoGain: this.autoGain }
+    this.processedTrack = outputTrack(destination)
     this.timer = window.setInterval(() => this.tick(), TICK_MS)
   }
 
   private tick(): void {
     const nodes = this.nodes
     if (!nodes) return
-    nodes.analyser.getByteTimeDomainData(nodes.samples)
-    this.levelDb = rmsToDb(rmsLevel(nodes.samples))
+    const post = readPostGain(nodes.chain)
+    this.levelDb = rmsToDb(post)
+    followLeveler(nodes.chain, post, nodes.autoGain)
+    this.followGate(nodes)
+  }
+
+  private followGate(nodes: GateNodes): void {
     const next = stepGate(nodes.state, this.levelDb, this.thresholdDb, TICK_MS)
-    if (next.open !== nodes.state.open) aimGate(nodes.gain, nodes.context, next.open)
+    if (next.open !== nodes.state.open) aimGateOpen(nodes.chain.gate.gain, next.open, nodes.chain.context.currentTime)
     nodes.state = next
   }
+}
+
+function readPostGain(chain: MicChain): number {
+  chain.analyser.getByteTimeDomainData(chain.samples)
+  return rmsLevel(chain.samples)
 }
 
 function audioContextOf(opts: AudioProcessorOptions): AudioContext {
@@ -100,24 +126,6 @@ function audioContextOf(opts: AudioProcessorOptions): AudioContext {
     throw new Error('AudioContext ausente ao ligar o portão do microfone; esperado AudioProcessorOptions.audioContext')
   }
   return opts.audioContext
-}
-
-function connectGate(context: AudioContext, track: MediaStreamTrack, volume: number): GateNodes {
-  const source = context.createMediaStreamSource(new MediaStream([track]))
-  const level = context.createGain()
-  const gain = context.createGain()
-  const analyser = context.createAnalyser()
-  const destination = context.createMediaStreamDestination()
-  forceMonoOutput(destination)
-  analyser.fftSize = 512
-  level.gain.value = volume
-  gain.gain.value = 0
-  source.connect(level)
-  level.connect(analyser)
-  level.connect(gain)
-  gain.connect(destination)
-  const samples = new Uint8Array(new ArrayBuffer(analyser.fftSize))
-  return { source, gain, volume: level, analyser, destination, context, samples, state: CLOSED_GATE }
 }
 
 /**
@@ -139,10 +147,4 @@ function outputTrack(destination: MediaStreamAudioDestinationNode): MediaStreamT
   const track = destination.stream.getAudioTracks()[0]
   if (!track) throw new Error('portão sem faixa de saída; esperado um MediaStreamTrack de áudio')
   return track
-}
-
-function aimGate(gain: GainNode, context: AudioContext, open: boolean): void {
-  const now = context.currentTime
-  gain.gain.cancelScheduledValues(now)
-  gain.gain.setTargetAtTime(open ? 1 : 0, now, 0.01)
 }

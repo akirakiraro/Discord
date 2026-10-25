@@ -12,7 +12,13 @@ describe('identidade empacotada', () => {
     build: {
       appId: string
       productName: string
-      nsis: { artifactName: string; shortcutName: string }
+      nsis: {
+        artifactName: string
+        shortcutName: string
+        installerIcon: string
+        installerHeaderIcon: string
+        oneClick: boolean
+      }
       publish: { owner: string; repo: string }
       win: { icon: string }
     }
@@ -24,8 +30,22 @@ describe('identidade empacotada', () => {
     expect(pkg.build.appId).toBe(APP_USER_MODEL_ID)
     expect(pkg.build.nsis.shortcutName).toBe(PRODUCT_DISPLAY_NAME)
     expect(pkg.build.nsis.artifactName).toBe('Radcord-Setup-${version}.${ext}')
+    expect(pkg.build.nsis.oneClick).toBe(true)
+    expect(pkg.build.nsis.installerIcon).toBe('icon.ico')
+    expect(pkg.build.nsis.installerHeaderIcon).toBe('icon.ico')
     expect(pkg.build.publish).toMatchObject({ owner: 'akirakiraro', repo: 'Discord' })
     expect(pkg.build.win.icon).toBe('build/icon.ico')
+  })
+
+  it('marca a janela do NSIS sem trocar o contrato do updater', () => {
+    const script = readFileSync(join(desktopRoot, 'build/installer.nsh'), 'utf8')
+
+    const commands = script.split('\n').filter((line) => !line.trim().startsWith(';')).join('\n')
+
+    expect(script).toContain('Radcord.lnk')
+    expect(script).toContain('LANG_PORTUGUESEBR')
+    expect(script).toContain('Instalando o SoundRoom. Ele abre sozinho em seguida.')
+    expect(commands, 'redefinir LangString derruba o makensis').not.toContain('LangString')
   })
 
   it('guarda o svg e os tamanhos que o electron-builder embute', () => {
