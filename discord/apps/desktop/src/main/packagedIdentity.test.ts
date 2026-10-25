@@ -40,10 +40,12 @@ describe('identidade empacotada', () => {
   it('marca a janela do NSIS sem trocar o contrato do updater', () => {
     const script = readFileSync(join(desktopRoot, 'build/installer.nsh'), 'utf8')
 
+    const commands = script.split('\n').filter((line) => !line.trim().startsWith(';')).join('\n')
+
     expect(script).toContain('Radcord.lnk')
     expect(script).toContain('LANG_PORTUGUESEBR')
     expect(script).toContain('Instalando o SoundRoom. Ele abre sozinho em seguida.')
-    expect(script).not.toContain('LangString')
+    expect(commands, 'redefinir LangString derruba o makensis').not.toContain('LangString')
   })
 
   it('guarda o svg e os tamanhos que o electron-builder embute', () => {
