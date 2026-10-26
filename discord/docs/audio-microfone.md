@@ -106,3 +106,7 @@ A partir da **0.1.113** os dois botões usam um estado só, em `lib/voice/micDea
 - Clicar em mutar enquanto surdo não fica travado. Esse clique sai do surdo: microfone e áudio voltam juntos, mesmo que o microfone estivesse mutado antes.
 - Clicar em ensurdecer de novo devolve o mute guardado. Se já estava mutado, continua mutado. Se não estava, volta a falar. O áudio dos outros volta nos dois casos.
 - Mutado ou surdo, o Me ouvir não abre. Se já estava aberto, para. O botão de microfone continua clicável; o texto passa a **Desmutar e ouvir**.
+
+## Medir a call
+
+O usuário `akira` tem, na barra de voz, o botão **Áudio**. Aberto, ele mostra perda, jitter, bitrate, transporte e o `getSettings()` da captura. Outra conta não vê esse botão. O painel não muda o áudio e não manda número para o servidor. O que cada valor indica está em [diagnostico-audio.md](diagnostico-audio.md).

@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.122
+
+Painel de diagnóstico de áudio da call, só para o usuário `akira`.
+
+- O botão **Áudio** fica na barra de voz, ao lado de sair da call. Outro usuário não vê o botão nem o painel.
+- Aberto, lê `getStats` a cada 1 s neste PC: perda, jitter, bitrate, codec, taxa, canais, RTT e se a mídia vai por UDP ou TCP. Fechado, não lê.
+- A captura mostra o que o Chromium aplicou de verdade (`getSettings`): supressão, eco, ganho automático, isolamento, taxa e canais.
+- Nada disso vai para o servidor nem para os outros clientes. O detalhe está em [diagnostico-audio.md](diagnostico-audio.md).
+
 ## 0.1.121
 
 Volume de cada pessoa na call, e o Me ouvir deixa de recapturar o microfone.

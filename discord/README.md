@@ -20,6 +20,8 @@ A versão 0.1.120 deixa o microfone cru quando supressão, eco e ganho automáti
 
 A versão 0.1.121 põe um volume em cada pessoa da call, de 0% a 200%, lembrado neste aparelho. 100% não altera o áudio recebido. O Me ouvir deixa de recapturar o microfone, então ligar a escuta não muda o que os outros ouvem. O detalhe está em [docs/volume-por-pessoa.md](docs/volume-por-pessoa.md) e em [docs/escuta-propria.md](docs/escuta-propria.md).
 
+A versão 0.1.122 mostra, só para o usuário `akira`, um painel com perda, jitter, bitrate, codec e o que o Chromium aplicou no microfone. Serve para medir a call antes de mudar o tratamento da voz. O detalhe está em [docs/diagnostico-audio.md](docs/diagnostico-audio.md).
+
 ## Pré-requisitos
 
 - Node.js com npm.

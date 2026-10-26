@@ -6,6 +6,7 @@ import { voiceSession } from '../../lib/voice/voiceSession'
 import { useChatStore } from '../../stores/chatStore'
 import { useSessionStore } from '../../stores/sessionStore'
 import { useVoiceStore } from '../../stores/voiceStore'
+import { CallAudioProbe } from './CallAudioProbe'
 
 const CONNECTION_LABEL: Record<ConnectionState, string> = {
   [ConnectionState.Connected]: 'Voz conectada',
@@ -17,6 +18,7 @@ const CONNECTION_LABEL: Record<ConnectionState, string> = {
 
 function ConnectedStatus({ channelId }: { channelId: string }): React.JSX.Element {
   const connectionState = useConnectionState()
+  const username = useSessionStore((store) => store.session?.user.username ?? null)
   const hostBaseUrl = useSessionStore((store) => store.session?.api.baseUrl ?? '')
   const pingMs = useHostPing(hostBaseUrl)
   const channelName = useChatStore((store) => store.chat.channels.find((channel) => channel.id === channelId)?.name)
@@ -29,9 +31,12 @@ function ConnectedStatus({ channelId }: { channelId: string }): React.JSX.Elemen
           {channelName ?? 'canal'} · {pingMs === null ? 'host sem resposta' : `${pingMs} ms`}
         </p>
       </div>
-      <button className="icon-button icon-button--danger" title="Sair da call" onClick={() => void voiceSession.leave()}>
-        📞
-      </button>
+      <div className="voice-status__actions">
+        <CallAudioProbe username={username} inCall />
+        <button className="icon-button icon-button--danger" title="Sair da call" onClick={() => void voiceSession.leave()}>
+          📞
+        </button>
+      </div>
     </div>
   )
 }

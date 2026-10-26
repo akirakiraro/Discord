@@ -7,6 +7,7 @@ import './styles/update.css'
 import './styles/shell.css'
 import './styles/chat.css'
 import './styles/voice.css'
+import './styles/audioProbe.css'
 import './styles/members.css'
 
 installClientReports()
