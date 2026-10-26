@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.128
+
+A suíte perde o teste que só repetia outro arquivo. O que pega regressão de número continua.
+
+- Mute e ensurdecer ficam em `micDeafen.test.ts`. A store só liga os dois. O volume de 0% a 200% fica nos exemplos, com o teto literal `2`.
+- Os três "me ouvir" da sessão viram uma tabela. O vitest conta cada linha, então a suíte vai de 448 para 427 testes. O detalhe está em [testes.md](testes.md).
+
 ## 0.1.127
 
 Os testes de áudio passam a pegar regressão de número, não só a direção.

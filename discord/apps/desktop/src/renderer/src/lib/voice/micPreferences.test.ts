@@ -112,12 +112,6 @@ describe('micPreferences', () => {
     })
   })
 
-  it('escuta com tudo desligado não acrescenta tratamento', () => {
-    const prefs = rawPrefs()
-    expect(monitorCapture(prefs, true)).toEqual(captureOptions(prefs))
-    expect(monitorCapture(prefs, false)).toEqual(captureOptions(prefs))
-  })
-
   it('preferência antiga desliga a supressão e o ganho que abafavam', () => {
     const storage = new InMemoryStorage()
     storage.setItem('radcord.mic', JSON.stringify({

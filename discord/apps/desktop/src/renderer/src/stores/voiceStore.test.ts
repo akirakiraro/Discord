@@ -52,13 +52,6 @@ describe('voiceStore', () => {
     expect(useVoiceStore.getState().showOwnTile).toBe(false)
   })
 
-  it('a própria tela começa muda e a dos outros no máximo', () => {
-    expect(useVoiceStore.getState()).toMatchObject({
-      ownScreenAudioVolume: OWN_SCREEN_LISTEN,
-      screenAudioVolume: REMOTE_SCREEN_LISTEN,
-    })
-  })
-
   it('o volume da tela fica entre 0 e 1', () => {
     useVoiceStore.getState().setScreenAudioVolume(2)
 
@@ -67,27 +60,6 @@ describe('voiceStore', () => {
     useVoiceStore.getState().setScreenAudioVolume(-1)
 
     expect(useVoiceStore.getState().screenAudioVolume).toBe(0)
-  })
-
-  it('ensurdecer também muta o microfone', () => {
-    useVoiceStore.getState().toggleDeafen()
-
-    expect(useVoiceStore.getState()).toMatchObject({ micMuted: true, deafened: true })
-  })
-
-  it('mutar enquanto surdo desmuta o microfone e o áudio', () => {
-    useVoiceStore.getState().toggleDeafen()
-    useVoiceStore.getState().toggleMic()
-
-    expect(useVoiceStore.getState()).toMatchObject({ micMuted: false, deafened: false, micMutedBeforeDeafen: false })
-  })
-
-  it('desensurdecer devolve o mute que estava antes', () => {
-    useVoiceStore.getState().toggleMic()
-    useVoiceStore.getState().toggleDeafen()
-    useVoiceStore.getState().toggleDeafen()
-
-    expect(useVoiceStore.getState()).toMatchObject({ micMuted: true, deafened: false, micMutedBeforeDeafen: false })
   })
 })
 

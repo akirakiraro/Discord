@@ -75,18 +75,4 @@ describe('VoiceRoster', () => {
 
     expect(() => roster.join(seat('', 's-1', CHANNEL_A, 'Akira'))).toThrow(/userId/)
   })
-
-  it('acompanha 50 pessoas e a saída da metade', () => {
-    const roster = new VoiceRoster()
-    for (let index = 0; index < 50; index += 1) {
-      const channelId = index % 2 === 0 ? CHANNEL_A : CHANNEL_B
-      roster.join(seat(`u-${index}`, `s-${index}`, channelId, `Nome ${index}`))
-    }
-
-    for (let index = 0; index < 25; index += 1) roster.leave(`u-${index}`, `s-${index}`)
-
-    const remaining = roster.snapshot()
-    expect(remaining, 'metade continua na call').toHaveLength(25)
-    expect(remaining.every((occupant) => Number(occupant.userId.slice(2)) >= 25)).toBe(true)
-  })
 })

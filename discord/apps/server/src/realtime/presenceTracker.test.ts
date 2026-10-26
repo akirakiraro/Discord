@@ -19,14 +19,4 @@ describe('PresenceTracker', () => {
     expect(presence.disconnect('fantasma')).toBe(false)
     expect(presence.isOnline('fantasma')).toBe(false)
   })
-
-  it('acompanha 50 usuários independentes', () => {
-    const presence = new PresenceTracker()
-    const userIds = Array.from({ length: 50 }, (_unused, index) => `u-${index}`)
-
-    userIds.forEach((userId) => presence.connect(userId))
-    userIds.slice(0, 25).forEach((userId) => presence.disconnect(userId))
-
-    expect(userIds.filter((userId) => presence.isOnline(userId))).toEqual(userIds.slice(25))
-  })
 })

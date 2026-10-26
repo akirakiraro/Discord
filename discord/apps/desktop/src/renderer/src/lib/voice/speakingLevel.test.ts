@@ -12,10 +12,6 @@ describe('rmsLevel', () => {
 })
 
 describe('stepSpeaking', () => {
-  it('acende no primeiro quadro acima do limiar', () => {
-    expect(stepSpeaking(SILENT_SPEAK_STATE, 0.05, 32).speaking).toBe(true)
-  })
-
   it('segura o verde por um instante entre sílabas', () => {
     const speaking = stepSpeaking(SILENT_SPEAK_STATE, 0.05, 32)
     const held = stepSpeaking(speaking, 0, 32)

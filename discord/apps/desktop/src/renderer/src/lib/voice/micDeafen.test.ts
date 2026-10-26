@@ -27,35 +27,17 @@ describe('micDeafen', () => {
     })
   })
 
-  it('clicar em mutar enquanto surdo desmuta o microfone e o áudio', () => {
-    const deaf = applyDeafenToggle(OPEN_MIC)
+  it('clicar em mutar enquanto surdo desmuta os dois, mesmo se o mute anterior estava ligado', () => {
+    expect(applyMicToggle(applyDeafenToggle(OPEN_MIC))).toEqual(OPEN_MIC)
 
-    expect(applyMicToggle(deaf)).toEqual(OPEN_MIC)
-  })
-
-  it('mutar enquanto surdo desmuta os dois mesmo se o mute anterior estava ligado', () => {
     const deaf = applyDeafenToggle(MUTED)
-
     expect(deaf.micMutedBeforeDeafen).toBe(true)
     expect(applyMicToggle(deaf)).toEqual(OPEN_MIC)
   })
 
-  it('desensurdecer devolve o mute de antes', () => {
-    const deaf = applyDeafenToggle(MUTED)
-
-    expect(applyDeafenToggle(deaf)).toEqual(MUTED)
-  })
-
-  it('desensurdecer com o microfone aberto devolve o microfone aberto', () => {
+  it('desensurdecer devolve o mute de antes, aberto ou fechado', () => {
+    expect(applyDeafenToggle(applyDeafenToggle(MUTED))).toEqual(MUTED)
     expect(applyDeafenToggle(applyDeafenToggle(OPEN_MIC))).toEqual(OPEN_MIC)
-  })
-
-  it('surdo implica microfone mutado', () => {
-    const samples = [OPEN_MIC, MUTED, applyDeafenToggle(OPEN_MIC), applyDeafenToggle(MUTED)]
-
-    for (const state of samples) {
-      if (state.deafened) expect(state.micMuted, 'surdo sem fala').toBe(true)
-    }
   })
 
   it('o botão de microfone fica clicável e diz o que o clique faz', () => {

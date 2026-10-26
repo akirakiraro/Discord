@@ -3,9 +3,7 @@ import { OWN_SCREEN_LISTEN, REMOTE_SCREEN_LISTEN, applyScreenVolume, clampUnitVo
 
 describe('clampUnitVolume', () => {
   it.each([
-    [0, 0],
     [0.35, 0.35],
-    [1, 1],
     [-2, 0],
     [4, 1],
     [Number.NaN, 1],

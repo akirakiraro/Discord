@@ -14,15 +14,11 @@ describe('buildHostBaseUrl', () => {
     expect(buildHostBaseUrl('localhost')).toBe('http://localhost:3000')
   })
 
-  it('rejeita texto com caracteres inválidos mostrando o valor', () => {
-    expect(() => buildHostBaseUrl('http://26.1.1.1')).toThrow(/"http:\/\/26\.1\.1\.1"/)
-  })
-
-  it('rejeita porta fora do intervalo', () => {
-    expect(() => buildHostBaseUrl('26.186.21.58:99999')).toThrow(/"99999"/)
-  })
-
-  it('rejeita endereço vazio', () => {
-    expect(() => buildHostBaseUrl('   ')).toThrow(/inválido/)
+  it.each([
+    ['http://26.1.1.1', /"http:\/\/26\.1\.1\.1"/],
+    ['26.186.21.58:99999', /"99999"/],
+    ['   ', /inválido/],
+  ] as const)('rejeita "%s"', (input, pattern) => {
+    expect(() => buildHostBaseUrl(input)).toThrow(pattern)
   })
 })

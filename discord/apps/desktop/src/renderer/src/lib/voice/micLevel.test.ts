@@ -28,10 +28,6 @@ describe('dbToPercent', () => {
 })
 
 describe('stepGate', () => {
-  it('abre quando o som alcança o limite', () => {
-    expect(stepGate(CLOSED_GATE, -20, -45, 32).open).toBe(true)
-  })
-
   it('segura aberto por um instante abaixo do limite', () => {
     const open = stepGate(CLOSED_GATE, -20, -45, 32)
     expect(stepGate(open, -70, -45, 32).open).toBe(true)

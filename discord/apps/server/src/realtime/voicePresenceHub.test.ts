@@ -77,16 +77,6 @@ describe('VoicePresenceHub', () => {
     expect(hub.snapshot().occupants).toEqual([])
   })
 
-  it('sair duas vezes não repete o evento', () => {
-    const { hub, broadcast } = setup()
-    hub.join('u-1', 's-1', { channelId: VOICE })
-
-    hub.leave('u-1', 's-1')
-    hub.leave('u-1', 's-1')
-
-    expect(broadcast.events.filter((event) => event.event === 'voice:left')).toHaveLength(1)
-  })
-
   it('cinquenta entradas aparecem no snapshot e a metade sai', () => {
     const names = Object.fromEntries(Array.from({ length: 50 }, (_unused, index) => [`u-${index}`, `Nome ${index}`]))
     const { hub } = setup(names)

@@ -32,6 +32,8 @@ A versão 0.1.126 trava o Me ouvir: abrir e fechar o monitor não pode recaptura
 
 A versão 0.1.127 aperta os testes de áudio: joelho do limiter, teto de 4×, portão em 0 ou 1, e 100% de volume igual a ganho 1. O detalhe está em [docs/testes.md](docs/testes.md).
 
+A versão 0.1.128 tira da suíte o teste que só repetia outro arquivo. A contagem vai de 448 para 427. O detalhe está em [docs/testes.md](docs/testes.md).
+
 ## Pré-requisitos
 
 - Node.js 22.23.4 (o `.nvmrc` da raiz). O servidor usa `node:sqlite`, que não carrega no Node 20 nem no 22.12.

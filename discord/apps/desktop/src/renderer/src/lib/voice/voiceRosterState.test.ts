@@ -66,18 +66,4 @@ describe('voiceRosterState', () => {
   it('nome vazio do LiveKit cai no id', () => {
     expect(sidebarVoiceRows([], [{ identity: 'u-9', name: '' }], true)).toEqual([{ userId: 'u-9', displayName: 'u-9' }])
   })
-
-  it('separa 50 pessoas em dois canais', () => {
-    const occupants = Array.from({ length: 50 }, (_unused, index) => ({
-      channelId: index % 2 === 0 ? 'geral' : 'outro',
-      userId: `u-${index}`,
-      displayName: `Nome ${index}`,
-    }))
-
-    const state = withVoiceSnapshot(EMPTY_VOICE_ROSTER, { occupants })
-
-    expect(occupantsInChannel(state, 'geral')).toHaveLength(25)
-    expect(occupantsInChannel(state, 'outro')).toHaveLength(25)
-    expect(withVoiceLeft(state, { channelId: 'geral', userId: 'u-0' }).occupants).toHaveLength(49)
-  })
 })

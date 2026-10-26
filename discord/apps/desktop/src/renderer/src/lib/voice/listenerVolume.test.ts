@@ -31,25 +31,41 @@ class MemoryStorage implements KeyValueStorage {
   }
 }
 
+const HEARD_PERCENTS = [0, 1, 25, 40, 50, 99, 100, 101, 150, 199, 200]
+const DIRECT_PERCENTS = [0, 1, 40, 50, 99, 100]
+const BOOST_PERCENTS = [101, 150, 199, 200]
+const GAIN_PAIRS: Array<[number, number]> = [[0, 100], [100, 101], [101, 200], [40, 150]]
+
 describe('volume de quem escuta', () => {
-  it('100% é ganho 1 e 200% é o teto', () => {
-    expect(gainFromPercent(100)).toBe(LISTENER_UNITY)
-    expect(gainFromPercent(200)).toBe(LISTENER_MAX_GAIN)
-    expect(gainFromPercent(0)).toBe(0)
-    expect(gainFromPercent(150)).toBe(1.5)
-    expect(percentFromGain(1.5)).toBe(150)
+  it('0% a 200% viram ganho proporcional, 100% é 1 e o teto é 2', () => {
+    for (const value of HEARD_PERCENTS) {
+      expect(gainFromPercent(value), `${value}%`).toBe(value / 100)
+      expect(percentFromGain(gainFromPercent(value)), `${value}% volta`).toBe(value)
+    }
+    for (const [low, high] of GAIN_PAIRS) {
+      expect(gainFromPercent(low)).toBeLessThanOrEqual(gainFromPercent(high))
+    }
+    expect(gainFromPercent(100)).toBe(1)
+    expect(directListenVolume(1)).toBe(1)
     expect(clampListenerGain(9)).toBe(2)
+    expect(clampListenerGain(-1)).toBe(0)
+    expect(clampListenerGain(1.25)).toBe(1.25)
     expect(clampListenerGain(Number.NaN)).toBe(1)
+    expect(LISTENER_UNITY).toBe(1)
+    expect(LISTENER_MAX_GAIN).toBe(2)
   })
 
   it('100% e abaixo ficam no elemento; acima disso há ganho; surdo cala', () => {
-    expect(listenerPlayback(1, false)).toBe('direct')
-    expect(listenerPlayback(0.4, false)).toBe('direct')
+    for (const value of DIRECT_PERCENTS) {
+      expect(listenerPlayback(gainFromPercent(value), false), `${value}%`).toBe('direct')
+    }
+    for (const value of BOOST_PERCENTS) {
+      expect(listenerPlayback(gainFromPercent(value), false), `${value}%`).toBe('boost')
+    }
+    for (const value of [0, 100, 200]) {
+      expect(listenerPlayback(gainFromPercent(value), true), `${value}% surdo`).toBe('silent')
+    }
     expect(listenerPlayback(0, false), 'mudo continua no elemento, sem desligar a faixa').toBe('direct')
-    expect(listenerPlayback(1.5, false)).toBe('boost')
-    expect(listenerPlayback(2, false)).toBe('boost')
-    expect(listenerPlayback(2, true)).toBe('silent')
-    expect(listenerPlayback(1, true)).toBe('silent')
     expect(directListenVolume(1)).toBe(1)
     expect(directListenVolume(0.25)).toBe(0.25)
     expect(directListenVolume(2), 'o elemento não passa de 1').toBe(1)

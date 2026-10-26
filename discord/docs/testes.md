@@ -1,6 +1,6 @@
 # Testes e CI
 
-O código que vale é o da versão **0.1.127**. O Node do projeto é o do arquivo `.nvmrc` na raiz do repositório: **22.23.4**. `engines` pede `>=22.23.0`.
+O código que vale é o da versão **0.1.128**. O Node do projeto é o do arquivo `.nvmrc` na raiz do repositório: **22.23.4**. `engines` pede `>=22.23.0`.
 
 O servidor importa `node:sqlite`. No Node 20, e no 22.12, esses módulos não carregam. A suíte e o typecheck rodam no 22.23, que é o que esta máquina usa.
 
@@ -36,11 +36,15 @@ npm run typecheck
 
 ## Propriedades e valores exatos
 
-`micGain.property.test.ts` e `listenerVolume.property.test.ts` usam fast-check.
+`micGain.property.test.ts` usa fast-check. `listenerVolume.property.test.ts` fica só com o limitador: sample até 0,4 com ganho 1 sai igual, e o pico não passa de 1.
 
 - Até 0,85 o limiter devolve o sample. Acima, o pico desce e não passa de 1. A curva de 0 a 1 é monótona.
 - O portão grava exatamente 1 ou 0. O nivelador, com voz baixa, sobe um passo até o teto de 4× (`nextLevelerGain(1, rms, true)` é `1.24` quando o alvo encosta em 4). Desligado, o ganho é 1.
-- Volume de 0% a 200% vira ganho de 0 a 2. 100% é ganho 1 e toca no elemento, sem o limitador. Acima de 100% é ganho. O ganho não sai de 0 a 2.
+- As faixas de 0% a 200%, a volta para a mesma porcentagem, a subida monótona e o modo `direct` / `boost` / `silent` estão nos exemplos de `listenerVolume.test.ts`, com o número literal (`100` é ganho `1`, o teto é `2`). Assim um teto trocado para 4 ou um joelho em 0,7 falha o teste.
+
+## Suíte sem repetição
+
+A 0.1.128 tira o teste que só repetia outro arquivo. Mute e ensurdecer ficam em `micDeafen.test.ts`; a store guarda só "alterna mute e ensurdecer". O volume inicial da tela fica em `screenAudioVolume.test.ts`. O teste de 50 pessoas da call fica só no `voicePresenceHub`. Os três "me ouvir" da sessão viram uma tabela `it.each`: o vitest conta cada linha, então a suíte vai de 448 para 427 testes (31 shared, 296 desktop, 100 server), não para 424.
 
 Os exemplos que só diziam "maior que 1" agora comparam o número. `1.08` é a voz baixa subindo um passo. `0.94` é a voz alta descendo um passo até o piso 0,25.
 
