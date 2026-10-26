@@ -1,7 +1,7 @@
 {
   "name": "@radcord/desktop",
   "productName": "SoundRoom",
-  "version": "0.1.124",
+  "version": "0.1.125",
   "private": true,
   "engines": {
     "node": ">=22.23.0"

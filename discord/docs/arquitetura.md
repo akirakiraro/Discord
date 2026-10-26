@@ -83,3 +83,5 @@ Na 0.1.122 o usuário `akira` vê um diagnóstico da call na barra de voz. Os n�
 Na 0.1.123 esse painel mostra o `getStats` cru, a captura original, a cadeia do microfone, o volume por pessoa, os últimos 60 s e um log. Copiar ou salvar o JSON continua neste PC.
 
 Na 0.1.124 o GitHub roda os testes e o typecheck em todo push na `dev`. O instalador continua saindo só do push na `qa`, e só se essa checagem passar. O Node é o 22.23.4 do `.nvmrc`. O detalhe está em [testes.md](testes.md).
+
+Na 0.1.125 o socket tem um teste com cliente de verdade. Sem token a conexão é recusada. O detalhe está em [testes.md](testes.md).

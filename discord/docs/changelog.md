@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.125
+
+O socket da API ganha um teste com servidor e cliente de verdade, numa porta livre.
+
+- Handshake sem token ou com token inválido recebe `unauthorized`. Tirar a autenticação faz o teste falhar.
+- Com sessão válida, o outro cliente vê presença, mensagem, digitação e a entrada e saída da call. O detalhe está em [testes.md](testes.md).
+
 ## 0.1.124
 
 O GitHub passa a rodar `npm test` e o typecheck em todo push e pull request na `dev`. O Release continua só no push da `qa`, e agora só começa se esses dois comandos passarem.

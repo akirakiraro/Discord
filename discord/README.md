@@ -26,6 +26,8 @@ A versão 0.1.123 completa esse painel: contadores crus do `getStats`, captura o
 
 A versão 0.1.124 faz o GitHub rodar `npm test` e o typecheck em todo push na `dev`. O instalador continua saindo só do push na `qa`, depois dessa checagem. O Node é o 22.23.4 do `.nvmrc` na raiz do repositório. O detalhe está em [docs/testes.md](docs/testes.md).
 
+A versão 0.1.125 testa o Socket.IO com servidor e cliente de verdade. Sem token a conexão é recusada.
+
 ## Pré-requisitos
 
 - Node.js 22.23.4 (o `.nvmrc` da raiz). O servidor usa `node:sqlite`, que não carrega no Node 20 nem no 22.12.
