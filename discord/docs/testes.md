@@ -1,6 +1,6 @@
 # Testes e CI
 
-O código que vale é o da versão **0.1.125**. O Node do projeto é o do arquivo `.nvmrc` na raiz do repositório: **22.23.4**. `engines` pede `>=22.23.0`.
+O código que vale é o da versão **0.1.126**. O Node do projeto é o do arquivo `.nvmrc` na raiz do repositório: **22.23.4**. `engines` pede `>=22.23.0`.
 
 O servidor importa `node:sqlite`. No Node 20, e no 22.12, esses módulos não carregam. A suíte e o typecheck rodam no 22.23, que é o que esta máquina usa.
 
@@ -25,6 +25,14 @@ npm run typecheck
 
 - Sem token, ou com token inválido, o handshake termina em `unauthorized`. Se o `io.use` da autenticação sair do gateway, o cliente conecta e o teste falha.
 - Com token válido, o outro cliente vê a presença, a mensagem `message:created`, o `typing:started`, o `voice:joined` e o `voice:left`.
+
+## Me ouvir não recaptura
+
+`liveKitMicrophone.test.ts` liga o microfone de mentira na `VoiceSessionController` e abre e fecha `setSelfMonitor`. A contagem de `setMicrophoneEnabled` fica igual e `restartTrack` continua em zero. O eco da preferência (`true`) não vira `{ exact: false }`.
+
+`HearMyself.test.tsx` clica no botão. Na call ele chama a escuta do servidor e `setSelfMonitor(true)` depois `false`, e não chama `startLocalEar` nem republica o microfone. Fora da call ele usa só a escuta local.
+
+`localEar.test.ts` abre e fecha essa captura à parte. O `getUserMedia` acontece uma vez, com eco `{ exact: false }`, e `setMicrophoneEnabled` da sala publicada não é chamado.
 
 ## Typecheck do desktop
 

@@ -2,7 +2,7 @@
 
 O botão **Me ouvir**, na aba Voz das configurações, toca o microfone desta pessoa depois que o áudio volta do LiveKit. Não é o monitor da tela. O monitor da tela está em [audio-tela.md](audio-tela.md).
 
-O código que vale para o retorno é o da versão **0.1.112**, com o mute e o surdo da **0.1.113**. A partir da **0.1.121** ligar ou desligar o botão não recaptura o microfone publicado. A voz nítida do microfone está em [audio-microfone.md](audio-microfone.md). A lista de quem está no canal sem entrar na call está em [arquitetura.md](arquitetura.md).
+O código que vale para o retorno é o da versão **0.1.112**, com o mute e o surdo da **0.1.113**. A partir da **0.1.121** ligar ou desligar o botão não recaptura o microfone publicado. A **0.1.126** trava isso num teste: abrir e fechar o monitor não chama `restartTrack` nem `setMicrophoneEnabled` de novo. A voz nítida do microfone está em [audio-microfone.md](audio-microfone.md). A lista de quem está no canal sem entrar na call está em [arquitetura.md](arquitetura.md).
 
 ## O que tem que continuar verdade
 

@@ -28,6 +28,8 @@ A versão 0.1.124 faz o GitHub rodar `npm test` e o typecheck em todo push na `d
 
 A versão 0.1.125 testa o Socket.IO com servidor e cliente de verdade. Sem token a conexão é recusada.
 
+A versão 0.1.126 trava o Me ouvir: abrir e fechar o monitor não pode recapturar o microfone publicado. O detalhe está em [docs/escuta-propria.md](docs/escuta-propria.md).
+
 ## Pré-requisitos
 
 - Node.js 22.23.4 (o `.nvmrc` da raiz). O servidor usa `node:sqlite`, que não carrega no Node 20 nem no 22.12.

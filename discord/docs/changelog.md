@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.126
+
+Teste de regressão do Me ouvir: abrir e fechar o monitor não recaptura a faixa publicada.
+
+- O microfone de mentira conta `restartTrack` e `setMicrophoneEnabled`. Os dois ficam parados quando `setSelfMonitor` liga e desliga.
+- O botão, na call, usa a escuta do servidor. Fora da call, a captura local não mexe na faixa da sala. O detalhe está em [testes.md](testes.md) e em [escuta-propria.md](escuta-propria.md).
+
 ## 0.1.125
 
 O socket da API ganha um teste com servidor e cliente de verdade, numa porta livre.
