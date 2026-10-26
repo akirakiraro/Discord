@@ -38,9 +38,11 @@ A versão 0.1.129 mede mutação com o Stryker só na máquina local (`npm run t
 
 A versão 0.1.130 liga e desliga o host dentro do app, no PC em que o repositório está clonado. Sem o manifesto o botão não aparece. O passo a passo está em [docs/host-no-app.md](docs/host-no-app.md).
 
+A versão 0.1.131 corrige o "Ligar host neste PC" no Windows: o `--import` do tsx vira `file:///C:/...`. O Node 24 serve. Reabra o `npm run desktop`. Não precisa rodar `host:setup` de novo.
+
 ## Pré-requisitos
 
-- Node.js 22.23.4 (o `.nvmrc` da raiz). O servidor usa `node:sqlite`, que não carrega no Node 20 nem no 22.12.
+- Node.js 22.23.4 no CI (o `.nvmrc` da raiz). `engines` aceita `>=22.23.0`, inclusive o 24 do PC do host. O servidor usa `node:sqlite`, que não carrega no Node 20 nem no 22.12.
 - npm.
 - Radmin VPN aberto e conectado à mesma rede. O host procura um IP `26.x`.
 - Windows na máquina do host. Os scripts `host:*` são PowerShell.

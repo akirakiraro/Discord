@@ -6,7 +6,7 @@ export const HOST_STOP_TIMEOUT_MS = 5_000
 
 export const HOST_ERROR = {
   noRadmin: 'O Radmin VPN está desligado ou sem IP 26.x. Abra o Radmin, conecte à rede e tente de novo.',
-  noNode: 'Não encontrei o Node.js neste PC. Instale o Node 22.23.4 e rode npm run host:setup de novo.',
+  noNode: 'Não encontrei o Node.js neste PC. Instale o Node 22.23 ou mais novo (o 24 serve) e rode npm run host:setup de novo.',
   noLivekit: 'Falta o LiveKit. Na pasta do repositório, rode: npm run host:install',
   noTsx: 'Não encontrei o tsx para subir a API sem o npm. Na pasta do repositório, rode npm install.',
   timeout: 'O host não respondeu em 20 s. Veja o log em infra/host/logs. Se a porta ficou ocupada, feche o processo e tente de novo.',
@@ -26,6 +26,68 @@ export const HOST_ERROR = {
  */
 export function processExitMessage(name: 'LiveKit' | 'API', code: number): string {
   return `O ${name} encerrou com código ${code} antes do host ficar pronto.`
+}
+
+const MIN_HOST_NODE = [22, 23, 0] as const
+
+/**
+ * O host aceita o Node do CI e qualquer mais novo, inclusive o 24.
+ * Exemplo: `hostNodeVersionOk('v24.15.0')`.
+ */
+export function hostNodeVersionOk(version: string): boolean {
+  const match = /(\d+)\.(\d+)\.(\d+)/.exec(version)
+  if (!match) return false
+  const got = [Number(match[1]), Number(match[2]), Number(match[3])]
+  for (let index = 0; index < MIN_HOST_NODE.length; index += 1) {
+    const left = got[index] ?? 0
+    const right = MIN_HOST_NODE[index] ?? 0
+    if (left > right) return true
+    if (left < right) return false
+  }
+  return true
+}
+
+const WINDOWS_IMPORT =
+  'No Windows o Node leu o caminho do carregador como protocolo "c:". O --import precisa ser uma URL file:///C:/.... O manifesto continua com o caminho normal do arquivo.'
+const PORT_IN_USE = 'A porta já está em uso. Feche o host aberto no terminal, ou o programa que está nessa porta, e tente de novo.'
+const MISSING_MODULE = 'Falta um módulo do Node. Na pasta do repositório, rode npm install.'
+const OLD_NODE = 'Este Node é antigo demais para o host. Use 22.23 ou mais novo. O Node 24 também serve.'
+
+/**
+ * A frase do código mais a causa, em português, e a linha de erro do log.
+ * Exemplo: `explainHostExit('API', 1, log)`.
+ */
+export function explainHostExit(name: 'LiveKit' | 'API', code: number, log: string): string {
+  const base = processExitMessage(name, code)
+  const extra = hostExitExtra(log)
+  return extra ? `${base} ${extra}` : base
+}
+
+function hostExitExtra(log: string): string | null {
+  const cause = hostExitCause(log)
+  const detail = hostExitDetail(log)
+  if (cause && detail) return `${cause} ${detail}`
+  return cause ?? detail
+}
+
+function hostExitCause(log: string): string | null {
+  if (/ERR_UNSUPPORTED_ESM_URL_SCHEME/.test(log) || /protocol 'c:'/.test(log)) return WINDOWS_IMPORT
+  if (/EADDRINUSE/.test(log)) return PORT_IN_USE
+  if (/ERR_MODULE_NOT_FOUND|MODULE_NOT_FOUND|Cannot find module/.test(log)) return MISSING_MODULE
+  const version = /Node\.js (v?\d+\.\d+\.\d+)/.exec(log)
+  if (version?.[1] && !hostNodeVersionOk(version[1])) return OLD_NODE
+  return null
+}
+
+function hostExitDetail(log: string): string | null {
+  const lines = log
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0 && !/^ligando (?:API|LiveKit) em /.test(line))
+  const errorLine = lines.find((line) => line.startsWith('Error'))
+  if (errorLine) return errorLine
+  if (lines.length === 0) return null
+  return lines.slice(-6).join(' · ')
 }
 
 /**

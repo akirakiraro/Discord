@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.131
+
+O botão "Ligar host neste PC" no Windows sobe a API de verdade.
+
+- O `--import` do tsx passa a ser uma URL `file:///C:/...`. O manifesto continua com o caminho normal (`C:\...`). Sem isso o Node 24 lia a letra do disco como protocolo `c:` e a API saía com código 1.
+- Se a API ou o LiveKit cair antes de ficar pronto, a frase traz a causa em português e a linha de erro do log. O Node 24 entra no intervalo `>=22.23`. Não precisa rodar `host:setup` de novo. O detalhe está em [host-no-app.md](host-no-app.md).
+
 ## 0.1.130
 
 O PC com o repositório clonado liga e desliga o host dentro do app.

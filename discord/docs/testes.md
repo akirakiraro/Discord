@@ -1,6 +1,6 @@
 # Testes e CI
 
-O código que vale é o da versão **0.1.130**. O Node do projeto é o do arquivo `.nvmrc` na raiz do repositório: **22.23.4**. `engines` pede `>=22.23.0`.
+O código que vale é o da versão **0.1.131**. O Node do projeto é o do arquivo `.nvmrc` na raiz do repositório: **22.23.4**. `engines` pede `>=22.23.0`, então o 24 do PC do host entra. O `.nvmrc` não é teto.
 
 O servidor importa `node:sqlite`. No Node 20, e no 22.12, esses módulos não carregam. A suíte e o typecheck rodam no 22.23, que é o que esta máquina usa.
 
@@ -95,7 +95,11 @@ Não entram na conta, porque o resultado observável não muda:
 
 ## Host no app
 
-`apps/desktop/src/main/host/` cobre o manifesto válido, inválido e ausente, a trava `HOST_SETTINGS_REQUIRE_AKIRA`, a subida com `node --import` e o YAML no IP `26.186.21.58`, o prazo de 20 s, o `taskkill /T /F`, o host que já estava no ar, a frase de desligar e a de fechar o app. A fase `deferred` da atualização não chama `quitAndInstall` enquanto `hostBlocksInstall` é verdadeiro. O `GET /health` devolve `online: 2` e `inVoice: 1` quando há duas contas e um assento. Processo real no Windows, UAC e Radmin não rodam nesta suíte: o teste usa fake de disco, porta e processo, e um `tcpAccepts` em `127.0.0.1`.
+`apps/desktop/src/main/host/` cobre o manifesto válido, inválido e ausente, a trava `HOST_SETTINGS_REQUIRE_AKIRA`, a subida com `node --import` e o YAML no IP `26.186.21.58`, o prazo de 20 s, o `taskkill /T /F`, o host que já estava no ar, a frase de desligar e a de fechar o app. A fase `deferred` da atualização não chama `quitAndInstall` enquanto `hostBlocksInstall` é verdadeiro. O `GET /health` devolve `online: 2` e `inVoice: 1` quando há duas contas e um assento.
+
+O argumento do Windows não usa só caminho POSIX. `apiSpawn` com `C:\Users\Akira\Documents\...` e `C:\Program Files\nodejs\node.exe` tem de produzir exatamente `--import file:///C:/Users/Akira/Documents/GitHub/Discord/discord/node_modules/tsx/dist/loader.mjs`. O `node.exe`, a entrada do server, o banco e o `livekit.yaml` com espaço ficam um argumento só (`path.win32`). `hostImportSmoke.test.ts` sobe o `node` desta máquina com `--import` na file URL real de `node_modules/tsx/dist/loader.mjs` e um `entry.ts` em pasta `Program Files`: a saída é `host-import-ok` mais o caminho do banco. O mesmo `node` com o caminho cru `C:\Users\Akira\...` sai com `ERR_UNSUPPORTED_ESM_URL_SCHEME` e protocolo `c:`.
+
+Não há job `windows-latest`. O `npm ci` do monorepo nesse runner é lento, o desktop puxa o Electron, e um job extra só para este caso ficaria caro e instável. O ubuntu já executa o `node` de verdade com a file URL e recusa o `C:\`. UAC, Radmin e o `taskkill` de verdade continuam fora da suíte: o resto do host usa fake de disco, porta e processo, e um `tcpAccepts` em `127.0.0.1`.
 
 ## Typecheck do desktop
 

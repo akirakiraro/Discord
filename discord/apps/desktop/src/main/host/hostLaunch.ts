@@ -1,4 +1,5 @@
 import { join } from 'node:path'
+import { pathToFileURL } from 'node:url'
 import type { HostModule } from './hostModule'
 import { API_PORT, LIVEKIT_PORT } from './hostMessages'
 
@@ -101,14 +102,25 @@ export function liveKitSpawn(module: HostModule, configPath: string): HostSpawnS
   }
 }
 
+const WINDOWS_DRIVE = /^[A-Za-z]:[\\/]/
+
 /**
- * A API sobe com `node --import tsx`, sem `npm run`. Exemplo: `apiSpawn(module, env)`.
+ * O `--import` não aceita `C:\...`: o Node lê a letra do disco como protocolo `c:`.
+ * O manifesto continua com o caminho normal. Exemplo: `nodeImportSpecifier('C:\\\\Users\\\\Akira\\\\loader.mjs')`.
+ */
+export function nodeImportSpecifier(filePath: string): string {
+  if (process.platform === 'win32' || !WINDOWS_DRIVE.test(filePath)) return pathToFileURL(filePath).href
+  return pathToFileURL(`/${filePath.replace(/\\/g, '/')}`).href
+}
+
+/**
+ * A API sobe com `node --import <file URL do tsx>`, sem `npm run`. Exemplo: `apiSpawn(module, env)`.
  */
 export function apiSpawn(module: HostModule, env: Record<string, string>): HostSpawnSpec {
   return {
     name: 'api',
     file: module.nodeExe,
-    args: ['--import', module.tsxLoader, module.serverEntry],
+    args: ['--import', nodeImportSpecifier(module.tsxLoader), module.serverEntry],
     cwd: module.serverDir,
     env,
   }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { liveKitYaml } from './hostLaunch'
-import { HOST_ERROR, closeWarning, stopWarning } from './hostMessages'
+import { HOST_ERROR, closeWarning, explainHostExit, stopWarning } from './hostMessages'
 import type { HostModule } from './hostModule'
 import { HostController } from './hostController'
 import type { HostEffects } from './hostEffects'
@@ -51,6 +51,7 @@ class FakeEffects implements HostEffects {
   spawned: HostSpawnSpec[] = []
   handles: Array<HostProcessHandle & { exit: { code: number } | null }> = []
   exitOnSpawn: { index: number; code: number } | null = null
+  logOnExit: { index: number; text: string } | null = null
   killed: number[] = []
   appended: string[] = []
   firewall = ''
@@ -83,8 +84,10 @@ class FakeEffects implements HostEffects {
   }
 
   spawn(spec: HostSpawnSpec): HostProcessHandle {
-    const handle = { pid: 4100 + this.handles.length, exit: null as { code: number } | null, exited: () => handle.exit }
-    if (this.exitOnSpawn && this.handles.length === this.exitOnSpawn.index) handle.exit = { code: this.exitOnSpawn.code }
+    const index = this.handles.length
+    const handle = { pid: 4100 + index, exit: null as { code: number } | null, exited: () => handle.exit }
+    if (this.exitOnSpawn && index === this.exitOnSpawn.index) handle.exit = { code: this.exitOnSpawn.code }
+    if (this.logOnExit && index === this.logOnExit.index && spec.logPath) this.appendLog(spec.logPath, this.logOnExit.text)
     this.handles.push(handle)
     this.spawned.push(spec)
     if (this.upAfterSpawn && this.spawned.length === 2) this.probeState = UP
@@ -127,7 +130,7 @@ describe('HostController', () => {
     expect(effects.spawned.map((spec) => spec.file)).toEqual([MODULE.livekitExe, MODULE.nodeExe])
     expect(effects.spawned[1]).toMatchObject({
       name: 'api',
-      args: ['--import', MODULE.tsxLoader, MODULE.serverEntry],
+      args: ['--import', 'file:///repo/node_modules/tsx/dist/loader.mjs', MODULE.serverEntry],
       cwd: MODULE.serverDir,
       env: {
         BIND_HOST: IP,
@@ -212,6 +215,28 @@ describe('HostController', () => {
     expect(snapshot.message).toBe('O LiveKit encerrou com código 1 antes do host ficar pronto.')
     expect(snapshot.phase).toBe('error')
     expect(effects.killed).toEqual([4101, 4100])
+  })
+
+  it('API que sai com código 1 mostra o erro do Node em português', async () => {
+    const effects = new FakeEffects()
+    const nodeError = [
+      'node:internal/modules/esm/load:195',
+      '    throw new ERR_UNSUPPORTED_ESM_URL_SCHEME(parsed, schemes);',
+      "Error [ERR_UNSUPPORTED_ESM_URL_SCHEME]: Only URLs with a scheme in: file, data, and node are supported by the default ESM loader. On Windows, absolute paths must be valid file:// URLs. Received protocol 'c:'",
+      'Node.js v24.15.0',
+    ].join('\n')
+    effects.exitOnSpawn = { index: 1, code: 1 }
+    effects.logOnExit = { index: 1, text: `${nodeError}\n` }
+
+    const snapshot = await controller(effects).start()
+
+    const log = effects.files.get('/repo/infra/host/logs/api.log') ?? ''
+    expect(snapshot.message).toBe(explainHostExit('API', 1, log))
+    expect(snapshot.message).toContain('O API encerrou com código 1 antes do host ficar pronto.')
+    expect(snapshot.message).toContain('protocolo "c:"')
+    expect(snapshot.message).toContain('Error [ERR_UNSUPPORTED_ESM_URL_SCHEME]')
+    expect(snapshot.message).not.toContain('antigo demais')
+    expect(snapshot.phase).toBe('error')
   })
 
   it('desligar mata a API e o LiveKit e só fica off quando as portas fecham', async () => {

@@ -26,7 +26,7 @@ O script não mistura mídia. Ele não encaminha áudio nem vídeo.
 
 `npm run host:firewall` libera no Firewall do Windows as mesmas portas, e a TCP `3000` da API, apenas para `26.0.0.0/8`.
 
-A partir da 0.1.130 o app também liga esse par de processos, no PC em que o repositório foi clonado e o `npm run host:setup` gravou o manifesto. O processo principal chama o `node` e o `livekit-server.exe` direto, sem `npm run`. Sem o manifesto, o botão não existe. O que a tela faz, a trava do username `akira` e como tirá-la estão em [host-no-app.md](host-no-app.md). O `GET /health` passa a incluir `online` e `inVoice`, para a confirmação de desligar.
+A partir da 0.1.130 o app também liga esse par de processos, no PC em que o repositório foi clonado e o `npm run host:setup` gravou o manifesto. O processo principal chama o `node` e o `livekit-server.exe` direto, sem `npm run`. O `--import` do tsx é uma URL `file:///` (0.1.131); o JSON do manifesto continua com o caminho do arquivo. Sem o manifesto, o botão não existe. O que a tela faz, a trava do username `akira` e como tirá-la estão em [host-no-app.md](host-no-app.md). O `GET /health` passa a incluir `online` e `inVoice`, para a confirmação de desligar.
 
 ## API
 
@@ -97,3 +97,5 @@ Na 0.1.128 a suíte tira o teste repetido. Mute, volume da tela e a lista de 50 
 Na 0.1.129 a mutação roda na máquina local, fora do CI. Os testes de áudio, mensagem e sessão matam mais mutantes. O detalhe está em [testes.md](testes.md).
 
 Na 0.1.130 o desktop liga e desliga o host quando o módulo está neste PC. Reabra o `npm run desktop`. Quem já tinha o LiveKit roda `npm run host:setup` uma vez para o botão aparecer. O detalhe está em [host-no-app.md](host-no-app.md).
+
+Na 0.1.131 o `--import` do tsx vira URL `file:///`. No Windows o caminho `C:\` do manifesto quebrava com protocolo `c:`. O Node 24 serve. Se a API cair antes de ficar pronta, a frase traz a linha do log. Reabra o `npm run desktop`. Não precisa rodar `host:setup` de novo.

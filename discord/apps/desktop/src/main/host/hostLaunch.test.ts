@@ -1,5 +1,7 @@
+import { win32 } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { apiEnvironment, ensureLiveKitSecret, formatLiveKitSecret, killTreeCommand, liveKitYaml } from './hostLaunch'
+import { apiEnvironment, apiSpawn, ensureLiveKitSecret, formatLiveKitSecret, killTreeCommand, liveKitSpawn, liveKitYaml, nodeImportSpecifier } from './hostLaunch'
+import type { HostModule } from './hostModule'
 
 describe('plano de subida do host', () => {
   it('gera o segredo de 36 bytes e reusa o que já tem 32', () => {
@@ -46,5 +48,42 @@ describe('plano de subida do host', () => {
     expect(killTreeCommand(4242, 'win32')).toEqual({ file: 'taskkill', args: ['/PID', '4242', '/T', '/F'] })
     expect(killTreeCommand(4242, 'linux')).toEqual({ file: 'kill', args: ['-TERM', '4242'] })
     expect(() => killTreeCommand(0, 'win32')).toThrow(/pid 0/)
+  })
+
+  it('no Windows o --import é file:///C:/Users/... e o node.exe continua caminho', () => {
+    const database = win32.join('C:\\Program Files\\Radcord\\data', 'radcord.db')
+    const config = win32.join('C:\\Program Files\\Radcord\\generated', 'livekit.yaml')
+    const serverDir = 'C:\\Users\\Akira\\Documents\\GitHub\\Discord\\discord\\apps\\server'
+    const module: HostModule = {
+      version: 1,
+      repoRoot: 'C:\\Users\\Akira\\Documents\\GitHub\\Discord\\discord',
+      livekitExe: 'C:\\Program Files\\Radcord\\bin\\livekit-server.exe',
+      serverEntry: 'C:\\Users\\Akira\\Documents\\GitHub\\Discord\\discord\\apps\\server\\src\\index.ts',
+      serverDir,
+      tsxLoader: 'C:\\Users\\Akira\\Documents\\GitHub\\Discord\\discord\\node_modules\\tsx\\dist\\loader.mjs',
+      nodeExe: 'C:\\Program Files\\nodejs\\node.exe',
+      firewallScript: 'C:\\Users\\Akira\\Documents\\GitHub\\Discord\\discord\\infra\\host\\open-firewall.ps1',
+      logDir: 'C:\\Users\\Akira\\Documents\\GitHub\\Discord\\discord\\infra\\host\\logs',
+      dataDir: 'C:\\Program Files\\Radcord\\data',
+      generatedDir: 'C:\\Program Files\\Radcord\\generated',
+      databasePath: database,
+    }
+    const env = apiEnvironment('26.186.21.58', 'segredo-de-teste-com-32-caracteres', database)
+    const api = apiSpawn(module, env)
+    const livekit = liveKitSpawn(module, config)
+
+    expect(api.file).toBe('C:\\Program Files\\nodejs\\node.exe')
+    expect(api.cwd).toBe(serverDir)
+    expect(api.args).toEqual([
+      '--import',
+      'file:///C:/Users/Akira/Documents/GitHub/Discord/discord/node_modules/tsx/dist/loader.mjs',
+      'C:\\Users\\Akira\\Documents\\GitHub\\Discord\\discord\\apps\\server\\src\\index.ts',
+    ])
+    expect(env.DATABASE_PATH).toBe(database)
+    expect(livekit.file).toBe(module.livekitExe)
+    expect(livekit.cwd).toBe(module.generatedDir)
+    expect(livekit.args).toEqual(['--config', config])
+    expect(nodeImportSpecifier('C:\\Program Files\\tsx\\dist\\loader.mjs')).toBe('file:///C:/Program%20Files/tsx/dist/loader.mjs')
+    expect(nodeImportSpecifier('/repo/node_modules/tsx/dist/loader.mjs')).toBe('file:///repo/node_modules/tsx/dist/loader.mjs')
   })
 })

@@ -1,6 +1,6 @@
 # Host dentro do app
 
-O que a versão **0.1.130** faz no PC que sobe o SoundRoom para a galera. O áudio da call não muda. O instalador NSIS continua levando só o app, o `RadcordLoopback.exe` e o ícone. O "módulo de host" é o repositório clonado, não um pacote dentro do instalador.
+O que a versão **0.1.131** faz no PC que sobe o SoundRoom para a galera. O áudio da call não muda. O instalador NSIS continua levando só o app, o `RadcordLoopback.exe` e o ícone. O "módulo de host" é o repositório clonado, não um pacote dentro do instalador.
 
 ## O que tem que continuar verdade
 
@@ -10,7 +10,8 @@ O que a versão **0.1.130** faz no PC que sobe o SoundRoom para a galera. O áud
 - Na tela de entrar, o botão "Ligar host neste PC" aparece para quem tem o módulo, mesmo sem login. Ao ficar ligado, o IP `26.x` deste PC entra no campo do host.
 - Em Configurações → Host a seção exige o módulo e, por enquanto, o username `akira` sem diferenciar maiúsculas. A trava é a constante `HOST_SETTINGS_REQUIRE_AKIRA` em `apps/desktop/src/shared/hostGate.ts`. Para qualquer pessoa com o módulo poder ser host, mude essa constante para `false`. Não há outra lista de usuários.
 - Quem liga e desliga é o processo principal do Electron. O renderer só pede pelos canais `radcord:host-*` do preload (`contextBridge`). O canal de desligar ignora o pedido se `confirmed` não for `true`.
-- A subida não usa `npm run`. O LiveKit é o `livekit-server.exe --config`. A API é `node --import <tsx> apps/server/src/index.ts`, com `BIND_HOST` no IP do Radmin, banco em `infra/host/data/radcord.db`, chave `radcord` e URL `ws://IP:7880`.
+- A subida não usa `npm run` nem um shell. O LiveKit é o `livekit-server.exe --config <livekit.yaml>`. A API é `node --import <file URL do tsx> <entrada do server>`, com pasta de trabalho `apps/server`, `BIND_HOST` no IP do Radmin, banco em `infra/host/data/radcord.db`, chave `radcord` e URL `ws://IP:7880`. O manifesto guarda caminhos normais, inclusive `C:\Program Files\nodejs\node.exe`. Na hora de montar o `--import`, o app converte o loader com `pathToFileURL` (`file:///C:/...`, espaço vira `%20`). A entrada do server, o `node.exe`, o banco e o `livekit.yaml` continuam caminhos: cada um é um argumento só, então espaço no caminho não quebra. Um `C:\` cru no `--import` vira protocolo `c:` e o Node encerra com `ERR_UNSUPPORTED_ESM_URL_SCHEME`. Quem já tem o `host-module.json` não roda `host:setup` de novo por esta correção. Basta reabrir o `npm run desktop`.
+- O Node do PC pode ser o 22.23 ou mais novo, inclusive o 24. O `.nvmrc` continua `22.23.4` para o CI. `engines` é `>=22.23.0` e não bloqueia o 24.
 - Desligar mata a árvore com `taskkill /PID <pid> /T /F` no Windows. O estado só volta a "Desligado" quando as portas 3000 e 7880 deixam de aceitar conexão.
 - "Ligado" exige os dois: `GET /health` com `status: ok` e a porta 7880 aceitando TCP. O prazo é 20 s (`HOST_START_TIMEOUT_MS`). Se passar, a árvore morre e a frase diz que o host não respondeu.
 - "Ligado fora do app" é o host que já respondia antes deste processo subir (o terminal). O app não oferece desligar. A frase pede para fechar aquela janela.
@@ -24,7 +25,7 @@ Erros que a tela mostra, com o texto do código:
 - Radmin sem IP `26.x`.
 - Porta 3000 ou 7880 ocupada.
 - Falta o Node, o tsx ou o LiveKit (`npm run host:install`).
-- O host não respondeu em 20 s, ou o processo saiu com um código.
+- O host não respondeu em 20 s, ou o processo saiu com um código. Nesse caso a frase inclui a causa em português (caminho `file:///` no Windows, porta ocupada, módulo faltando, Node anterior a 22.23) e a linha `Error` do log. O Node 24.15.0 não é tratado como antigo.
 - As portas continuaram ocupadas depois do `taskkill`.
 
 Exemplo, na pasta `discord/` de um Windows com o Radmin conectado:

@@ -11,7 +11,7 @@ import {
   liveKitYaml,
 } from './hostLaunch'
 import { logTail } from './hostLog'
-import { HOST_ERROR, firewallElevationFailure, processExitMessage, readError, stopWarning } from './hostMessages'
+import { HOST_ERROR, explainHostExit, firewallElevationFailure, readError, stopWarning } from './hostMessages'
 import { findReadyModule, hostLogPaths, type HostModule } from './hostModule'
 import { describePortConflict, portsAreUp, type HostProbe } from './hostProbe'
 import { waitForHostReady, waitForPortsClosed } from './hostWait'
@@ -199,7 +199,7 @@ export class HostController {
     if (!ready.ok) {
       await this.killOwned()
       if (this.cancelled) return this.finishStop(module)
-      const message = ready.reason === 'timeout' ? HOST_ERROR.timeout : processExitMessage(ready.reason === 'livekit-exit' ? 'LiveKit' : 'API', ready.code)
+      const message = ready.reason === 'timeout' ? HOST_ERROR.timeout : this.exitMessage(module, ready)
       return this.fail(message)
     }
     return this.publish({ ...this.base(this.logsOf(module)), phase: 'on', ownedByApp: true, radminIp: ip, message: null, online: ready.online, inVoice: ready.inVoice })
@@ -316,6 +316,12 @@ export class HostController {
       online: probe.online,
       inVoice: probe.inVoice,
     }
+  }
+
+  private exitMessage(module: HostModule, ready: { reason: 'livekit-exit' | 'api-exit'; code: number }): string {
+    const name = ready.reason === 'livekit-exit' ? 'LiveKit' : 'API'
+    const log = this.options.effects.readText(hostLogPaths(module)[name === 'API' ? 'api' : 'livekit']) ?? ''
+    return explainHostExit(name, ready.code, log)
   }
 
   private logsOf(module: HostModule): { apiLog: string[]; livekitLog: string[] } {

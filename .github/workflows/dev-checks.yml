@@ -9,6 +9,8 @@ on:
     branches:
       - dev
 
+# Sem job windows-latest: npm ci do monorepo nesse runner é lento e o desktop puxa o Electron.
+# O C:\ no --import é coberto no ubuntu (file:///C:/Users/... e um node de verdade). Ver docs/testes.md.
 jobs:
   test:
     runs-on: ubuntu-latest
