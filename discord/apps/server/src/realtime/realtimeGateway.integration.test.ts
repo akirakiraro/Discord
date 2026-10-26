@@ -63,6 +63,7 @@ describe('socket.io de verdade', () => {
       headers: { authorization: `Bearer ${akira.token}` },
       payload: { content: 'oi' },
     })
+    akiraSocket.emit('typing:start', { channelId: 1 })
     akiraSocket.emit('typing:start', { channelId: text.id })
 
     expect(sent.statusCode).toBe(201)

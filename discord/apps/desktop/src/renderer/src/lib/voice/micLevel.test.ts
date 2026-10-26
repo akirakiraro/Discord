@@ -7,7 +7,9 @@ describe('rmsToDb', () => {
   })
 
   it('converte amplitude em decibéis', () => {
-    expect(rmsToDb(0.1)).toBeCloseTo(-20, 0)
+    expect(rmsToDb(0.1)).toBeCloseTo(-20, 5)
+    expect(rmsToDb(0.01)).toBeCloseTo(-40, 5)
+    expect(rmsToDb(Number.NaN)).toBe(-80)
   })
 })
 
@@ -29,6 +31,8 @@ describe('dbToPercent', () => {
 
 describe('stepGate', () => {
   it('segura aberto por um instante abaixo do limite', () => {
+    expect(stepGate(CLOSED_GATE, -45, -45, 32)).toEqual({ open: true, quietMs: 0 })
+    expect(stepGate(CLOSED_GATE, -70, -45, 32)).toEqual(CLOSED_GATE)
     const open = stepGate(CLOSED_GATE, -20, -45, 32)
     expect(stepGate(open, -70, -45, 32).open).toBe(true)
   })

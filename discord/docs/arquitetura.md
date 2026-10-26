@@ -91,3 +91,5 @@ Na 0.1.126 um teste abre e fecha o Me ouvir e exige que a faixa publicada não s
 Na 0.1.127 os testes de áudio checam o valor exato e propriedades do limiter, do portão e do volume. O detalhe está em [testes.md](testes.md).
 
 Na 0.1.128 a suíte tira o teste repetido. Mute, volume da tela e a lista de 50 pessoas ficam num arquivo só. A contagem vai de 448 para 427. O detalhe está em [testes.md](testes.md).
+
+Na 0.1.129 a mutação roda na máquina local, fora do CI. Os testes de áudio, mensagem e sessão matam mais mutantes. O detalhe está em [testes.md](testes.md).

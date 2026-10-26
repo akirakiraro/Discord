@@ -1,5 +1,6 @@
-import { describe, expect, it } from 'vitest'
-import { limiterAttenuation, limiterCurve, nextLevelerGain, peakSample, preSliderRms, softLimitSample } from './micGain'
+import { describe, expect, it, vi } from 'vitest'
+import { FakeAudioContext, fakeMediaTrack } from './fakeWebAudio'
+import { createMicChain, followLeveler, limiterAttenuation, limiterCurve, nextLevelerGain, peakSample, preSliderRms, softLimitSample } from './micGain'
 
 describe('micGain', () => {
   it('100% do limiter é a reta: o sample do meio sai igual', () => {
@@ -30,5 +31,31 @@ describe('micGain', () => {
     expect(nextLevelerGain(1, 0.05, true), 'voz baixa sobe um passo até o alvo 2').toBe(1.08)
     expect(nextLevelerGain(1, 0.5, true), 'voz alta desce um passo até o piso 0,25').toBe(0.94)
     expect(preSliderRms(0.4, 4), 'o slider não entra na conta do nivelador').toBeCloseTo(0.1)
+    expect(preSliderRms(0.4, 0), 'slider mudo não divide por zero').toBe(0.4)
+    expect(preSliderRms(0.4, Number.NaN)).toBe(0.4)
+    expect(preSliderRms(Number.NaN, 2)).toBe(0)
+    expect(limiterAttenuation(Number.NaN)).toBe(0)
+    expect(limiterAttenuation(2)).toBeCloseTo(0.5178804383033176)
+    expect(softLimitSample(2)).toBeCloseTo(0.9642391233933647)
+    expect(softLimitSample(-2)).toBeCloseTo(-0.9642391233933647)
+  })
+
+  it('contexto já rodando não pede resume e o analyser fica na derivação', () => {
+    vi.stubGlobal('MediaStream', class {
+      constructor(readonly tracks: readonly MediaStreamTrack[]) {}
+    })
+    const context = new FakeAudioContext()
+    context.state = 'running'
+    const chain = createMicChain(context as unknown as AudioContext, fakeMediaTrack(1), 1)
+
+    expect(context.resumed).toBe(0)
+    expect(chain.samples).toHaveLength(512)
+    expect(context.gains[1]?.links).toContain(context.analysers[0])
+    expect(context.shapers[0]?.links).toEqual([context.gains[2]])
+    const scheduled = context.gains[0]?.gain.scheduled.length ?? 0
+    followLeveler(chain, 0.5, false)
+    expect(context.gains[0]?.gain.scheduled).toHaveLength(scheduled)
+    expect(chain.levelerGain).toBe(1)
+    vi.unstubAllGlobals()
   })
 })

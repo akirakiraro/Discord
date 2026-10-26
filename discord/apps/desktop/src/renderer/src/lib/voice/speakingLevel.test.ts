@@ -4,16 +4,19 @@ import { rmsLevel, SILENT_SPEAK_STATE, SPEAK_HOLD_MS, stepSpeaking } from './spe
 describe('rmsLevel', () => {
   it('trata o meio da escala como silêncio', () => {
     expect(rmsLevel(new Uint8Array([128, 128, 128]))).toBe(0)
+    expect(rmsLevel(new Uint8Array())).toBe(0)
   })
 
   it('sobe quando as amostras saem do silêncio', () => {
-    expect(rmsLevel(new Uint8Array([128, 255]))).toBeGreaterThan(0.4)
+    expect(rmsLevel(new Uint8Array([128, 255]))).toBeCloseTo(0.7015825094585276)
   })
 })
 
 describe('stepSpeaking', () => {
   it('segura o verde por um instante entre sílabas', () => {
+    expect(stepSpeaking(SILENT_SPEAK_STATE, 0.02, 32)).toEqual({ speaking: true, quietMs: 0 })
     const speaking = stepSpeaking(SILENT_SPEAK_STATE, 0.05, 32)
+    expect(stepSpeaking(speaking, 0.012, 32)).toEqual({ speaking: true, quietMs: 0 })
     const held = stepSpeaking(speaking, 0, 32)
     expect(held.speaking).toBe(true)
     expect(held.quietMs).toBe(32)

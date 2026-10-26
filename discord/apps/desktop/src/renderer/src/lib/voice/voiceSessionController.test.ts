@@ -243,10 +243,13 @@ describe('VoiceSessionController', () => {
   })
 
   it('sair desconecta sem mensagem de erro', async () => {
-    await controller.join(new FakeVoiceTokens(), 'v1')
+    await controller.leave()
+    expect(eventsOf(room.log, 'disconnect')).toEqual([])
 
+    await controller.join(new FakeVoiceTokens(), 'v1')
     await controller.leave()
 
+    expect(eventsOf(room.log, 'disconnect')).toEqual(['disconnect'])
     expect(useVoiceStore.getState()).toMatchObject({ connection: null, lastError: null })
   })
 
@@ -314,6 +317,15 @@ describe('VoiceSessionController', () => {
       echoCancellation: { exact: false },
       voiceIsolation: { exact: false },
     })
+  })
+
+  it('trocar o eco republica com a preferência', async () => {
+    await controller.join(new FakeVoiceTokens(), 'v1')
+
+    useMicPrefsStore.getState().setEchoCancellation(false)
+    await Promise.resolve()
+
+    expect(room.microphone.lastRestart?.echoCancellation).toEqual({ exact: false })
   })
 
   it('sensibilidade só move o portão, sem recapturar', async () => {

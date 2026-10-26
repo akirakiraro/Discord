@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.129
+
+Os testes fracos passam a pegar regressão de número. A mutação fica só na máquina local.
+
+- `npm run test:mutation` roda o Stryker. Não entra no CI. O desktop foi de 62,54% para 64,05%. O servidor foi de 83,02% para 85,83%.
+- Áudio, Me ouvir, página de mensagem, sessão e a consulta da release ganham asserts exatos. Mutante que não muda o resultado fica de fora. O detalhe está em [testes.md](testes.md).
+
 ## 0.1.128
 
 A suíte perde o teste que só repetia outro arquivo. O que pega regressão de número continua.

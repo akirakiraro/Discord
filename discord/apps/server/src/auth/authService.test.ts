@@ -56,6 +56,10 @@ describe('AuthService', () => {
     expect(broadcaster.events.at(-1)).toEqual({ event: 'member:updated', payload: { ...updated, online: false } })
   })
 
+  it('não atualiza perfil de quem não existe', () => {
+    expect(() => auth.updateProfile('sumido', { displayName: 'Akira', avatarUrl: null })).toThrow(/"sumido"/)
+  })
+
   it('não autentica token ausente, desconhecido ou depois do logout', () => {
     const { token } = auth.join(AKIRA)
     auth.logout(token)

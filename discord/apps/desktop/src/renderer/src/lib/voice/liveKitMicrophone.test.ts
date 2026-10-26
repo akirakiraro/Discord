@@ -36,6 +36,27 @@ describe('microfone publicado', () => {
     expect(options.echoCancellation, 'o eco da preferência não vira exact false').toBe(true)
   })
 
+  it('liga o portão uma vez e ignora texto no getSettings', async () => {
+    const track = publishedTrack()
+    track.settings.voiceIsolation = 'ligado' as unknown as boolean
+    const room = fakeRoom(track)
+    const mic = liveKitMicrophone(room.room)
+    const processor = {} as Parameters<ReturnType<typeof liveKitMicrophone>['attachGain']>[0]
+
+    await mic.attachGain(processor)
+    await mic.attachGain(processor)
+
+    expect(track.processors).toBe(1)
+    expect(mic.readCapture()).toEqual({ echoCancellation: true, voiceIsolation: undefined })
+  })
+
+  it('sem faixa, ou com faixa que não é áudio, a leitura volta vazia', () => {
+    expect(liveKitMicrophone(fakeRoom(null).room).readCapture()).toEqual({})
+    const video = publishedTrack()
+    video.kind = 'video'
+    expect(liveKitMicrophone(fakeRoom(video).room).readCapture()).toEqual({})
+  })
+
   it('sem faixa publicada, restart pede o microfone em vez de restartTrack', async () => {
     const room = fakeRoom(null)
     await liveKitMicrophone(room.room).restart(captureOptions(DEFAULT_MIC_PREFERENCES))

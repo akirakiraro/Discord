@@ -89,7 +89,10 @@ describe('volume de quem escuta', () => {
     expect(boosted, '200% encosta em 1 sem passar').toBeCloseTo(0.9999999342434372)
     expect(preLimitGain(2)).toBe(1)
     expect(preLimitGain(1.5)).toBe(0.75)
+    expect(limitBoostedSample(0.85, 1)).toBeCloseTo(0.85)
+    expect(limitBoostedSample(Number.NaN, 1)).toBe(0)
     expect(limitBoostedSample(0.9, 1), 'ganho 1 acima do joelho muda o pico').toBeCloseTo(0.8982269106297451)
+    expect(gainFromPercent(Number.NaN)).toBe(1)
     expect(listenerPlayback(1, false), 'por isso 100% não entra no limitador').toBe('direct')
   })
 

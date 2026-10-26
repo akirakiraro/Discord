@@ -10,6 +10,7 @@ describe('localEarConstraints', () => {
 
     expect(constraints.echoCancellation).toEqual({ exact: false })
     expect(constraints.deviceId).toBeUndefined()
+    expect(localEarConstraints({ ...DEFAULT_MIC_PREFERENCES, deviceId: 'headset' }).deviceId).toEqual({ exact: 'headset' })
   })
 })
 
@@ -36,6 +37,14 @@ describe('startLocalEar', () => {
     expect(local.stops, 'só a captura local é solta').toBe(1)
     expect(context.closed).toBe(1)
     expect(seen, 'fechar não pede o microfone de novo').toHaveLength(1)
+    expect(context.cleared).toEqual([1])
+    expect(context.sources[0]?.links).toEqual([])
+    expect(gate?.links).toContain(context.destination)
+  })
+
+  it('stream sem faixa não abre contexto', async () => {
+    installEar([], undefined)
+    await expect(startLocalEar(DEFAULT_MIC_PREFERENCES, () => DEFAULT_MIC_PREFERENCES)).rejects.toThrow(/sem faixa de áudio/)
   })
 })
 
@@ -48,8 +57,9 @@ function stoppableTrack(): MediaStreamTrack & { stops: number } {
   return track
 }
 
-function installEar(seen: MediaStreamConstraints[], track: MediaStreamTrack): FakeAudioContext {
-  const context = new FakeAudioContext()
+function installEar(seen: MediaStreamConstraints[], track: MediaStreamTrack | undefined): FakeAudioContext & { cleared: number[] } {
+  const context = new FakeAudioContext() as FakeAudioContext & { cleared: number[] }
+  context.cleared = []
   vi.stubGlobal('AudioContext', class {
     constructor() {
       return context
@@ -62,10 +72,15 @@ function installEar(seen: MediaStreamConstraints[], track: MediaStreamTrack): Fa
     mediaDevices: {
       getUserMedia: async (constraints: MediaStreamConstraints) => {
         seen.push(constraints)
-        return { getAudioTracks: () => [track], getTracks: () => [track] }
+        return { getAudioTracks: () => (track ? [track] : []), getTracks: () => (track ? [track] : []) }
       },
     },
   })
-  vi.stubGlobal('window', { setInterval: () => 1, clearInterval: () => undefined })
+  vi.stubGlobal('window', {
+    setInterval: () => 1,
+    clearInterval: (timer: number) => {
+      context.cleared.push(timer)
+    },
+  })
   return context
 }
