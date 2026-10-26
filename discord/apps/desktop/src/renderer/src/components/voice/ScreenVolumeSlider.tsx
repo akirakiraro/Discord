@@ -20,7 +20,7 @@ export function ScreenVolumeSlider(): React.JSX.Element {
         max={100}
         value={percent}
         aria-label="Volume do som da tela"
-        style={{ '--volume-fill': `${percent}%` }}
+        style={{ '--volume-fill': `${percent}%` } as React.CSSProperties}
         onChange={(event) => setPercent(Number(event.target.value))}
       />
     </label>

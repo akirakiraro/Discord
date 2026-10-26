@@ -129,11 +129,13 @@ function fillsWorkArea(window: BrowserWindow): boolean {
 }
 
 function deferUntilAlive(window: BrowserWindow, event: 'unmaximize' | 'leave-full-screen', apply: () => void): void {
-  window.on(event, () => {
+  const run = (): void => {
     setTimeout(() => {
       if (!window.isDestroyed()) apply()
     }, 100)
-  })
+  }
+  if (event === 'unmaximize') window.on('unmaximize', run)
+  else window.on('leave-full-screen', run)
 }
 
 function bindPlacementBounds(window: BrowserWindow, memory: PlacementMemory, save: () => void): void {

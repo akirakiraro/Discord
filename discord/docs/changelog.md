@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.124
+
+O GitHub passa a rodar `npm test` e o typecheck em todo push e pull request na `dev`. O Release continua só no push da `qa`, e agora só começa se esses dois comandos passarem.
+
+- O Node fica fixo em `.nvmrc` (`22.23.4`) e em `engines` (`>=22.23.0`). O `node:sqlite` do servidor não carrega no Node 20 nem no 22.12.
+- O typecheck do desktop volta a passar. O detalhe está em [testes.md](testes.md).
+
 ## 0.1.123
 
 O painel **Áudio** do usuário `akira` passa a ser o debug completo da call, ainda só neste PC.

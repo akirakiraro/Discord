@@ -81,3 +81,5 @@ Na 0.1.121 o volume de cada pessoa fica no app de quem ajusta, de 0% a 200%. 100
 Na 0.1.122 o usuário `akira` vê um diagnóstico da call na barra de voz. Os números ficam neste PC. O detalhe está em [diagnostico-audio.md](diagnostico-audio.md).
 
 Na 0.1.123 esse painel mostra o `getStats` cru, a captura original, a cadeia do microfone, o volume por pessoa, os últimos 60 s e um log. Copiar ou salvar o JSON continua neste PC.
+
+Na 0.1.124 o GitHub roda os testes e o typecheck em todo push na `dev`. O instalador continua saindo só do push na `qa`, e só se essa checagem passar. O Node é o 22.23.4 do `.nvmrc`. O detalhe está em [testes.md](testes.md).

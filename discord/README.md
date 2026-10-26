@@ -24,9 +24,12 @@ A versão 0.1.122 mostra, só para o usuário `akira`, um painel com perda, jitt
 
 A versão 0.1.123 completa esse painel: contadores crus do `getStats`, captura original, cadeia do microfone, volume por pessoa, gráfico de 60 s, log e um JSON para copiar ou salvar neste PC. Outra conta continua sem o botão.
 
+A versão 0.1.124 faz o GitHub rodar `npm test` e o typecheck em todo push na `dev`. O instalador continua saindo só do push na `qa`, depois dessa checagem. O Node é o 22.23.4 do `.nvmrc` na raiz do repositório. O detalhe está em [docs/testes.md](docs/testes.md).
+
 ## Pré-requisitos
 
-- Node.js com npm.
+- Node.js 22.23.4 (o `.nvmrc` da raiz). O servidor usa `node:sqlite`, que não carrega no Node 20 nem no 22.12.
+- npm.
 - Radmin VPN aberto e conectado à mesma rede. O host procura um IP `26.x`.
 - Windows na máquina do host. Os scripts `host:*` são PowerShell.
 

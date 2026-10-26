@@ -9,14 +9,38 @@ permissions:
   contents: write
 
 jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: discord/package-lock.json
+
+      - name: Instalar dependências
+        working-directory: discord
+        run: npm ci
+
+      - name: Rodar os testes
+        working-directory: discord
+        run: npm test
+
+      - name: Typecheck
+        working-directory: discord
+        run: npm run typecheck
+
   publish:
+    needs: verify
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version-file: .nvmrc
           cache: npm
           cache-dependency-path: discord/package-lock.json
 
