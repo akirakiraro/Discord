@@ -14,6 +14,7 @@ import { useSessionStore } from '../../stores/sessionStore'
 import { useVoiceRosterStore } from '../../stores/voiceRosterStore'
 import { useVoiceStore } from '../../stores/voiceStore'
 import { Avatar } from '../common/Avatar'
+import { ListenerVolumeToggle } from '../voice/ListenerVolumeToggle'
 import { ParticipantRow } from '../voice/ParticipantRow'
 import { useMemberFace } from '../voice/useMemberFace'
 
@@ -57,7 +58,7 @@ function LiveChannelRoster({ occupants }: { occupants: VoiceOccupantDto[] }): Re
   return (
     <ul className="voice-participants">
       {rows.map((row) => (
-        <SidebarEntry key={row.userId} row={row} participants={participants} />
+        <SidebarEntry key={row.userId} row={row} participants={participants} volume />
       ))}
     </ul>
   )
@@ -67,18 +68,39 @@ function toLiveIdentity(participant: Participant): LiveVoiceIdentity {
   return { identity: participant.identity, name: participant.name || participant.identity }
 }
 
-function SidebarEntry({ row, participants }: { row: SidebarVoiceRow; participants: Participant[] }): React.JSX.Element {
+function SidebarEntry({
+  row,
+  participants,
+  volume,
+}: {
+  row: SidebarVoiceRow
+  participants: Participant[]
+  volume?: boolean
+}): React.JSX.Element {
   const participant = participants.find((item) => item.identity === row.userId)
   if (participant) return <ParticipantRow participant={participant} />
-  return <RosterRow userId={row.userId} displayName={row.displayName} />
+  return <RosterRow userId={row.userId} displayName={row.displayName} volume={volume === true} />
 }
 
-function RosterRow({ userId, displayName }: { userId: string; displayName: string }): React.JSX.Element {
+function RosterRow({ userId, displayName, volume }: { userId: string; displayName: string; volume?: boolean }): React.JSX.Element {
   const face = useMemberFace(userId, displayName)
-  return (
-    <li className="participant-row">
+  const body = (
+    <>
       <Avatar name={face.name} seed={userId} imageUrl={face.imageUrl} size={24} />
       <span className="participant-row__name">{face.name}</span>
+    </>
+  )
+  return (
+    <li className="participant-row">
+      {volume ? <VolumeRow userId={userId} name={face.name}>{body}</VolumeRow> : <StaticRow>{body}</StaticRow>}
     </li>
   )
+}
+
+function VolumeRow({ userId, name, children }: { userId: string; name: string; children: React.ReactNode }): React.JSX.Element {
+  return <ListenerVolumeToggle userId={userId} name={name}>{children}</ListenerVolumeToggle>
+}
+
+function StaticRow({ children }: { children: React.ReactNode }): React.JSX.Element {
+  return <div className="participant-row__main participant-row__main--static">{children}</div>
 }

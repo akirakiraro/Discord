@@ -1,6 +1,7 @@
 import { useConnectionQualityIndicator } from '@livekit/components-react'
 import { ConnectionQuality, type Participant } from 'livekit-client'
 import { Avatar } from '../common/Avatar'
+import { ListenerVolumeToggle } from './ListenerVolumeToggle'
 import { useMemberFace } from './useMemberFace'
 import { useSpeaking } from './useSpeaking'
 
@@ -19,11 +20,13 @@ export function ParticipantRow({ participant }: { participant: Participant }): R
 
   return (
     <li className="participant-row" title={QUALITY_LABEL[quality]}>
-      <Avatar name={face.name} seed={participant.identity} imageUrl={face.imageUrl} speaking={speaking} size={24} />
-      <span className="participant-row__name">{face.name}</span>
-      {participant.isScreenShareEnabled && <span className="badge badge--live">AO VIVO</span>}
-      {!participant.isMicrophoneEnabled && <span className="participant-row__muted">🔇</span>}
-      <span className={`quality-dot quality-dot--${quality}`} />
+      <ListenerVolumeToggle userId={participant.identity} name={face.name}>
+        <Avatar name={face.name} seed={participant.identity} imageUrl={face.imageUrl} speaking={speaking} size={24} />
+        <span className="participant-row__name">{face.name}</span>
+        {participant.isScreenShareEnabled && <span className="badge badge--live">AO VIVO</span>}
+        {!participant.isMicrophoneEnabled && <span className="participant-row__muted">🔇</span>}
+        <span className={`quality-dot quality-dot--${quality}`} />
+      </ListenerVolumeToggle>
     </li>
   )
 }

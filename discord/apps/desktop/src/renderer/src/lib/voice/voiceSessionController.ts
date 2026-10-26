@@ -5,10 +5,9 @@ import { isMicrophoneLive, type VoiceStore } from '../../stores/voiceStore'
 import type { MicPrefsStore } from '../../stores/micPrefsStore'
 import { describeVoiceDisconnect } from './describeVoiceDisconnect'
 import { SensitivityGate } from './sensitivityGate'
-import { monitorCapture, type MicPreferences } from './micPreferences'
+import { captureOptions, type MicPreferences } from './micPreferences'
 import type { MicrophonePort } from './liveKitMicrophone'
 import { reportAppError } from '../report/reportAppError'
-import { earCaptureFailure } from './earStatus'
 import type { CallChimeGatePort } from './callChimeGate'
 
 /** O pedaço da `Room` do LiveKit que o controlador usa (permite um fake nos testes). */
@@ -47,7 +46,6 @@ type MicPrefsApi = Pick<StoreApi<MicPrefsStore>, 'getState' | 'subscribe'>
  */
 export class VoiceSessionController {
   private readonly gate: SensitivityGate
-  private monitoring = false
 
   constructor(
     private readonly room: VoiceRoomPort,
@@ -82,23 +80,18 @@ export class VoiceSessionController {
   async leave(): Promise<void> {
     this.chimes.prime()
     this.chimes.onLeft()
-    this.monitoring = false
     this.store.getState().leave()
     if (this.room.state !== ConnectionState.Disconnected) await this.room.disconnect()
   }
 
   /**
-   * Liga a escuta da própria voz e tira o eco enquanto ela durar.
-   * Sem isso o Chromium apaga o áudio que volta do servidor.
-   * Republica mesmo com o eco já desligado: o isolamento de voz do SDK também apaga.
+   * A escuta da própria voz não mexe na faixa publicada.
+   * Recapturar para tirar o eco pedia o microfone de novo e a voz saía
+   * com ruído e abafada para quem ouve. O retorno só assina a faixa que já está no ar.
    * Exemplo: `await controller.setSelfMonitor(true)`.
    */
-  async setSelfMonitor(on: boolean): Promise<void> {
-    this.monitoring = on
-    await this.republishCapture()
-    if (!on) return
-    const blocked = earCaptureFailure(this.room.microphone.readCapture())
-    if (blocked) throw blocked
+  async setSelfMonitor(_on: boolean): Promise<void> {
+    return Promise.resolve()
   }
 
   private async enterChannel(tokens: VoiceTokenSource, channelId: string): Promise<void> {
@@ -172,7 +165,7 @@ export class VoiceSessionController {
   }
 
   private captureNow(): AudioCaptureOptions {
-    return monitorCapture(this.prefs.getState(), this.monitoring)
+    return captureOptions(this.prefs.getState())
   }
 }
 

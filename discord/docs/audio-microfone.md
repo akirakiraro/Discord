@@ -9,8 +9,8 @@ Na 0.1.112 esta captura entra junto com a lista de quem está no canal, em [arqu
 - O portão de sensibilidade só abre e fecha o volume. Não filtra frequência.
 - O slider de volume muda o ganho antes do portão. 100% é ganho 1. Não é um segundo controle automático.
 - O ganho automático da tela sobe o nível no Web Audio. Não pede `autoGainControl` ao Chromium.
-- Quem escuta a própria voz fica sem cancelamento de eco enquanto a escuta durar. O Chromium trata o retorno do servidor como eco. A escuta não liga isolamento nem o AGC do navegador.
-- A reprodução de quem ouve não processa a voz. O `RoomAudioRenderer` entrega a faixa do LiveKit num elemento de áudio.
+- Quem escuta a própria voz não recaptura o microfone e não troca o eco. O retorno assina a faixa que já está publicada. Fora da call, o teste local ainda abre uma captura à parte. O detalhe está em [escuta-propria.md](escuta-propria.md).
+- Em 100%, quem ouve outra pessoa não processa a voz: um elemento de áudio toca a faixa com volume 1. Acima de 100% o ganho é só neste aparelho, num elemento mudo cujo `srcObject` alimenta o contexto da sala. O detalhe está em [volume-por-pessoa.md](volume-por-pessoa.md).
 
 ## Por que saía abafada
 

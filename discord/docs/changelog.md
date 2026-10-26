@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.121
+
+Volume de cada pessoa na call, e o Me ouvir deixa de recapturar o microfone.
+
+- Clicar numa pessoa do canal de voz abre o volume dela, de 0% a 200%. 100% toca a faixa como chegou, no elemento de áudio. Acima de 100% o ganho é neste aparelho, no contexto da sala, lendo o `srcObject` de um elemento mudo, com limitador só no pico. A preferência fica no `localStorage`, por quem está logado.
+- Não vale para a própria voz, para a escuta `:monitor` nem para o áudio da tela. Surdo continua calando o que chega.
+- Ligar ou desligar o Me ouvir não chama `restartTrack` e não troca o eco. A namorada do teste saía abafada e com ruído porque a escuta pedia o microfone de novo.
+- O detalhe está em [volume-por-pessoa.md](volume-por-pessoa.md) e em [escuta-propria.md](escuta-propria.md).
+
 ## 0.1.120
 
 Com as três opções de voz desligadas, o microfone deixa de passar pelo AGC do Chromium. O slider de volume passa a valer para quem ouve.

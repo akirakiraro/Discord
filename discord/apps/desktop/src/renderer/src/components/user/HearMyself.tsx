@@ -46,7 +46,7 @@ export function HearMyself(): React.JSX.Element {
 function hint(inCall: boolean, hearing: boolean): string {
   if (!inCall && hearing) return 'Você está se ouvindo neste PC, sem chamada. O portão de sensibilidade vale para esse retorno.'
   if (!inCall) return 'Ouve o microfone neste PC, sem entrar num canal. Na chamada, o som volta pelo servidor.'
-  if (hearing) return 'Você está se ouvindo pelo servidor. O eco fica pausado. Fale acima do traço da sensibilidade: abaixo dele o retorno também fica mudo.'
+  if (hearing) return 'Você está se ouvindo pelo servidor, com o atraso da call. A faixa que os outros ouvem não muda. Fale acima do traço: abaixo dele o retorno também fica mudo.'
   return 'O som da sua voz volta pelo servidor para você conferir como os outros escutam. O portão de sensibilidade vale para esse retorno.'
 }
 

@@ -18,6 +18,8 @@ A versão 0.1.119 instala a atualização sem a janela do NSIS. Depois do OK, a 
 
 A versão 0.1.120 deixa o microfone cru quando supressão, eco e ganho automático estão desligados. O ganho automático da tela não usa mais o do navegador, que abafava. O slider de volume do microfone passa a alterar o que os outros ouvem: 100% não muda, 400% aumenta. O detalhe está em [docs/audio-microfone.md](docs/audio-microfone.md).
 
+A versão 0.1.121 põe um volume em cada pessoa da call, de 0% a 200%, lembrado neste aparelho. 100% não altera o áudio recebido. O Me ouvir deixa de recapturar o microfone, então ligar a escuta não muda o que os outros ouvem. O detalhe está em [docs/volume-por-pessoa.md](docs/volume-por-pessoa.md) e em [docs/escuta-propria.md](docs/escuta-propria.md).
+
 ## Pré-requisitos
 
 - Node.js com npm.

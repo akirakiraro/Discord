@@ -314,37 +314,48 @@ describe('VoiceSessionController', () => {
     expect(room.microphone.processor?.thresholdDb).toBe(-30)
   })
 
-  it('se ouvir tira o cancelamento de eco e devolve ao soltar', async () => {
-    useMicPrefsStore.setState({ echoCancellation: true })
+  it('me ouvir não recaptura e não troca o eco da faixa publicada', async () => {
+    useMicPrefsStore.setState({ echoCancellation: true, noiseSuppression: false })
     await controller.join(new FakeVoiceTokens(), 'v1')
+    const published = room.microphone.lastOptions
 
     await controller.setSelfMonitor(true)
-    expect(room.microphone.lastRestart?.echoCancellation, 'eco pausado para o retorno não ser apagado').toEqual({ exact: false })
-    expect(room.microphone.lastRestart?.voiceIsolation, 'isolamento pausado enquanto se ouve').toEqual({ exact: false })
-
     await controller.setSelfMonitor(false)
-    expect(room.microphone.lastRestart?.echoCancellation, 'eco volta ao soltar').toBe(true)
-    expect(room.microphone.lastRestart?.voiceIsolation, 'isolamento continua desligado fora da escuta').toEqual({ exact: false })
+
+    expect(room.log.filter((entry) => entry.startsWith('restart')), 'a escuta não pede o microfone de novo').toEqual([])
+    expect(room.microphone.lastOptions, 'as constraints publicadas ficam as mesmas').toBe(published)
+    expect(published?.echoCancellation, 'o eco da preferência continua').toBe(true)
   })
 
-  it('escuta republica mesmo com o eco já desligado', async () => {
-    useMicPrefsStore.setState({ echoCancellation: false })
+  it('me ouvir com o eco já desligado também não recaptura', async () => {
+    useMicPrefsStore.setState({ echoCancellation: false, noiseSuppression: false })
     await controller.join(new FakeVoiceTokens(), 'v1')
 
     await controller.setSelfMonitor(true)
 
-    expect(room.microphone.lastRestart).toMatchObject({
-      echoCancellation: { exact: false },
-      voiceIsolation: { exact: false },
-    })
+    expect(room.microphone.lastRestart, 'eco já desligado não é desculpa para restartTrack').toBeNull()
+    expect(room.microphone.lastOptions?.echoCancellation).toEqual({ exact: false })
   })
 
-  it('recusa a escuta se o Chromium mantém o eco ligado', async () => {
+  it('me ouvir não falha quando o Chromium mantém o eco ligado', async () => {
     useMicPrefsStore.setState({ echoCancellation: true })
     await controller.join(new FakeVoiceTokens(), 'v1')
-    room.microphone.probe = { echoCancellation: true }
+    room.microphone.probe = { echoCancellation: true, voiceIsolation: true }
 
-    await expect(controller.setSelfMonitor(true)).rejects.toThrow(/cancelamento de eco/)
+    await expect(controller.setSelfMonitor(true)).resolves.toBeUndefined()
+    expect(room.log.filter((entry) => entry.startsWith('restart'))).toEqual([])
+  })
+
+  it('trocar o microfone durante o me ouvir republica com a preferência', async () => {
+    useMicPrefsStore.setState({ echoCancellation: true, noiseSuppression: true })
+    await controller.join(new FakeVoiceTokens(), 'v1')
+    await controller.setSelfMonitor(true)
+
+    useMicPrefsStore.getState().setDeviceId('headset')
+    await Promise.resolve()
+
+    expect(room.microphone.lastRestart?.deviceId).toBe('headset')
+    expect(room.microphone.lastRestart?.echoCancellation, 'a escuta não força o eco desligado').toBe(true)
   })
 
   it('entrar, trocar e sair avisam o sino com quem já está na sala', async () => {

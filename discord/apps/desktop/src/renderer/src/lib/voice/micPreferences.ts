@@ -129,9 +129,9 @@ export function microphonePublishOptions(): TrackPublishOptions {
 }
 
 /**
- * Captura usada na call. Com a escuta da própria voz, o eco sai.
- * O Chromium cancela o retorno do servidor porque ele parece eco do microfone.
- * O isolamento fica `{ exact: false }` em toda captura: `false` solto não desliga o módulo.
+ * Captura do Me ouvir fora da call, neste PC. Não é a faixa publicada.
+ * Ligar a escuta na call não pode usar isto para recapturar: o getUserMedia
+ * novo, com o eco trocado, abafa a voz para quem ouve.
  * Exemplo: `monitorCapture(prefs, true).echoCancellation` devolve `{ exact: false }`.
  */
 export function monitorCapture(prefs: MicPreferences, monitoring: boolean): AudioCaptureOptions {

@@ -2,15 +2,41 @@
 
 O botão **Me ouvir**, na aba Voz das configurações, toca o microfone desta pessoa depois que o áudio volta do LiveKit. Não é o monitor da tela. O monitor da tela está em [audio-tela.md](audio-tela.md).
 
-O código que vale é o da versão **0.1.112**, com o mute e o surdo da **0.1.113**. Nesta versão a escuta entra junto com a voz nítida do microfone, em [audio-microfone.md](audio-microfone.md), e com a lista de quem está no canal sem entrar na call, em [arquitetura.md](arquitetura.md).
+O código que vale para o retorno é o da versão **0.1.112**, com o mute e o surdo da **0.1.113**. A partir da **0.1.121** ligar ou desligar o botão não recaptura o microfone publicado. A voz nítida do microfone está em [audio-microfone.md](audio-microfone.md). A lista de quem está no canal sem entrar na call está em [arquitetura.md](arquitetura.md).
 
 ## O que tem que continuar verdade
 
 - Quem escuta entra de novo na mesma sala, com a identidade `id-do-usuário:monitor`. Essa conexão não publica e não aparece na lista do canal.
 - O som é o que os outros recebem, com o atraso da call e com o portão de sensibilidade. Abaixo do traço, o servidor manda silêncio.
-- Enquanto a escuta dura, o cancelamento de eco fica desligado. O isolamento de voz fica desligado o tempo todo, não só durante a escuta. O Chromium trata o retorno como eco e apaga o alto-falante. A escuta não liga o ganho automático do navegador: com as três opções já desligadas, as constraints são as mesmas da call.
+- Ligar ou desligar o Me ouvir não chama `restartTrack`, não troca constraints e não recria o portão. A faixa publicada é a mesma de antes do clique.
+- O cancelamento de eco da call fica como a pessoa configurou. A escuta não desliga o eco para "deixar o retorno passar": esse `getUserMedia` novo era o que abafava a voz para quem ouve.
+- Fora da call, o teste local ainda abre uma captura à parte, com eco e isolamento desligados. Essa captura não é publicada.
 - Mutado ou surdo, o Me ouvir não abre e, se já estava aberto, para. O portão não pede o microfone de novo. Clicar em mutar enquanto surdo volta a falar e a ouvir; aí o botão pode abrir. Clicar em ensurdecer de novo só devolve o mute que estava antes.
 - A URL é a mesma da call, `ws://IP-do-Radmin:7880`. Não há caminho por `localhost` nem por `127.0.0.1`.
+
+## Por que a voz mudava para quem ouve
+
+Num teste com duas pessoas, a voz estava normal. Assim que uma clicou em **Me ouvir**, quem ouvia passou a receber ruído e um som abafado. Desligar o botão não devolvia a faixa antiga: o microfone já tinha sido pedido de novo.
+
+A cadeia era esta:
+
+1. O clique chamava `setSelfMonitor(true)`.
+2. Isso chamava `republishCapture`, que soltava o portão (`stopProcessor`) e em seguida `restartTrack`.
+3. `restartTrack` para o `MediaStreamTrack` e chama `getUserMedia` de novo. No Windows, reabrir o dispositivo no meio da call não devolve o mesmo módulo: o Chromium pode nascer com o processamento de voz, em banda estreita. É o abafado.
+4. A captura nova ainda forçava `echoCancellation: { exact: false }`, mesmo quando a preferência estava ligada. Sem o eco, a caixa e o próprio retorno entram no microfone. É o ruído.
+5. O portão era criado outra vez em cima da captura nova. A faixa que seguia para o LiveKit já não era a de antes do clique.
+
+O palpite de uma segunda `AudioContext` no Me ouvir não é o que o código fazia. A escuta na call não cria contexto: ela assina a faixa remota e toca num elemento. O contexto novo existe só no teste local, fora da call. O que degradava a faixa publicada era o `restartTrack`.
+
+O retorno em si não precisa disso. A segunda conexão (`:monitor`) só assina o microfone que já está no ar. O eco da preferência continua valendo para a captura. Quem escuta ouve essa mesma faixa, com o atraso da call.
+
+## O que mudou na 0.1.121
+
+- `setSelfMonitor` não republica e não lê `getSettings()` para recusar a escuta. Eco ligado no Chromium deixa de ser motivo para pedir o microfone de novo.
+- A captura publicada segue `captureOptions`. O flag de "estou me ouvindo" saiu dessa decisão.
+- `monitorCapture` continua só no teste local, fora da call.
+
+O que a 0.1.112 fez no retorno (elemento fora da tela, prazo de 8 segundos, relato no cliente) continua valendo. A parte que pedia o microfone de novo, não.
 
 ## O que aconteceu no teste com dois PCs
 
@@ -36,24 +62,30 @@ O que faz o Chromium zerar o retorno, sem lançar exceção:
 
 O portão em si não muda de PC para PC. Se a barra fica à esquerda do traço, os dois ouvem silêncio no retorno, porque é o áudio publicado. A dica do botão passa a dizer isso.
 
-## O que mudou
+A 0.1.121 parou de republicar o microfone para contornar esse eco. O preço era a voz abafada para quem ouve. O retorno segue assinando a faixa que já está no ar.
 
-- A escuta solta o portão, pede o microfone com eco e isolamento desligados, e lê `getSettings()`. Se o Chromium manteve um dos dois, o botão volta e a frase diz qual.
+## O que mudou na 0.1.112
+
+A 0.1.121 desfez o primeiro item: soltar o portão e pedir o microfone de novo abafava a voz para quem ouve. O resto continua.
+
+- Na 0.1.112 a escuta soltava o portão e pedia o microfone com eco desligado. Isso não vale mais.
 - O clique toca um WAV mudo ainda no gesto, antes da ida ao servidor. No outro PC a VPN pode passar do tempo em que o navegador aceita um `play()` sozinho.
 - A faixa tem de tocar em até 8 segundos. Assinatura, queda, autoplay e elemento mudo viram erro na tela e uma linha no relato do cliente (`Escuta da própria voz: …`), com `eco`, `voz`, `mic`, `rem`, `fonte` e a URL `ws://26.x:7880`. O token não entra nessa linha.
 - O elemento fica fora da tela, com volume 1, sem `hidden`.
-- O isolamento de voz sai desligado em toda captura do microfone, como `{ exact: false }`. `false` solto é só um ideal: o Chromium pode manter o módulo, que abafa a voz e come o retorno. O interruptor da interface nunca ofereceu isolamento; quem ligava era o padrão da biblioteca. A mesma captura pede 48 kHz mono e publica a 96 kbps.
+- O isolamento de voz sai desligado em toda captura do microfone, como `{ exact: false }`. `false` solto é só um ideal: o Chromium pode manter o módulo, que abafa a voz e come o retorno. O interruptor da interface nunca ofereceu isolamento; quem ligava era o padrão da biblioteca. A mesma captura pede 48 kHz mono. O bitrate atual está em [audio-microfone.md](audio-microfone.md).
 
 ## Como testar no PC que não é o host
 
-Os dois PCs na mesma rede Radmin, os dois dentro do mesmo canal de voz, microfone ligado.
+Os dois PCs na mesma rede Radmin, os dois dentro do mesmo canal de voz, microfone ligado. Reabra o desktop nos dois (`npm run desktop` a partir de `discord/`).
 
-1. No PC que não hospeda, abra Configurações → Voz.
-2. Fale acima do traço da sensibilidade e clique em **Me ouvir**.
+1. No PC que não hospeda, entre na call e fale. Quem ouve anota o timbre.
+2. Configurações → Voz. Fale acima do traço da sensibilidade e clique em **Me ouvir**.
 3. Tem que sair a própria voz, com o atraso da call. O botão fica **Parar de me ouvir**.
-4. Se não sair som, a frase vermelha embaixo do botão diz o motivo. A mesma frase vai para o relato do cliente no host.
+4. Quem ouve compara de novo. Tem que ser a mesma voz de antes do clique, sem ruído novo e sem abafado.
+5. **Parar de me ouvir**. A voz para quem ouve continua a mesma.
+6. Se não sair som no retorno, a frase vermelha embaixo do botão diz o motivo. A mesma frase vai para o relato do cliente no host.
 
-Repita no PC do host. Os dois têm que ouvir.
+Repita no PC do host. Os dois têm que ouvir o próprio retorno, e nenhum dos dois pode mudar a voz que o outro recebe.
 
 Para ver o relato, o host precisa estar no ar. O arquivo fica junto dos outros relatos do cliente.
 
