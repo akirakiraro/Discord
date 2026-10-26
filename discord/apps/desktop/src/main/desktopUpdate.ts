@@ -36,6 +36,16 @@ export interface UpdateMachineOptions {
   installedVersion: string
   client: BlockUpdateClient
   onChange?: (snapshot: UpdateSnapshot) => void
+  /** Host ligado por este app: instalar fecharia a call. */
+  blocksInstall?: () => boolean
+}
+
+/**
+ * A instalação espera o host. Exemplo: `hostDefersUpdateMessage('0.1.130')`.
+ */
+export function hostDefersUpdateMessage(version: string | null): string {
+  const label = version ?? 'nova'
+  return `O host ligado por este app adia a instalação da versão ${label}. Desligue o host para instalar. Instalar agora fecharia o app e derrubaria a call.`
 }
 
 export interface QuitInstallTarget {
@@ -137,10 +147,26 @@ export class DesktopUpdateMachine {
    * Exemplo: `machine.install()`
    */
   install(): void {
-    if (this.snapshot.phase !== 'ready' || this.installing) return
+    if (this.installing) return
+    const phase = this.snapshot.phase
+    if (phase !== 'ready' && phase !== 'deferred') return
+    if (this.options.blocksInstall?.()) {
+      this.publish(deferredSnapshot(this.snapshot.version))
+      return
+    }
     this.installing = true
     this.publish(installingSnapshot(this.snapshot.version))
     this.scheduleQuit(INSTALL_PAUSE_MS)
+  }
+
+  /**
+   * O host desligou. A versão que estava esperando volta a poder instalar.
+   * Exemplo: `machine.reconsiderInstall()`.
+   */
+  reconsiderInstall(): void {
+    if (this.snapshot.phase !== 'deferred') return
+    if (this.options.blocksInstall?.()) return
+    this.publish(readySnapshot(this.snapshot.version))
   }
 
   private hold(): boolean {
@@ -162,7 +188,7 @@ export class DesktopUpdateMachine {
       this.publish(downloadingSnapshot(offer.version))
       await this.options.client.downloadUpdate()
       if (!this.sameAttempt(generation)) return this.snapshot
-      return this.settle(generation, readySnapshot(this.snapshot.version ?? offer.version))
+      return this.settle(generation, this.readyOrDeferred(this.snapshot.version ?? offer.version))
     } catch (error: unknown) {
       return this.failAttempt(generation, readError(error))
     }
@@ -196,7 +222,7 @@ export class DesktopUpdateMachine {
 
   private noteDownloaded(version: string): void {
     if (!this.busy || this.snapshot.phase !== 'downloading') return
-    this.publish(readySnapshot(version.trim() || this.snapshot.version))
+    this.publish(this.readyOrDeferred(version.trim() || this.snapshot.version))
   }
 
   private failFromEvent(message: string): void {
@@ -223,9 +249,14 @@ export class DesktopUpdateMachine {
     return this.publish(next)
   }
 
+  private readyOrDeferred(version: string | null): UpdateSnapshot {
+    if (this.options.blocksInstall?.()) return deferredSnapshot(version)
+    return readySnapshot(version)
+  }
+
   private keepsCurrentWork(): boolean {
     const phase = this.snapshot.phase
-    return phase === 'downloading' || phase === 'ready' || phase === 'installing'
+    return phase === 'downloading' || phase === 'ready' || phase === 'installing' || phase === 'deferred'
   }
 
   private scheduleQuit(pauseMs: number): void {
@@ -246,7 +277,7 @@ function mentions(text: string, needles: readonly string[]): boolean {
 }
 
 function failureStage(phase: UpdatePhase): 'check' | 'download' {
-  return phase === 'downloading' || phase === 'ready' ? 'download' : 'check'
+  return phase === 'downloading' || phase === 'ready' || phase === 'deferred' ? 'download' : 'check'
 }
 
 function readError(error: unknown): string {
@@ -275,6 +306,10 @@ function readySnapshot(version: string | null): UpdateSnapshot {
 
 function installingSnapshot(version: string | null): UpdateSnapshot {
   return { phase: 'installing', version, progress: null, message: null }
+}
+
+function deferredSnapshot(version: string | null): UpdateSnapshot {
+  return { phase: 'deferred', version, progress: null, message: hostDefersUpdateMessage(version) }
 }
 
 function errorSnapshot(message: string): UpdateSnapshot {

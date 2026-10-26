@@ -548,6 +548,52 @@
   color: var(--red);
 }
 
+.host-panel__state,
+.host-panel__count,
+.host-panel__hint {
+  margin: 0;
+}
+
+.host-panel__confirm,
+.host-panel__firewall {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.host-panel__confirm {
+  padding: 12px;
+  border-radius: 8px;
+  background: var(--bg-dark);
+}
+
+.host-panel__confirm p {
+  flex-basis: 100%;
+  margin: 0;
+}
+
+.host-log {
+  align-self: stretch;
+}
+
+.host-log h3 {
+  margin: 0 0 6px;
+  font-size: 13px;
+}
+
+.host-log pre {
+  margin: 0;
+  max-height: 160px;
+  overflow: auto;
+  padding: 8px;
+  border-radius: 6px;
+  background: var(--bg-darkest);
+  color: var(--text-muted);
+  font-size: 12px;
+  white-space: pre-wrap;
+}
+
 .settings-modal__logout:hover {
   background: rgba(242, 63, 67, 0.16);
 }

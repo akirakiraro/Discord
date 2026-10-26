@@ -1,3 +1,4 @@
+import type { HostQuitPrompt, HostSnapshot, HostStopPreview } from '../../shared/hostSnapshot'
 import type { UpdateSnapshot } from '../../shared/desktopUpdateSnapshot'
 
 export {}
@@ -21,6 +22,16 @@ declare global {
       takeQueuedReports(): Promise<QueuedClientReport[]>
       saveQueuedReports(reports: QueuedClientReport[]): Promise<void>
       onMainReport(listener: (message: string) => void): void
+      hostStatus(): Promise<HostSnapshot>
+      hostStart(): Promise<HostSnapshot>
+      hostPreviewStop(): Promise<HostStopPreview>
+      hostStop(): Promise<HostSnapshot>
+      hostFirewall(): Promise<HostSnapshot>
+      hostOpenFirewall(): Promise<HostSnapshot>
+      confirmHostQuit(): Promise<HostSnapshot>
+      dismissHostQuit(): Promise<void>
+      onHostState(listener: (snapshot: HostSnapshot) => void): () => void
+      onHostQuitPrompt(listener: (prompt: HostQuitPrompt) => void): () => void
     }
   }
 

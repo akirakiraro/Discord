@@ -58,6 +58,26 @@ describe('tela de atualização', () => {
     expect(html).not.toContain('Reiniciar o SoundRoom')
     expect(html).not.toContain('>OK<')
   })
+
+  it('com o host ligado avisa e oferece instalar só depois de desligar', () => {
+    const html = renderToStaticMarkup(
+      <UpdateChrome
+        snapshot={{
+          phase: 'deferred',
+          version: '0.1.130',
+          progress: null,
+          message: 'O host ligado por este app adia a instalação da versão 0.1.130. Desligue o host para instalar. Instalar agora fecharia o app e derrubaria a call.',
+        }}
+        onRetry={noop}
+        onInstall={noop}
+      />,
+    )
+
+    expect(html).toContain('Atualização adiada')
+    expect(html).toContain('Desligue o host para instalar')
+    expect(html).toContain('Instalar depois de desligar o host')
+    expect(html).not.toContain('>OK<')
+  })
 })
 
 function errorSnapshot(): UpdateSnapshot {

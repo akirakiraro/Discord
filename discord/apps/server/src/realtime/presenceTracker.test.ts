@@ -11,6 +11,17 @@ describe('PresenceTracker', () => {
     expect(presence.isOnline('u-1')).toBe(true)
     expect(presence.disconnect('u-1'), 'última conexão').toBe(true)
     expect(presence.isOnline('u-1')).toBe(false)
+    expect(presence.onlineCount()).toBe(0)
+  })
+
+  it('conta pessoas, não janelas', () => {
+    const presence = new PresenceTracker()
+
+    presence.connect('u-1')
+    presence.connect('u-1')
+    presence.connect('u-2')
+
+    expect(presence.onlineCount()).toBe(2)
   })
 
   it('ignora desconexão de quem não estava conectado', () => {

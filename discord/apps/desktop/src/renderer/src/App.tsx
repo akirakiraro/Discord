@@ -3,7 +3,9 @@ import { AuthScreen } from './components/auth/AuthScreen'
 import { AppShell } from './components/layout/AppShell'
 import { UpdateBlockScreen } from './components/update/UpdateBlockScreen'
 import { UpdateChrome } from './components/update/UpdateChrome'
+import { HostQuitModal } from './components/user/HostQuitModal'
 import { useDesktopUpdate } from './hooks/useDesktopUpdate'
+import { useHostQuitPrompt } from './hooks/useHostQuitPrompt'
 import { useRestoreSession } from './hooks/useRestoreSession'
 import { useSessionStore, type AuthSession } from './stores/sessionStore'
 
@@ -12,11 +14,13 @@ export function App(): React.JSX.Element {
   const blocked = updateBlocksLogin(update.snapshot)
   const restoring = useRestoreSession(!blocked)
   const session = useSessionStore((store) => store.session)
+  const hostQuit = useHostQuitPrompt()
 
   return (
     <>
       <AppMain blocked={blocked} restoring={restoring} session={session} snapshot={update.snapshot} onRetry={update.retry} />
       <UpdateChrome snapshot={update.snapshot} onRetry={update.retry} onInstall={update.install} />
+      {hostQuit.prompt && <HostQuitModal prompt={hostQuit.prompt} onConfirm={hostQuit.confirm} onDismiss={hostQuit.dismiss} />}
     </>
   )
 }

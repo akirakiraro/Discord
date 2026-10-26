@@ -24,6 +24,8 @@ export async function buildApp(context: ServerContext, options: { logger: boolea
   app.get('/health', { logLevel: 'warn' }, async (): Promise<HostHealthResponse> => ({
     status: 'ok',
     livekitUrl: context.livekitPublicUrl,
+    online: context.presence.onlineCount(),
+    inVoice: context.voiceRoster.snapshot().length,
   }))
   registerAuthRoutes(app, context.auth)
   registerChannelRoutes(app, context.auth, context.channels)

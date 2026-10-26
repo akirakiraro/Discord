@@ -10,6 +10,8 @@ release/
 # Gerados pelos scripts do host (contêm o segredo do LiveKit)
 infra/host/bin/
 infra/host/generated/
+infra/host/host-module.json
+infra/host/logs/
 
 # Banco SQLite com contas e mensagens
 infra/host/data/

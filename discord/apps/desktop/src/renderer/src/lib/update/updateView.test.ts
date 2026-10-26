@@ -17,6 +17,7 @@ describe('updateView', () => {
     }
     expect(updateBlocksLogin({ phase: 'current', version: null, progress: null, message: null })).toBe(false)
     expect(updateBlocksLogin({ phase: 'skipped', version: null, progress: null, message: null })).toBe(false)
+    expect(updateBlocksLogin({ phase: 'deferred', version: '0.1.130', progress: null, message: null })).toBe(false)
   })
 
   it('mostra porcentagem, velocidade e tamanho quando o download informa', () => {
@@ -48,6 +49,20 @@ describe('updateView', () => {
     expect(updatePercent(ready)).toBe(100)
     expect(updateIsIndeterminate(ready)).toBe(false)
     expect(updateBlockBody(ready)).toMatch(/reiniciar/)
+  })
+
+  it('adiada pelo host mostra a frase e não bloqueia o login', () => {
+    const deferred: UpdateSnapshot = {
+      phase: 'deferred',
+      version: '0.1.130',
+      progress: null,
+      message: 'O host ligado por este app adia a instalação da versão 0.1.130. Desligue o host para instalar. Instalar agora fecharia o app e derrubaria a call.',
+    }
+
+    expect(updateCardTitle(deferred)).toBe('Atualização adiada')
+    expect(updateCardDetail(deferred)).toBe(deferred.message)
+    expect(updatePercent(deferred)).toBeNull()
+    expect(updateBlocksLogin(deferred)).toBe(false)
   })
 
   it('instalando avisa que o app fecha sozinho e não inventa porcentagem', () => {

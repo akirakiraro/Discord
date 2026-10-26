@@ -33,6 +33,10 @@ export interface VoiceTokenResponse {
 export interface HostHealthResponse {
   status: 'ok'
   livekitUrl: string
+  /** Pessoas com pelo menos uma sessão Socket.IO. Duas janelas da mesma conta contam uma. */
+  online: number
+  /** Assentos do canal de voz. A escuta `:monitor` não entra aqui. */
+  inVoice: number
 }
 
 /** Pedido do desktop depois que a sala do LiveKit conectou. */

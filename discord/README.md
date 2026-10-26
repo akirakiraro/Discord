@@ -36,6 +36,8 @@ A versão 0.1.128 tira da suíte o teste que só repetia outro arquivo. A contag
 
 A versão 0.1.129 mede mutação com o Stryker só na máquina local (`npm run test:mutation`) e aperta os testes de áudio, mensagem e sessão. O detalhe está em [docs/testes.md](docs/testes.md).
 
+A versão 0.1.130 liga e desliga o host dentro do app, no PC em que o repositório está clonado. Sem o manifesto o botão não aparece. O passo a passo está em [docs/host-no-app.md](docs/host-no-app.md).
+
 ## Pré-requisitos
 
 - Node.js 22.23.4 (o `.nvmrc` da raiz). O servidor usa `node:sqlite`, que não carrega no Node 20 nem no 22.12.
@@ -55,13 +57,17 @@ Na pasta `discord/`, nesta ordem:
 
 ```powershell
 npm run host:install
+npm run host:setup
 npm run host:firewall
 npm run host
 ```
 
-- `host:install` baixa o `livekit-server.exe` para `infra/host/bin`. Se o arquivo já existe, não baixa de novo.
-- `host:firewall` abre as portas só para a faixa `26.0.0.0/8`. Precisa de PowerShell como administrador: API na TCP `3000`, sinalização do LiveKit nas TCP `7880` e `7881`, mídia na UDP `50000–50100`.
-- `host` acha o IP do Radmin, sobe o LiveKit preso a esse IP e, em seguida, a API. A janela imprime o endereço que os amigos devem digitar. Fechar essa janela e a do LiveKit desliga o host.
+- `host:install` baixa o `livekit-server.exe` para `infra/host/bin`. Se o arquivo já existe, não baixa de novo. No fim grava o manifesto do módulo.
+- `host:setup` grava `infra/host/host-module.json` e uma cópia em `%APPDATA%\Radcord`. É isso que faz o botão aparecer no app. Se o `host:install` acabou de rodar, o manifesto já está lá.
+- `host:firewall` abre as portas só para a faixa `26.0.0.0/8`. Precisa de PowerShell como administrador: API na TCP `3000`, sinalização do LiveKit nas TCP `7880` e `7881`, mídia na UDP `50000–50100`. O mesmo botão existe em Configurações → Host e pede o UAC.
+- `host` acha o IP do Radmin, sobe o LiveKit preso a esse IP e, em seguida, a API. A janela imprime o endereço que os amigos devem digitar. Fechar essa janela e a do LiveKit desliga o host. Com o app aberto no mesmo PC, esse host aparece como "Ligado fora do app": o app não mata o processo do terminal.
+
+No app, depois do `host:setup` e com o Radmin conectado, a tela de entrar tem "Ligar host neste PC". Isso sobe o LiveKit e a API sem o terminal e preenche o IP. Desligar fica em Configurações → Host, hoje só para o usuário `akira`.
 
 A API escuta a porta `3000`. O banco fica em `infra/host/data/radcord.db`. O arquivo não muda de nome: um banco novo perderia as contas.
 

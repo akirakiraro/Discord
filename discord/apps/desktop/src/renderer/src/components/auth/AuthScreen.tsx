@@ -3,8 +3,10 @@ import { PRODUCT_DISPLAY_NAME } from '../../../../shared/appIdentity'
 import { authenticate } from '../../lib/auth/authenticate'
 import { loadSavedLogin, saveLogin } from '../../lib/savedLogin'
 import { useSessionStore } from '../../stores/sessionStore'
+import { useHostPower } from '../../hooks/useHostPower'
 import { AuthFields } from './AuthFields'
 import { HostAddressControl } from './HostAddressControl'
+import { HostLaunchControl } from './HostLaunchControl'
 
 export function AuthScreen(): React.JSX.Element {
   const signOutReason = useSessionStore((store) => store.signOutReason)
@@ -12,6 +14,7 @@ export function AuthScreen(): React.JSX.Element {
   const [hostAddress, setHostAddress] = useState(() => loadSavedLogin(window.localStorage).hostAddress)
   const [error, setError] = useState<string | null>(signOutReason)
   const [submitting, setSubmitting] = useState(false)
+  const host = useHostPower()
 
   useEffect(() => {
     if (hostAddress) return
@@ -19,6 +22,12 @@ export function AuthScreen(): React.JSX.Element {
       if (ip) setHostAddress(ip)
     })
   }, [hostAddress])
+
+  function applyHostAddress(ip: string): void {
+    const saved = loadSavedLogin(window.localStorage)
+    saveLogin(window.localStorage, { ...saved, hostAddress: ip })
+    setHostAddress(ip)
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault()
@@ -50,6 +59,7 @@ export function AuthScreen(): React.JSX.Element {
         </button>
       </form>
       <HostAddressControl value={hostAddress} onChange={setHostAddress} />
+      <HostLaunchControl snapshot={host} onStart={() => void window.radcord?.hostStart()} onUseAddress={applyHostAddress} />
     </div>
   )
 }

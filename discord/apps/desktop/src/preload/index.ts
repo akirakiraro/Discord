@@ -1,6 +1,7 @@
 import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron'
 import type { ClientReportRequest } from '@radcord/shared'
 import { parseUpdateSnapshot, type UpdateSnapshot } from '../shared/desktopUpdateSnapshot'
+import { parseHostQuitPrompt, parseHostSnapshot, type HostQuitPrompt, type HostSnapshot, type HostStopPreview } from '../shared/hostSnapshot'
 
 contextBridge.exposeInMainWorld('radcord', {
   radminIp: (): Promise<string | null> => ipcRenderer.invoke('radcord:radmin-ip'),
@@ -29,6 +30,27 @@ contextBridge.exposeInMainWorld('radcord', {
     ipcRenderer.on('radcord:main-report', (_event, message: unknown) => {
       if (typeof message === 'string') listener(message)
     })
+  },
+  hostStatus: (): Promise<HostSnapshot> => ipcRenderer.invoke('radcord:host-status').then(parseHostSnapshot),
+  hostStart: (): Promise<HostSnapshot> => ipcRenderer.invoke('radcord:host-start').then(parseHostSnapshot),
+  hostPreviewStop: (): Promise<HostStopPreview> => ipcRenderer.invoke('radcord:host-preview-stop'),
+  hostStop: (): Promise<HostSnapshot> => ipcRenderer.invoke('radcord:host-stop', { confirmed: true }).then(parseHostSnapshot),
+  hostFirewall: (): Promise<HostSnapshot> => ipcRenderer.invoke('radcord:host-firewall').then(parseHostSnapshot),
+  hostOpenFirewall: (): Promise<HostSnapshot> => ipcRenderer.invoke('radcord:host-firewall-open').then(parseHostSnapshot),
+  confirmHostQuit: (): Promise<HostSnapshot> => ipcRenderer.invoke('radcord:host-confirm-quit').then(parseHostSnapshot),
+  dismissHostQuit: (): Promise<void> => ipcRenderer.invoke('radcord:host-dismiss-quit'),
+  onHostState: (listener: (snapshot: HostSnapshot) => void): (() => void) => {
+    const wrapped = (_event: IpcRendererEvent, snapshot: unknown): void => listener(parseHostSnapshot(snapshot))
+    ipcRenderer.on('radcord:host-state', wrapped)
+    return () => ipcRenderer.removeListener('radcord:host-state', wrapped)
+  },
+  onHostQuitPrompt: (listener: (prompt: HostQuitPrompt) => void): (() => void) => {
+    const wrapped = (_event: IpcRendererEvent, payload: unknown): void => {
+      const prompt = parseHostQuitPrompt(payload)
+      if (prompt) listener(prompt)
+    }
+    ipcRenderer.on('radcord:host-quit-prompt', wrapped)
+    return () => ipcRenderer.removeListener('radcord:host-quit-prompt', wrapped)
   },
 })
 

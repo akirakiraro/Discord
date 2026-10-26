@@ -1,10 +1,13 @@
 import { useState } from 'react'
+import { hostSettingsTab } from '../../../../shared/hostGate'
 import { logout } from '../../lib/auth/logout'
+import { useHostPower } from '../../hooks/useHostPower'
 import { useSessionStore } from '../../stores/sessionStore'
+import { HostSettings } from './HostSettings'
 import { ProfileEditor } from './ProfileModal'
 import { VoiceSettings } from './VoiceSettings'
 
-type SettingsTab = 'conta' | 'voz'
+type SettingsTab = 'conta' | 'voz' | 'host'
 
 const TABS: { id: SettingsTab; label: string }[] = [
   { id: 'conta', label: 'Minha conta' },
@@ -16,26 +19,33 @@ interface SettingsModalProps {
 }
 
 export function SettingsModal({ onClose }: SettingsModalProps): React.JSX.Element {
+  const username = useSessionStore((store) => store.session?.user.username)
+  const host = useHostPower()
+  const hostTab = hostSettingsTab(host.moduleReady, username)
+  const tabs = hostTab ? [...TABS, hostTab] : TABS
   const [tab, setTab] = useState<SettingsTab>('conta')
+  const visible = tab === 'host' && !hostTab ? 'conta' : tab
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <div className="settings-modal" role="dialog" aria-label="Configurações" onClick={(event) => event.stopPropagation()}>
-        <SettingsNav tab={tab} onSelect={setTab} />
+        <SettingsNav tab={visible} tabs={tabs} onSelect={setTab} />
         <div className="settings-modal__content">
           <button type="button" className="settings-modal__close" title="Fechar" aria-label="Fechar" onClick={onClose} />
-          {tab === 'conta' ? <AccountSettings /> : <VoiceSettings />}
+          {visible === 'conta' && <AccountSettings />}
+          {visible === 'voz' && <VoiceSettings />}
+          {visible === 'host' && <HostSettings />}
         </div>
       </div>
     </div>
   )
 }
 
-function SettingsNav({ tab, onSelect }: { tab: SettingsTab; onSelect: (tab: SettingsTab) => void }): React.JSX.Element {
+function SettingsNav({ tab, tabs, onSelect }: { tab: SettingsTab; tabs: { id: SettingsTab; label: string }[]; onSelect: (tab: SettingsTab) => void }): React.JSX.Element {
   return (
     <nav className="settings-nav" aria-label="Seções">
       <p className="settings-nav__label">Configurações do usuário</p>
-      {TABS.map((item) => (
+      {tabs.map((item) => (
         <button
           key={item.id}
           type="button"

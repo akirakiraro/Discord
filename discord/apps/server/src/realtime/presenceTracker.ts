@@ -27,4 +27,9 @@ export class PresenceTracker {
   isOnline(userId: string): boolean {
     return this.connectionCounts.has(userId)
   }
+
+  /** Uma pessoa, mesmo com duas janelas. Exemplo: `presence.onlineCount()`. */
+  onlineCount(): number {
+    return this.connectionCounts.size
+  }
 }

@@ -1,6 +1,6 @@
 # Testes e CI
 
-O código que vale é o da versão **0.1.129**. O Node do projeto é o do arquivo `.nvmrc` na raiz do repositório: **22.23.4**. `engines` pede `>=22.23.0`.
+O código que vale é o da versão **0.1.130**. O Node do projeto é o do arquivo `.nvmrc` na raiz do repositório: **22.23.4**. `engines` pede `>=22.23.0`.
 
 O servidor importa `node:sqlite`. No Node 20, e no 22.12, esses módulos não carregam. A suíte e o typecheck rodam no 22.23, que é o que esta máquina usa.
 
@@ -92,6 +92,10 @@ Não entram na conta, porque o resultado observável não muda:
 - Esvaziar `setSelfMonitor` continua devolvendo `undefined`: a função já não recaptura.
 - No clamp do limiter, `sample >= 1` e `sample > 1` tratam o sample 1 igual, porque os dois seguem para o compressor.
 - No teto 4 do nivelador, `>=` e `>` devolvem 4 quando o alvo é exatamente 4.
+
+## Host no app
+
+`apps/desktop/src/main/host/` cobre o manifesto válido, inválido e ausente, a trava `HOST_SETTINGS_REQUIRE_AKIRA`, a subida com `node --import` e o YAML no IP `26.186.21.58`, o prazo de 20 s, o `taskkill /T /F`, o host que já estava no ar, a frase de desligar e a de fechar o app. A fase `deferred` da atualização não chama `quitAndInstall` enquanto `hostBlocksInstall` é verdadeiro. O `GET /health` devolve `online: 2` e `inVoice: 1` quando há duas contas e um assento. Processo real no Windows, UAC e Radmin não rodam nesta suíte: o teste usa fake de disco, porta e processo, e um `tcpAccepts` em `127.0.0.1`.
 
 ## Typecheck do desktop
 

@@ -26,6 +26,8 @@ O script não mistura mídia. Ele não encaminha áudio nem vídeo.
 
 `npm run host:firewall` libera no Firewall do Windows as mesmas portas, e a TCP `3000` da API, apenas para `26.0.0.0/8`.
 
+A partir da 0.1.130 o app também liga esse par de processos, no PC em que o repositório foi clonado e o `npm run host:setup` gravou o manifesto. O processo principal chama o `node` e o `livekit-server.exe` direto, sem `npm run`. Sem o manifesto, o botão não existe. O que a tela faz, a trava do username `akira` e como tirá-la estão em [host-no-app.md](host-no-app.md). O `GET /health` passa a incluir `online` e `inVoice`, para a confirmação de desligar.
+
 ## API
 
 [apps/server/src/index.ts](../apps/server/src/index.ts) sobe um Fastify. A porta padrão é `3000` (`SERVER_DEFAULT_PORT`). `npm run host` define o endereço de escuta; sem `BIND_HOST`, a API escuta em `0.0.0.0`.
@@ -93,3 +95,5 @@ Na 0.1.127 os testes de áudio checam o valor exato e propriedades do limiter, d
 Na 0.1.128 a suíte tira o teste repetido. Mute, volume da tela e a lista de 50 pessoas ficam num arquivo só. A contagem vai de 448 para 427. O detalhe está em [testes.md](testes.md).
 
 Na 0.1.129 a mutação roda na máquina local, fora do CI. Os testes de áudio, mensagem e sessão matam mais mutantes. O detalhe está em [testes.md](testes.md).
+
+Na 0.1.130 o desktop liga e desliga o host quando o módulo está neste PC. Reabra o `npm run desktop`. Quem já tinha o LiveKit roda `npm run host:setup` uma vez para o botão aparecer. O detalhe está em [host-no-app.md](host-no-app.md).

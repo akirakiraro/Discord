@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.130
+
+O PC com o repositório clonado liga e desliga o host dentro do app.
+
+- `npm run host:setup` (e o `host:install`) grava `infra/host/host-module.json`. Sem esse módulo a opção não aparece.
+- A tela de entrar liga o host e preenche o IP `26.x`. Configurações → Host, por enquanto só para `akira`, mostra estado, log, confirmação antes de derrubar a call e o botão de firewall. Fechar o app desliga o host que ele subiu. Com o host ligado, a atualização espera. O detalhe está em [host-no-app.md](host-no-app.md).
+
 ## 0.1.129
 
 Os testes fracos passam a pegar regressão de número. A mutação fica só na máquina local.
