@@ -5,6 +5,7 @@ import { withMemberProfile } from '../../lib/chat/chatState'
 import { useChatStore } from '../../stores/chatStore'
 import { useSessionStore } from '../../stores/sessionStore'
 import { Avatar } from '../common/Avatar'
+import { Button } from '../ui/Button'
 
 interface ProfileModalProps {
   user: UserDto
@@ -56,7 +57,7 @@ export function ProfileEditor({ user }: { user: UserDto }): React.JSX.Element {
         {editing && <ChangePhoto onFile={(file) => void choosePhoto(file, setAvatarUrl, setError)} />}
         {error && <p className="profile-modal__error">{error}</p>}
       </div>
-      {editing ? <EditActions saving={saving} onCancel={cancel} onSave={() => void save()} /> : <button type="button" className="profile-modal__text account-profile__edit" onClick={startEdit}>Editar</button>}
+      {editing ? <EditActions saving={saving} onCancel={cancel} onSave={() => void save()} /> : <Button variant="secondary" className="account-profile__edit" onClick={startEdit}>Editar</Button>}
     </div>
   )
 }
@@ -82,12 +83,12 @@ function ChangePhoto({ onFile }: { onFile: (file: File | undefined) => void }): 
 function EditActions({ saving, onCancel, onSave }: { saving: boolean; onCancel: () => void; onSave: () => void }): React.JSX.Element {
   return (
     <div className="profile-modal__actions account-profile__actions">
-      <button type="button" onClick={onCancel}>
+      <Button variant="secondary" onClick={onCancel}>
         Cancelar
-      </button>
-      <button type="button" className="profile-modal__save" disabled={saving} onClick={onSave}>
+      </Button>
+      <Button variant="primary" disabled={saving} onClick={onSave}>
         Salvar
-      </button>
+      </Button>
     </div>
   )
 }
@@ -103,9 +104,9 @@ function ProfileView({ user, onClose }: ProfileModalProps): React.JSX.Element {
           Usuário <strong>{user.username}</strong>
         </p>
         <div className="profile-modal__actions">
-          <button type="button" onClick={onClose}>
+          <Button variant="secondary" onClick={onClose}>
             Fechar
-          </button>
+          </Button>
         </div>
       </div>
     </div>

@@ -2,6 +2,7 @@ import { updateBlocksLogin, type UpdateSnapshot } from '../../../../shared/deskt
 import { updateCardTitle } from '../../lib/update/updateView'
 import { UpdateCornerCard } from './UpdateCornerCard'
 import { UpdateRestartModal } from './UpdateRestartModal'
+import { Button } from '../ui/Button'
 
 interface UpdateChromeProps {
   snapshot: UpdateSnapshot
@@ -26,9 +27,9 @@ function DeferredUpdateCard({ snapshot, onInstall }: { snapshot: UpdateSnapshot;
     <aside className="update-corner" aria-live="polite">
       <p className="update-corner__title">{updateCardTitle(snapshot)}</p>
       {snapshot.message && <p className="update-corner__detail">{snapshot.message}</p>}
-      <button type="button" className="button button--primary update-corner__retry" onClick={onInstall}>
+      <Button variant="primary" className="update-corner__retry" onClick={onInstall}>
         Instalar depois de desligar o host
-      </button>
+      </Button>
     </aside>
   )
 }

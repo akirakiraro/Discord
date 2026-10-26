@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { hostOccupancyLine, hostPhaseLabel, type HostSnapshot, type HostStopPreview } from '../../../../shared/hostSnapshot'
 import { useHostPower } from '../../hooks/useHostPower'
+import { Button } from '../ui/Button'
 
 /**
  * Configurações → Host. A aba só entra na lista quando o gate deixa.
@@ -70,22 +71,22 @@ export function HostSettingsPanel({
       {preview?.allowed && (
         <div className="host-panel__confirm" role="alertdialog" aria-label="Desligar o host">
           <p>{preview.message}</p>
-          <button type="button" className="button button--primary" onClick={onConfirmStop}>
+          <Button variant="danger" onClick={onConfirmStop}>
             Desligar mesmo assim
-          </button>
-          <button type="button" className="button" onClick={onCancelStop}>
+          </Button>
+          <Button variant="secondary" onClick={onCancelStop}>
             Cancelar
-          </button>
+          </Button>
         </div>
       )}
       {preview && !preview.allowed && <p className="settings-modal__error">{preview.message}</p>}
       <div className="host-panel__firewall">
-        <button type="button" className="button" onClick={onCheckFirewall}>
+        <Button variant="secondary" onClick={onCheckFirewall}>
           Verificar firewall
-        </button>
-        <button type="button" className="button" onClick={onOpenFirewall}>
+        </Button>
+        <Button variant="secondary" onClick={onOpenFirewall}>
           Liberar portas no firewall
-        </button>
+        </Button>
       </div>
       <HostLog title="API" lines={snapshot.apiLog} />
       <HostLog title="LiveKit" lines={snapshot.livekitLog} />
@@ -97,17 +98,17 @@ function HostPowerButton({ snapshot, onStart, onAskStop }: { snapshot: HostSnaps
   if (snapshot.phase === 'external') return <p className="host-panel__hint">O app não desliga um host que foi aberto no terminal.</p>
   if (snapshot.phase === 'on' || snapshot.phase === 'error' && snapshot.ownedByApp) {
     return (
-      <button type="button" className="button button--primary" onClick={onAskStop}>
+      <Button variant="danger" onClick={onAskStop}>
         Desligar host
-      </button>
+      </Button>
     )
   }
   if (snapshot.phase === 'starting' || snapshot.phase === 'stopping') return <p className="host-panel__hint">{hostPhaseLabel(snapshot.phase)}…</p>
   if (snapshot.phase === 'off' || snapshot.phase === 'error') {
     return (
-      <button type="button" className="button button--primary" onClick={onStart}>
+      <Button variant="primary" onClick={onStart}>
         Ligar host
-      </button>
+      </Button>
     )
   }
   return null

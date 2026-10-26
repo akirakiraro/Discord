@@ -6,6 +6,7 @@ import { useSessionStore } from '../../stores/sessionStore'
 import { HostSettings } from './HostSettings'
 import { ProfileEditor } from './ProfileModal'
 import { VoiceSettings } from './VoiceSettings'
+import { Button } from '../ui/Button'
 
 type SettingsTab = 'conta' | 'voz' | 'host'
 
@@ -73,9 +74,9 @@ function AccountSettings(): React.JSX.Element {
         </div>
       )}
       {session && (
-        <button type="button" className="button settings-modal__logout" onClick={() => void logout(session)}>
+        <Button variant="danger" className="settings-modal__logout" onClick={() => void logout(session)}>
           Sair da conta
-        </button>
+        </Button>
       )}
     </div>
   )

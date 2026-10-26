@@ -5,6 +5,7 @@ import { voiceRoom, voiceSession } from '../../lib/voice/voiceSession'
 import { listenerGain, percentFromGain } from '../../lib/voice/listenerVolume'
 import { useListenerVolumeStore } from '../../stores/listenerVolumeStore'
 import { useSessionStore } from '../../stores/sessionStore'
+import { Button } from '../ui/Button'
 import {
   PROBE_INTERVAL_MS,
   probeFailureView,
@@ -77,8 +78,8 @@ export function AudioProbeSheet({
       <p className="audio-probe__hint">Só neste aparelho. Nada disto sai para o servidor. Atualiza a cada 1 s enquanto está aberto.</p>
       <p className="audio-probe__legend">Vermelho: perda acima de 2%, jitter acima de 30 ms, RTT ou jitter buffer acima de 150 ms, TCP, ocultação ou NACK no último segundo, ou o Chromium tratando a voz.</p>
       <div className="audio-probe__actions">
-        <button type="button" onClick={onCopy} disabled={!view}>Copiar JSON</button>
-        <button type="button" onClick={onSave} disabled={!view}>Salvar arquivo</button>
+        <Button variant="secondary" onClick={onCopy} disabled={!view}>Copiar JSON</Button>
+        <Button variant="secondary" onClick={onSave} disabled={!view}>Salvar arquivo</Button>
         {note && <span>{note}</span>}
       </div>
       {view ? <ProbeBody view={view} /> : <p>Lendo a call…</p>}

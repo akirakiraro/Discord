@@ -1,6 +1,6 @@
 # Testes e CI
 
-O código que vale é o da versão **0.1.131**. O Node do projeto é o do arquivo `.nvmrc` na raiz do repositório: **22.23.4**. `engines` pede `>=22.23.0`, então o 24 do PC do host entra. O `.nvmrc` não é teto.
+O código que vale é o da versão **0.1.132**. O Node do projeto é o do arquivo `.nvmrc` na raiz do repositório: **22.23.4**. `engines` pede `>=22.23.0`, então o 24 do PC do host entra. O `.nvmrc` não é teto.
 
 O servidor importa `node:sqlite`. No Node 20, e no 22.12, esses módulos não carregam. A suíte e o typecheck rodam no 22.23, que é o que esta máquina usa.
 
@@ -100,6 +100,10 @@ Não entram na conta, porque o resultado observável não muda:
 O argumento do Windows não usa só caminho POSIX. `apiSpawn` com `C:\Users\Akira\Documents\...` e `C:\Program Files\nodejs\node.exe` tem de produzir exatamente `--import file:///C:/Users/Akira/Documents/GitHub/Discord/discord/node_modules/tsx/dist/loader.mjs`. O `node.exe`, a entrada do server, o banco e o `livekit.yaml` com espaço ficam um argumento só (`path.win32`). `hostImportSmoke.test.ts` sobe o `node` desta máquina com `--import` na file URL real de `node_modules/tsx/dist/loader.mjs` e um `entry.ts` em pasta `Program Files`: a saída é `host-import-ok` mais o caminho do banco. O mesmo `node` com o caminho cru `C:\Users\Akira\...` sai com `ERR_UNSUPPORTED_ESM_URL_SCHEME` e protocolo `c:`.
 
 Não há job `windows-latest`. O `npm ci` do monorepo nesse runner é lento, o desktop puxa o Electron, e um job extra só para este caso ficaria caro e instável. O ubuntu já executa o `node` de verdade com a file URL e recusa o `C:\`. UAC, Radmin e o `taskkill` de verdade continuam fora da suíte: o resto do host usa fake de disco, porta e processo, e um `tcpAccepts` em `127.0.0.1`.
+
+## Botões
+
+`buttonTheme.test.ts` exige contraste de pelo menos 4,5:1 em cada par das variantes (descanso, hover e desabilitado), inclusive o verde com texto escuro e o vermelho com texto branco. O mesmo teste lê o CSS do renderer e falha se um botão tiver fundo claro, texto branco sem fundo escuro ou opacidade que esconda a letra. Ele também lê cada `<button>` do renderer: sem `button--primary`, `button--secondary`, `button--danger`, `button--ghost`, `button--success` ou outra classe do tema listada em `buttonTheme.ts`, o teste falha. Um `<button className="button">` sozinho é o caso que quebra.
 
 ## Typecheck do desktop
 

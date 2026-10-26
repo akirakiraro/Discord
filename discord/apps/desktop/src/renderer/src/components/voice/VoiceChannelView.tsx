@@ -6,6 +6,7 @@ import { voiceSession } from '../../lib/voice/voiceSession'
 import { useSessionStore } from '../../stores/sessionStore'
 import { useVoiceStore } from '../../stores/voiceStore'
 import { MemberListToggle } from '../members/MemberListToggle'
+import { Button } from '../ui/Button'
 import { VoiceStage } from './VoiceStage'
 
 function JoinPrompt({ channel }: { channel: ChannelDto }): React.JSX.Element {
@@ -17,9 +18,9 @@ function JoinPrompt({ channel }: { channel: ChannelDto }): React.JSX.Element {
       <h2>🔊 {channel.name}</h2>
       <p>Ninguém te ouve até você entrar.</p>
       {lastError && <p className="voice-join__error">{lastError}</p>}
-      <button className="button button--success" onClick={() => api && void voiceSession.join(api, channel.id)}>
+      <Button variant="success" onClick={() => api && void voiceSession.join(api, channel.id)}>
         Entrar na call
-      </button>
+      </Button>
     </div>
   )
 }

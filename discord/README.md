@@ -40,6 +40,8 @@ A versão 0.1.130 liga e desliga o host dentro do app, no PC em que o repositór
 
 A versão 0.1.131 corrige o "Ligar host neste PC" no Windows: o `--import` do tsx vira `file:///C:/...`. O Node 24 serve. Reabra o `npm run desktop`. Não precisa rodar `host:setup` de novo.
 
+A versão 0.1.132 tira o botão branco. Ligar, firewall, desligar e o resto usam azul, cinza escuro ou vermelho, com texto legível também desabilitado. O detalhe está em [docs/botoes.md](docs/botoes.md).
+
 ## Pré-requisitos
 
 - Node.js 22.23.4 no CI (o `.nvmrc` da raiz). `engines` aceita `>=22.23.0`, inclusive o 24 do PC do host. O servidor usa `node:sqlite`, que não carrega no Node 20 nem no 22.12.

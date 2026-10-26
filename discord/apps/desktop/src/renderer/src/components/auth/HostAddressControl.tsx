@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { loadSavedLogin, saveLogin } from '../../lib/savedLogin'
+import { Button } from '../ui/Button'
 
 interface HostAddressControlProps {
   value: string
@@ -46,7 +47,7 @@ function HostAddressForm({ draft, onDraft, onSubmit }: HostAddressFormProps): Re
   return (
     <form className="host-switch" onSubmit={onSubmit}>
       <input autoFocus value={draft} placeholder="26.186.21.58" aria-label="IP do host" onChange={(event) => onDraft(event.target.value)} />
-      <button type="submit">Salvar</button>
+      <Button type="submit" variant="secondary">Salvar</Button>
     </form>
   )
 }

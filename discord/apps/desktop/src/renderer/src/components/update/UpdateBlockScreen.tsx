@@ -2,6 +2,7 @@ import { PRODUCT_DISPLAY_NAME } from '../../../../shared/appIdentity'
 import type { UpdateSnapshot } from '../../../../shared/desktopUpdateSnapshot'
 import { updateBlockBody, updateIsIndeterminate } from '../../lib/update/updateView'
 import { UpdateProgressBar } from './UpdateProgressBar'
+import { Button } from '../ui/Button'
 
 interface UpdateBlockScreenProps {
   snapshot: UpdateSnapshot
@@ -18,9 +19,9 @@ export function UpdateBlockScreen({ snapshot, onRetry }: UpdateBlockScreenProps)
         <p className="auth-card__subtitle">{updateBlockBody(snapshot)}</p>
         <InstallingProgress snapshot={snapshot} />
         {failed && (
-          <button type="button" className="button button--primary" onClick={onRetry}>
+          <Button variant="primary" onClick={onRetry}>
             Tentar novamente
-          </button>
+          </Button>
         )}
       </section>
     </div>

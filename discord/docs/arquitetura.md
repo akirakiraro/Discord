@@ -99,3 +99,5 @@ Na 0.1.129 a mutação roda na máquina local, fora do CI. Os testes de áudio, 
 Na 0.1.130 o desktop liga e desliga o host quando o módulo está neste PC. Reabra o `npm run desktop`. Quem já tinha o LiveKit roda `npm run host:setup` uma vez para o botão aparecer. O detalhe está em [host-no-app.md](host-no-app.md).
 
 Na 0.1.131 o `--import` do tsx vira URL `file:///`. No Windows o caminho `C:\` do manifesto quebrava com protocolo `c:`. O Node 24 serve. Se a API cair antes de ficar pronta, a frase traz a linha do log. Reabra o `npm run desktop`. Não precisa rodar `host:setup` de novo.
+
+Na 0.1.132 os botões de ação usam `<Button variant>`. Fundo branco com letra branca não entra. O detalhe está em [botoes.md](botoes.md).

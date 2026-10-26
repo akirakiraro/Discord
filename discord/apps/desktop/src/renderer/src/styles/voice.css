@@ -71,11 +71,16 @@
   padding: 4px 8px;
   border: 0;
   border-radius: 4px;
-  background: var(--bg-active);
-  color: var(--text-strong);
+  background: #404249;
+  color: #f2f3f5;
   font: inherit;
   font-size: 12px;
   cursor: pointer;
+}
+
+.listener-volume__reset:hover {
+  background: #4e5058;
+  color: #f2f3f5;
 }
 
 .listener-volume__panel p.listener-volume__hint {
@@ -346,7 +351,8 @@
 }
 
 .tile-collapse:hover {
-  filter: brightness(1.2);
+  background: #4e5058;
+  color: #f2f3f5;
 }
 
 .participant-grid {
@@ -395,20 +401,34 @@
 }
 
 .round-button:hover {
-  filter: brightness(1.2);
+  background: #4e5058;
+  color: #f2f3f5;
 }
 
-.round-button--off {
-  color: var(--red);
-  background: rgba(242, 63, 67, 0.2);
+.round-button--off,
+.round-button--off:hover {
+  color: #ffb4b6;
+  background: #404249;
 }
 
-.round-button--live {
-  background: var(--green);
+.round-button--live,
+.round-button--live:hover {
+  background: #23a55a;
+  color: #1e1f22;
 }
 
-.round-button--danger {
-  background: var(--red);
+.round-button--live:hover {
+  background: #2dcc6e;
+}
+
+.round-button--danger,
+.round-button--danger:hover {
+  background: #c43135;
+  color: #ffffff;
+}
+
+.round-button--danger:hover {
+  background: #a61e28;
 }
 
 .share-picker {
@@ -485,8 +505,7 @@
   flex: 1;
 }
 
-.share-picker select,
-.share-picker__actions button {
+.share-picker select {
   padding: 8px 12px;
   border: none;
   border-radius: 4px;
@@ -499,11 +518,3 @@
   justify-content: flex-end;
 }
 
-.share-picker__actions button[type='submit'] {
-  background: var(--green);
-}
-
-.share-picker__actions button:disabled {
-  opacity: 0.5;
-  cursor: default;
-}

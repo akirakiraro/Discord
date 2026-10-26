@@ -1,4 +1,5 @@
 import type { HostQuitPrompt } from '../../../../shared/hostSnapshot'
+import { Button } from '../ui/Button'
 
 interface HostQuitModalProps {
   prompt: HostQuitPrompt
@@ -16,12 +17,12 @@ export function HostQuitModal({ prompt, onConfirm, onDismiss }: HostQuitModalPro
         <h2 id="host-quit-title">Desligar o host</h2>
         <p>{prompt.message}</p>
         <p>{prompt.online} pessoas online, {prompt.inVoice} na call.</p>
-        <button type="button" className="button button--primary" onClick={onConfirm}>
+        <Button variant="danger" onClick={onConfirm}>
           Fechar e desligar
-        </button>
-        <button type="button" className="button" onClick={onDismiss}>
+        </Button>
+        <Button variant="secondary" onClick={onDismiss}>
           Continuar com o host ligado
-        </button>
+        </Button>
       </div>
     </div>
   )

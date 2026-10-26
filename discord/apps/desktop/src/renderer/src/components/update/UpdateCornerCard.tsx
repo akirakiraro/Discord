@@ -1,6 +1,7 @@
 import type { UpdateSnapshot } from '../../../../shared/desktopUpdateSnapshot'
 import { updateCardDetail, updateCardTitle, updateIsIndeterminate, updatePercent } from '../../lib/update/updateView'
 import { UpdateProgressBar } from './UpdateProgressBar'
+import { Button } from '../ui/Button'
 
 interface UpdateCornerCardProps {
   snapshot: UpdateSnapshot
@@ -18,9 +19,9 @@ export function UpdateCornerCard({ snapshot, onRetry }: UpdateCornerCardProps): 
       {showBar && <UpdateProgressBar percent={percent} />}
       {detail && <p className="update-corner__detail">{detail}</p>}
       {snapshot.phase === 'error' && (
-        <button type="button" className="button button--primary update-corner__retry" onClick={onRetry}>
+        <Button variant="primary" className="update-corner__retry" onClick={onRetry}>
           Tentar novamente
-        </button>
+        </Button>
       )}
     </aside>
   )

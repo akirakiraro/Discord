@@ -32,6 +32,7 @@ describe('telas do host', () => {
     )
 
     expect(off).toContain('Ligar host neste PC')
+    expect(off).toContain('button button--primary')
     expect(off).not.toContain('Desligar')
     expect(external).toContain('Usar o host que já está no ar (26.186.21.58)')
     expect(external).toContain(HOST_ERROR.externalStop)
@@ -71,6 +72,9 @@ describe('telas do host', () => {
     expect(on).toContain('api-pronta')
     expect(on).toContain('Sem linhas ainda.')
     expect(on).toContain('Liberar portas no firewall')
+    expect(on).toContain('button button--danger')
+    expect(on).toContain('button button--secondary')
+    expect(on).not.toContain('class="button"')
     expect(external).toContain('Ligado fora do app')
     expect(external).toContain('O app não desliga um host que foi aberto no terminal.')
     expect(external).not.toContain('Desligar host')

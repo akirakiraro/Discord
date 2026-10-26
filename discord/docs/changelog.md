@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.132
+
+Nenhum botão do app fica branco ou com texto ilegível.
+
+- Configurações → Host usa o botão do tema: ligar azul, firewall cinza escuro, desligar vermelho. O mesmo vale na tela de entrar, nos modais, no login, na atualização e no painel de áudio.
+- A classe `.button` sozinha pintava a letra de branco e deixava o fundo cinza do Windows. Agora toda variante declara fundo e texto no descanso, hover, foco e desabilitado, com contraste de pelo menos 4,5:1. O detalhe está em [botoes.md](botoes.md).
+
 ## 0.1.131
 
 O botão "Ligar host neste PC" no Windows sobe a API de verdade.

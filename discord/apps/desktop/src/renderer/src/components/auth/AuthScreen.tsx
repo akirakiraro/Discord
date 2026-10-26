@@ -7,6 +7,7 @@ import { useHostPower } from '../../hooks/useHostPower'
 import { AuthFields } from './AuthFields'
 import { HostAddressControl } from './HostAddressControl'
 import { HostLaunchControl } from './HostLaunchControl'
+import { Button } from '../ui/Button'
 
 export function AuthScreen(): React.JSX.Element {
   const signOutReason = useSessionStore((store) => store.signOutReason)
@@ -54,9 +55,9 @@ export function AuthScreen(): React.JSX.Element {
         <p className="auth-card__subtitle">{PRODUCT_DISPLAY_NAME} · a call da galera pela rede do Radmin</p>
         <AuthFields username={username} onChange={setUsername} />
         {error && <p className="auth-card__error">{error}</p>}
-        <button type="submit" className="button button--primary" disabled={submitting}>
+        <Button type="submit" variant="primary" disabled={submitting}>
           {submitting ? 'Conectando…' : 'Entrar'}
-        </button>
+        </Button>
       </form>
       <HostAddressControl value={hostAddress} onChange={setHostAddress} />
       <HostLaunchControl snapshot={host} onStart={() => void window.radcord?.hostStart()} onUseAddress={applyHostAddress} />

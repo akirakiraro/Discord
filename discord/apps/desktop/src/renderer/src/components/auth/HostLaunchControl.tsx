@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { canShowHostOnLogin } from '../../../../shared/hostGate'
 import { hostPhaseLabel, type HostSnapshot } from '../../../../shared/hostSnapshot'
+import { Button } from '../ui/Button'
 
 interface HostLaunchControlProps {
   snapshot: HostSnapshot
@@ -32,9 +33,9 @@ export function HostLaunchControl({ snapshot, onStart, onUseAddress }: HostLaunc
 function HostLaunchButton({ snapshot, onStart, onUseAddress }: HostLaunchControlProps): React.JSX.Element {
   if (snapshot.phase === 'external') {
     return (
-      <button type="button" className="host-launch__button" onClick={() => snapshot.radminIp && onUseAddress(snapshot.radminIp)}>
+      <Button variant="primary" onClick={() => snapshot.radminIp && onUseAddress(snapshot.radminIp)}>
         Usar o host que já está no ar{snapshot.radminIp ? ` (${snapshot.radminIp})` : ''}
-      </button>
+      </Button>
     )
   }
   if (snapshot.phase === 'on') {
@@ -44,8 +45,8 @@ function HostLaunchButton({ snapshot, onStart, onUseAddress }: HostLaunchControl
     return <p className="host-launch__state">{hostPhaseLabel(snapshot.phase)}…</p>
   }
   return (
-    <button type="button" className="host-launch__button" onClick={onStart}>
+    <Button variant="primary" onClick={onStart}>
       Ligar host neste PC
-    </button>
+    </Button>
   )
 }

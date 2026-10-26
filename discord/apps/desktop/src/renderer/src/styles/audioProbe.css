@@ -7,12 +7,17 @@
 .voice-status__probe {
   border: 0;
   background: transparent;
-  color: var(--text-muted);
+  color: #dbdee1;
   font-size: 12px;
   font-weight: 700;
   padding: 4px 6px;
   border-radius: 4px;
   cursor: pointer;
+}
+
+.voice-status__probe:hover {
+  background: #404249;
+  color: #f2f3f5;
 }
 
 .voice-status__probe[aria-pressed='true'] {
@@ -53,9 +58,14 @@
 .audio-probe__close {
   border: 0;
   background: transparent;
-  color: var(--text-muted);
+  color: #dbdee1;
   cursor: pointer;
   font-size: 12px;
+}
+
+.audio-probe__close:hover {
+  background: #404249;
+  color: #f2f3f5;
 }
 
 .audio-probe__hint,
@@ -101,21 +111,6 @@
   gap: 8px;
   margin-top: 8px;
   font-size: 12px;
-}
-
-.audio-probe__actions button {
-  border: 0;
-  border-radius: 4px;
-  background: var(--bg-active);
-  color: var(--text-strong);
-  font-size: 12px;
-  padding: 4px 8px;
-  cursor: pointer;
-}
-
-.audio-probe__actions button:disabled {
-  opacity: 0.5;
-  cursor: default;
 }
 
 .audio-probe__charts {

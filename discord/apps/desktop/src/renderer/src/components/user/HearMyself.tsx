@@ -8,6 +8,7 @@ import { useMicPrefsStore } from '../../stores/micPrefsStore'
 import { useSessionStore, type AuthSession } from '../../stores/sessionStore'
 import { blockedEarReason } from '../../lib/voice/micDeafen'
 import { useVoiceStore } from '../../stores/voiceStore'
+import { Button } from '../ui/Button'
 
 /**
  * Liga e desliga a escuta da própria voz. Fora da chamada toca o microfone neste PC.
@@ -26,9 +27,8 @@ export function HearMyself(): React.JSX.Element {
 
   return (
     <div className="settings-modal__field">
-      <button
-        type="button"
-        className={hearing ? 'button button--success' : 'button button--primary'}
+      <Button
+        variant={hearing ? 'success' : 'primary'}
         onClick={() => {
           setError(null)
           if (!hearing) unlockEarOutput()
@@ -36,7 +36,7 @@ export function HearMyself(): React.JSX.Element {
         }}
       >
         {hearing ? 'Parar de me ouvir' : 'Me ouvir'}
-      </button>
+      </Button>
       <p className="settings-modal__hint">{hint(channelId !== null, hearing)}</p>
       {error && <p className="settings-modal__error">{error}</p>}
     </div>

@@ -7,6 +7,7 @@ import {
   type ShareFrameRate,
   type ShareQuality,
 } from '../../lib/voice/screenSharePresets'
+import { Button } from '../ui/Button'
 
 const QUALITY_LABEL: Record<ShareQuality, string> = {
   '720p': '720p',
@@ -54,8 +55,8 @@ export function ScreenSharePicker({ onCancel, onConfirm }: ScreenSharePickerProp
           <FrameRateSelect frameRate={frameRate} onChange={setFrameRate} />
         </div>
         <div className="share-picker__actions">
-          <button type="button" onClick={onCancel}>Cancelar</button>
-          <button type="submit" disabled={!sourceId}>Compartilhar</button>
+          <Button variant="secondary" onClick={onCancel}>Cancelar</Button>
+          <Button type="submit" variant="primary" disabled={!sourceId}>Compartilhar</Button>
         </div>
       </form>
     </div>

@@ -13,7 +13,7 @@ export function MemberListToggle({ floating = false }: { floating?: boolean }): 
   return (
     <button
       type="button"
-      className={className}
+      className={`icon-button ${className}`}
       title={label}
       aria-label={label}
       aria-pressed={open}
