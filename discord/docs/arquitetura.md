@@ -87,3 +87,5 @@ Na 0.1.124 o GitHub roda os testes e o typecheck em todo push na `dev`. O instal
 Na 0.1.125 o socket tem um teste com cliente de verdade. Sem token a conexão é recusada. O detalhe está em [testes.md](testes.md).
 
 Na 0.1.126 um teste abre e fecha o Me ouvir e exige que a faixa publicada não seja recapturada.
+
+Na 0.1.127 os testes de áudio checam o valor exato e propriedades do limiter, do portão e do volume. O detalhe está em [testes.md](testes.md).

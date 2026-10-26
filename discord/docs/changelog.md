@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.127
+
+Os testes de áudio passam a pegar regressão de número, não só a direção.
+
+- fast-check cobre o joelho do limiter, o teto de 4× do nivelador, o portão em 0 ou 1, e o volume de 0% a 200% com 100% igual a ganho 1.
+- O fake de Web Audio fica num helper só. O agendador do poller de release executa o tick. Os testes deixam de depender da posição exata no log. O detalhe está em [testes.md](testes.md).
+
 ## 0.1.126
 
 Teste de regressão do Me ouvir: abrir e fechar o monitor não recaptura a faixa publicada.

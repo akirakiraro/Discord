@@ -21,6 +21,10 @@ export class FakeAudioParam {
 export class FakeAudioNode {
   readonly outs: Array<{ to: FakeAudioNode; output: number }> = []
 
+  get links(): FakeAudioNode[] {
+    return this.outs.map((edge) => edge.to)
+  }
+
   connect(to: FakeAudioNode, output = 0): FakeAudioNode {
     this.outs.push({ to, output })
     return this
@@ -36,8 +40,8 @@ export class FakeGainNode extends FakeAudioNode {
 }
 
 export class FakeWaveShaper extends FakeAudioNode {
-  curve: Float32Array | null = null
-  oversample = 'none'
+  curve: Float32Array<ArrayBuffer> | null = null
+  oversample: OverSampleType = 'none'
 }
 
 export class FakeAnalyser extends FakeAudioNode {

@@ -58,17 +58,22 @@ class CapturingFetch {
 
 class FakeScheduler implements IntervalScheduler {
   ms = 0
-  ticks = 0
   stopped = false
+  private tick: (() => void) | null = null
 
   every(ms: number, tick: () => void): IntervalHandle {
     this.ms = ms
+    this.tick = tick
     return {
       stop: () => {
         this.stopped = true
-        void tick
+        this.tick = null
       },
     }
+  }
+
+  fire(): void {
+    this.tick?.()
   }
 }
 
@@ -179,5 +184,22 @@ describe('startReleasePoller', () => {
     expect(scheduler.ms).toBe(120_000)
     handle.stop()
     expect(scheduler.stopped).toBe(true)
+  })
+
+  it('o intervalo seguinte consulta de novo e para depois do stop', async () => {
+    const lookup = new ScriptedReleaseLookup(['v0.1.2', 'v0.1.3'])
+    const sink = new RecordingReleaseSink()
+    const poller = new ReleasePoller(lookup, sink, new RecordingPollLogger())
+    const scheduler = new FakeScheduler()
+
+    const handle = startReleasePoller(poller, 120_000, scheduler)
+    await vi.waitFor(() => expect(sink.versions).toEqual(['0.1.2']))
+
+    scheduler.fire()
+    await vi.waitFor(() => expect(sink.versions).toEqual(['0.1.2', '0.1.3']))
+
+    handle.stop()
+    scheduler.fire()
+    expect(sink.versions).toEqual(['0.1.2', '0.1.3'])
   })
 })

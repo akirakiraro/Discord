@@ -1,6 +1,6 @@
 # Testes e CI
 
-O código que vale é o da versão **0.1.126**. O Node do projeto é o do arquivo `.nvmrc` na raiz do repositório: **22.23.4**. `engines` pede `>=22.23.0`.
+O código que vale é o da versão **0.1.127**. O Node do projeto é o do arquivo `.nvmrc` na raiz do repositório: **22.23.4**. `engines` pede `>=22.23.0`.
 
 O servidor importa `node:sqlite`. No Node 20, e no 22.12, esses módulos não carregam. A suíte e o typecheck rodam no 22.23, que é o que esta máquina usa.
 
@@ -33,6 +33,24 @@ npm run typecheck
 `HearMyself.test.tsx` clica no botão. Na call ele chama a escuta do servidor e `setSelfMonitor(true)` depois `false`, e não chama `startLocalEar` nem republica o microfone. Fora da call ele usa só a escuta local.
 
 `localEar.test.ts` abre e fecha essa captura à parte. O `getUserMedia` acontece uma vez, com eco `{ exact: false }`, e `setMicrophoneEnabled` da sala publicada não é chamado.
+
+## Propriedades e valores exatos
+
+`micGain.property.test.ts` e `listenerVolume.property.test.ts` usam fast-check.
+
+- Até 0,85 o limiter devolve o sample. Acima, o pico desce e não passa de 1. A curva de 0 a 1 é monótona.
+- O portão grava exatamente 1 ou 0. O nivelador, com voz baixa, sobe um passo até o teto de 4× (`nextLevelerGain(1, rms, true)` é `1.24` quando o alvo encosta em 4). Desligado, o ganho é 1.
+- Volume de 0% a 200% vira ganho de 0 a 2. 100% é ganho 1 e toca no elemento, sem o limitador. Acima de 100% é ganho. O ganho não sai de 0 a 2.
+
+Os exemplos que só diziam "maior que 1" agora comparam o número. `1.08` é a voz baixa subindo um passo. `0.94` é a voz alta descendo um passo até o piso 0,25.
+
+O contexto de áudio de mentira mora em `fakeWebAudio.ts`. O portão, a escuta local e o ganho de quem escuta usam o mesmo.
+
+## Consulta da release e ordem do log
+
+O agendador de teste do `releasePoller` guarda o tick e `fire()` executa a consulta do intervalo. Depois do `stop`, `fire()` não consulta de novo.
+
+Os testes da sessão de voz e da troca de canal não usam mais `log.slice(3)` nem `events.slice(1)`. Eles filtram o tipo do evento, então uma linha a mais no começo do log não quebra o teste.
 
 ## Typecheck do desktop
 

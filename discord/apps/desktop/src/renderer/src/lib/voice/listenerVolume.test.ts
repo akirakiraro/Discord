@@ -70,11 +70,10 @@ describe('volume de quem escuta', () => {
     expect(limitBoostedSample(0.4, 2)).toBeCloseTo(0.8)
     expect(limitBoostedSample(0.2 * preLimitGain(1.5), LISTENER_MAX_GAIN)).toBeCloseTo(0.3)
     const boosted = limitBoostedSample(1 * preLimitGain(2), LISTENER_MAX_GAIN)
-    expect(boosted, '200% não estoura 1').toBeLessThan(1)
-    expect(boosted).toBeGreaterThan(0.85)
+    expect(boosted, '200% encosta em 1 sem passar').toBeCloseTo(0.9999999342434372)
     expect(preLimitGain(2)).toBe(1)
     expect(preLimitGain(1.5)).toBe(0.75)
-    expect(limitBoostedSample(0.9, 1), 'ganho 1 acima do joelho muda o pico').toBeLessThan(0.9)
+    expect(limitBoostedSample(0.9, 1), 'ganho 1 acima do joelho muda o pico').toBeCloseTo(0.8982269106297451)
     expect(listenerPlayback(1, false), 'por isso 100% não entra no limitador').toBe('direct')
   })
 
@@ -84,8 +83,7 @@ describe('volume de quem escuta', () => {
     const full = curve[curve.length - 1] ?? 0
 
     expect(mid).toBeCloseTo(0, 5)
-    expect(full).toBeLessThanOrEqual(1)
-    expect(full).toBeGreaterThan(0.85)
+    expect(full).toBeCloseTo(0.9999999342434372)
   })
 
   it('lembra o volume por pessoa e por quem está logado', () => {

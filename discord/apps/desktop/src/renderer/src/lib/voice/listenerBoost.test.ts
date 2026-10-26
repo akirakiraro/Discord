@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import type { ScheduledGain } from './micGain'
+import { FakeAudioNode, FakeGainNode, FakeWaveShaper } from './fakeWebAudio'
 import {
   connectListenerBoost,
   ensureCallAudioContext,
@@ -7,50 +7,14 @@ import {
   readCallAudioContext,
   retuneListenerBoost,
   type AttachableAudio,
-  type BoostAudioNode,
-  type BoostGainNode,
-  type BoostShaperNode,
   type ListenerBoostGraph,
 } from './listenerBoost'
 import { preLimitGain } from './listenerVolume'
 
-class FakeParam implements ScheduledGain {
-  value = -1
-  scheduled: Array<{ value: number; time: number }> = []
-
-  cancelScheduledValues(): void {}
-
-  setValueAtTime(value: number, time: number): void {
-    this.value = value
-    this.scheduled.push({ value, time })
-  }
-}
-
-class FakeNode implements BoostAudioNode {
-  readonly links: FakeNode[] = []
-
-  connect(destination: BoostAudioNode): void {
-    this.links.push(destination as FakeNode)
-  }
-
-  disconnect(): void {
-    this.links.length = 0
-  }
-}
-
-class FakeGain extends FakeNode implements BoostGainNode {
-  readonly gain = new FakeParam()
-}
-
-class FakeShaper extends FakeNode implements BoostShaperNode {
-  curve: Float32Array<ArrayBuffer> | null = null
-  oversample: OverSampleType = '2x'
-}
-
-function graph(): { graph: ListenerBoostGraph; gain: FakeGain; shaper: FakeShaper; destination: FakeNode; resume: ReturnType<typeof vi.fn>; seen: MediaStream[] } {
-  const destination = new FakeNode()
-  const gain = new FakeGain()
-  const shaper = new FakeShaper()
+function graph(): { graph: ListenerBoostGraph; gain: FakeGainNode; shaper: FakeWaveShaper; destination: FakeAudioNode; resume: ReturnType<typeof vi.fn>; seen: MediaStream[] } {
+  const destination = new FakeAudioNode()
+  const gain = new FakeGainNode()
+  const shaper = new FakeWaveShaper()
   const resume = vi.fn(async () => undefined)
   const seen: MediaStream[] = []
   return {
@@ -65,7 +29,7 @@ function graph(): { graph: ListenerBoostGraph; gain: FakeGain; shaper: FakeShape
       resume,
       createMediaStreamSource: (stream) => {
         seen.push(stream)
-        return new FakeNode()
+        return new FakeAudioNode()
       },
       createGain: () => gain,
       createWaveShaper: () => shaper,

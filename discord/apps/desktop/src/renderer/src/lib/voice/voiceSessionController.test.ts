@@ -37,6 +37,10 @@ class FakeMicrophone implements MicrophonePort {
   }
 }
 
+function eventsOf(log: readonly string[], prefix: string): string[] {
+  return log.filter((entry) => entry.startsWith(prefix))
+}
+
 function captureFlag(value: AudioCaptureOptions['noiseSuppression']): string {
   if (value === true) return 'true'
   if (value === false || (typeof value === 'object' && value.exact === false)) return 'false'
@@ -173,7 +177,9 @@ describe('VoiceSessionController', () => {
     await controller.join(new FakeVoiceTokens(), 'v1')
     await controller.join(new FakeVoiceTokens(), 'v2')
 
-    expect(room.log.slice(3)).toEqual(['disconnect', 'connect:ws://host:7880:tok-v2', 'mic:true', 'gain'])
+    expect(eventsOf(room.log, 'connect')).toEqual(['connect:ws://host:7880:tok-v1', 'connect:ws://host:7880:tok-v2'])
+    expect(room.log.indexOf('disconnect')).toBeGreaterThan(room.log.indexOf('connect:ws://host:7880:tok-v1'))
+    expect(room.log.indexOf('disconnect')).toBeLessThan(room.log.lastIndexOf('connect:ws://host:7880:tok-v2'))
     expect(useVoiceStore.getState()).toMatchObject({ connection: { channelId: 'v2' }, lastError: null })
   })
 
@@ -192,7 +198,13 @@ describe('VoiceSessionController', () => {
     useVoiceStore.getState().toggleMic()
     await Promise.resolve()
 
-    expect(room.log.slice(3), 'o clique no microfone surdo desmuta os dois').toEqual(['mic:false', 'mic:true', 'gain'])
+    expect(room.log.filter((entry) => entry.startsWith('mic') || entry === 'gain'), 'o clique no microfone surdo desmuta os dois').toEqual([
+      'mic:true',
+      'gain',
+      'mic:false',
+      'mic:true',
+      'gain',
+    ])
     expect(useVoiceStore.getState()).toMatchObject({ micMuted: false, deafened: false })
   })
 
@@ -251,7 +263,13 @@ describe('VoiceSessionController', () => {
     useMicPrefsStore.getState().setNoiseSuppression(false)
     await Promise.resolve()
 
-    expect(room.log.slice(3)).toEqual(['restart:headset:true', 'restart:headset:false', 'gain', 'gain'])
+    expect(room.log.filter((entry) => entry.startsWith('restart') || entry === 'gain')).toEqual([
+      'gain',
+      'restart:headset:true',
+      'restart:headset:false',
+      'gain',
+      'gain',
+    ])
   })
 
   it('com a call fechada, a preferência fica salva e o microfone não é republicado', async () => {
