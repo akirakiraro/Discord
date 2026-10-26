@@ -1,14 +1,16 @@
-import { Track, type Room } from 'livekit-client'
+import { Track, type LocalAudioTrack, type Room } from 'livekit-client'
 import { isMonitorIdentity } from '@radcord/shared'
 import {
   buildCallAudioProbe,
   captureFromSettings,
   type CaptureSettings,
   type ProbeBuildResult,
+  type ProbeCarry,
   type ProbeDirection,
   type ProbeLegInput,
   type ProbeMemory,
 } from './callAudioProbe'
+import type { MicChainReading, SourceBags } from './probeChain'
 import { flattenStats } from './rtcAudioLeg'
 
 export interface ProbeTrack {
@@ -21,9 +23,15 @@ export interface ProbeTrack {
 export interface ProbePerson {
   key: string
   name: string
+  identity: string
   direction: ProbeDirection
   track: ProbeTrack
   capture: boolean
+}
+
+export interface ProbeExtras {
+  chain: MicChainReading | null
+  volumes: Array<{ name: string; percent: number }>
 }
 
 interface ProbePublication {
@@ -52,23 +60,39 @@ export function includeRemoteMic(identity: string): boolean {
 
 /**
  * Lê as faixas desta sala e devolve o painel. Não envia nada.
- * Exemplo: `await sampleCallAudioProbe(voiceRoom, memory, Date.now())`.
+ * Exemplo: `await sampleCallAudioProbe(voiceRoom, hold, Date.now(), { chain: null, volumes: [] })`.
  */
-export function sampleCallAudioProbe(room: Room, memory: ProbeMemory, nowMs: number): Promise<ProbeBuildResult> {
-  return readProbeSnapshot(probePeople(asProbeRoom(room)), nowMs, memory)
+export function sampleCallAudioProbe(
+  room: Room,
+  hold: ProbeCarry & { memory: ProbeMemory },
+  nowMs: number,
+  extras: ProbeExtras,
+): Promise<ProbeBuildResult> {
+  return readProbeSnapshot(probePeople(asProbeRoom(room)), nowMs, hold.memory, {
+    ...hold,
+    chain: extras.chain,
+    volumes: extras.volumes,
+    source: readLocalSource(room),
+  })
 }
 
 /**
  * Uma leitura, já separada da sala, para o teste não precisar do LiveKit.
  * Exemplo: `await readProbeSnapshot(people, 1000, {})`.
  */
-export async function readProbeSnapshot(people: ProbePerson[], nowMs: number, memory: ProbeMemory): Promise<ProbeBuildResult> {
+export async function readProbeSnapshot(
+  people: ProbePerson[],
+  nowMs: number,
+  memory: ProbeMemory,
+  carry?: ProbeCarry,
+): Promise<ProbeBuildResult> {
   const gathered = await Promise.all(people.map((person) => readPerson(person)))
   return buildCallAudioProbe({
     legs: gathered.map((item) => item.leg),
     capture: firstCapture(gathered),
     nowMs,
     memory,
+    carry,
   })
 }
 
@@ -101,7 +125,7 @@ function personOf(participant: ProbeParticipant, direction: ProbeDirection, capt
   if (direction === 'recebido' && !includeRemoteMic(participant.identity)) return null
   const track = micTrack(participant)
   if (!track) return null
-  return { key: `${direction}:${track.sid || participant.identity}`, name: participant.name || participant.identity, direction, track, capture }
+  return { key: `${direction}:${track.sid || participant.identity}`, name: participant.name || participant.identity, identity: participant.identity, direction, track, capture }
 }
 
 function micTrack(participant: ProbeParticipant): ProbeTrack | null {
@@ -112,4 +136,48 @@ function micTrack(participant: ProbeParticipant): ProbeTrack | null {
 
 function asProbeRoom(room: Room): ProbeRoom {
   return room as unknown as ProbeRoom
+}
+
+function readLocalSource(room: Room): SourceBags | null {
+  const track = room.localParticipant.getTrackPublication(Track.Source.Microphone)?.track
+  if (!track || track.kind !== Track.Kind.Audio) return null
+  return bagsOf(track as LocalAudioTrack)
+}
+
+function bagsOf(track: LocalAudioTrack): SourceBags {
+  const media = sourceMedia(track)
+  return {
+    settings: track.getSourceTrackSettings(),
+    constraints: constraintsOf(track, media),
+    capabilities: capabilitiesOf(media),
+    device: deviceOf(track.getSourceTrackSettings(), media),
+  }
+}
+
+function sourceMedia(track: LocalAudioTrack): MediaStreamTrack | undefined {
+  // O processador substitui mediaStreamTrack. O original continua neste campo interno.
+  const hidden = track as unknown as { _mediaStreamTrack?: MediaStreamTrack }
+  return hidden._mediaStreamTrack
+}
+
+function constraintsOf(track: LocalAudioTrack, media: MediaStreamTrack | undefined): object {
+  const applied = media && typeof media.getConstraints === 'function' ? media.getConstraints() : {}
+  if (Object.keys(applied).length > 0) return applied
+  return track.constraints ?? {}
+}
+
+function capabilitiesOf(media: MediaStreamTrack | undefined): object {
+  if (!media || typeof media.getCapabilities !== 'function') return {}
+  try {
+    return media.getCapabilities()
+  } catch {
+    return {}
+  }
+}
+
+function deviceOf(settings: MediaTrackSettings, media: MediaStreamTrack | undefined): string | null {
+  const id = settings.deviceId
+  const label = media?.label
+  if (label && id) return `${label} (${id})`
+  return label || id || null
 }

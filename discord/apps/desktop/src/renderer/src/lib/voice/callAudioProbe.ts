@@ -1,5 +1,8 @@
 import type { AudioLegNumbers, RtcStat } from './rtcAudioLeg'
 import { readLegNumbers } from './rtcAudioLeg'
+import { rawCursorOf, rawLegMetrics, type RawCursor } from './probeRaw'
+import { chainMetrics, contextMetrics, sourceMetrics, volumeMetrics, type MicChainReading, type SourceBags } from './probeChain'
+import { advanceProbeTrace, type ProbeEvent, type ProbeHistory, type ProbePoint } from './probeTrace'
 
 const PROBE_USERNAME = 'akira'
 const MISSING = '—'
@@ -31,6 +34,13 @@ export interface ProbeCursor {
   bytes: number
   lost: number
   packets: number
+  concealed?: number | null
+  concealmentEvents?: number | null
+  nack?: number | null
+  fec?: number | null
+  retransmitted?: number | null
+  inserted?: number | null
+  removed?: number | null
 }
 
 export type ProbeMemory = Record<string, ProbeCursor>
@@ -50,6 +60,11 @@ export interface ProbeLegView {
 export interface CallAudioProbeView {
   legs: ProbeLegView[]
   capture: ProbeMetric[] | null
+  chain: ProbeMetric[] | null
+  volumes: ProbeMetric[] | null
+  context: ProbeMetric[] | null
+  history: ProbeHistory
+  events: ProbeEvent[]
   empty: string | null
 }
 
@@ -69,16 +84,35 @@ export interface CaptureSettings {
   channelCount: number | null
 }
 
+export interface ProbeCarry {
+  history?: ProbeHistory
+  events?: ProbeEvent[]
+  transports?: Record<string, string>
+  names?: Record<string, string>
+  device?: string | null
+  seen?: string[] | null
+  chain?: MicChainReading | null
+  volumes?: Array<{ name: string; percent: number }>
+  source?: SourceBags | null
+}
+
 export interface ProbeBuildInput {
   legs: ProbeLegInput[]
   capture: CaptureSettings | null
   nowMs: number
   memory: ProbeMemory
+  carry?: ProbeCarry
 }
 
 export interface ProbeBuildResult {
   view: CallAudioProbeView
   memory: ProbeMemory
+  history: ProbeHistory
+  events: ProbeEvent[]
+  transports: Record<string, string>
+  names: Record<string, string>
+  device: string | null
+  seen: string[] | null
 }
 
 /**
@@ -218,30 +252,66 @@ export function captureFromSettings(settings: object | null | undefined): Captur
  */
 export function buildCallAudioProbe(input: ProbeBuildInput): ProbeBuildResult {
   const described = input.legs.map((leg) => describeLeg(leg, input.nowMs, input.memory))
+  const trace = traceLegs(input, described)
   return {
     view: {
       legs: described.map((item) => item.view),
-      capture: input.capture ? captureRows(input.capture) : null,
+      capture: captureBlock(input.capture, input.carry?.source ?? null),
+      chain: chainMetrics(input.carry?.chain ?? null),
+      volumes: volumeMetrics(input.carry?.volumes ?? []),
+      context: contextMetrics(input.carry?.chain ?? null),
+      history: trace.history,
+      events: trace.events,
       empty: input.legs.length === 0 ? EMPTY_MICS : null,
     },
     memory: memoryFrom(input.legs, described),
+    history: trace.history,
+    events: trace.events,
+    transports: trace.transports,
+    names: trace.names,
+    device: trace.device,
+    seen: trace.seen,
   }
 }
 
 /** Exemplo: `probeFailureView('sem pc')` cabe no mesmo painel. */
 export function probeFailureView(message: string): CallAudioProbeView {
-  return { legs: [], capture: null, empty: `Não li as estatísticas: ${message}` }
+  return {
+    legs: [],
+    capture: null,
+    chain: null,
+    volumes: null,
+    context: null,
+    history: {},
+    events: [],
+    empty: `Não li as estatísticas: ${message}`,
+  }
 }
 
-function describeLeg(leg: ProbeLegInput, nowMs: number, memory: ProbeMemory): { view: ProbeLegView; cursor: ProbeCursor | null } {
+function describeLeg(leg: ProbeLegInput, nowMs: number, memory: ProbeMemory): DescribedLeg {
   const numbers = readLegNumbers(leg.stats)
-  if (!numbers) return { view: missingLeg(leg), cursor: null }
+  if (!numbers) return { view: missingLeg(leg), cursor: null, point: null, transport: '—' }
   const cursor = cursorOf(nowMs, numbers)
-  return { view: filledLeg(leg, numbers, memory[leg.key], cursor), cursor }
+  return filledLeg(leg, numbers, memory[leg.key], cursor)
 }
 
-function filledLeg(leg: ProbeLegInput, numbers: AudioLegNumbers, previous: ProbeCursor | undefined, cursor: ProbeCursor): ProbeLegView {
-  return { key: leg.key, title: `${leg.name} · ${leg.direction}`, metrics: legMetrics(numbers, previous, cursor) }
+interface DescribedLeg {
+  view: ProbeLegView
+  cursor: ProbeCursor | null
+  point: ProbePoint | null
+  transport: string
+}
+
+function filledLeg(leg: ProbeLegInput, numbers: AudioLegNumbers, previous: ProbeCursor | undefined, cursor: ProbeCursor): DescribedLeg {
+  const loss = lossSince(previous, cursor)
+  const bitrate = bitrateSince(previous, cursor)
+  const metrics = summaryMetrics(numbers, loss, bitrate).concat(rawLegMetrics(numbers, rawOf(previous)))
+  return {
+    view: { key: leg.key, title: `${leg.name} · ${leg.direction}`, metrics },
+    cursor,
+    point: { atMs: cursor.atMs, loss, jitterMs: jitterMs(numbers.jitterSec), bitrate },
+    transport: formatTransport(numbers.protocol, numbers.path),
+  }
 }
 
 function missingLeg(leg: ProbeLegInput): ProbeLegView {
@@ -252,12 +322,11 @@ function missingLeg(leg: ProbeLegInput): ProbeLegView {
   }
 }
 
-function legMetrics(numbers: AudioLegNumbers, previous: ProbeCursor | undefined, cursor: ProbeCursor): ProbeMetric[] {
-  const loss = lossSince(previous, cursor)
+function summaryMetrics(numbers: AudioLegNumbers, loss: number | null, bitrate: number | null): ProbeMetric[] {
   return [
     metric('Perda', formatLossRatio(loss), lossTone(loss)),
     metric('Jitter', formatMillis(numbers.jitterSec), jitterTone(numbers.jitterSec)),
-    metric('Bitrate', formatBitrate(bitrateSince(previous, cursor)), 'idle'),
+    metric('Bitrate', formatBitrate(bitrate), 'idle'),
     metric('Codec', numbers.codec ?? MISSING, codecTone(numbers.codec)),
     metric('Taxa', formatHertz(numbers.clockHz), 'idle'),
     metric('Canais', formatChannels(numbers.channels), 'idle'),
@@ -267,16 +336,62 @@ function legMetrics(numbers: AudioLegNumbers, previous: ProbeCursor | undefined,
 }
 
 function cursorOf(nowMs: number, numbers: AudioLegNumbers): ProbeCursor {
-  return { atMs: nowMs, bytes: numbers.bytes, lost: numbers.lost, packets: numbers.packets }
+  const raw = rawCursorOf(numbers)
+  return { atMs: nowMs, bytes: numbers.bytes, lost: numbers.lost, packets: numbers.packets, ...raw }
 }
 
-function memoryFrom(legs: ProbeLegInput[], described: Array<{ cursor: ProbeCursor | null }>): ProbeMemory {
+function memoryFrom(legs: ProbeLegInput[], described: DescribedLeg[]): ProbeMemory {
   const memory: ProbeMemory = {}
   described.forEach((item, index) => {
     const key = legs[index]?.key
     if (item.cursor && key) memory[key] = item.cursor
   })
   return memory
+}
+
+function traceLegs(input: ProbeBuildInput, described: DescribedLeg[]): ReturnType<typeof advanceProbeTrace> {
+  const carry = input.carry
+  return advanceProbeTrace({
+    nowMs: input.nowMs,
+    history: carry?.history ?? {},
+    events: carry?.events ?? [],
+    seen: carry?.seen ?? null,
+    transports: carry?.transports ?? {},
+    names: carry?.names ?? {},
+    device: carry?.device ?? null,
+    nextDevice: carry?.source?.device ?? carry?.device ?? null,
+    rows: described.map((item, index) => ({
+      key: item.view.key,
+      name: input.legs[index]?.name ?? item.view.title,
+      transport: item.transport,
+      point: item.point,
+    })),
+  })
+}
+
+function captureBlock(settings: CaptureSettings | null, source: SourceBags | null): ProbeMetric[] | null {
+  const rows = settings ? captureRows(settings) : []
+  const extra = sourceMetrics(source)
+  const joined = rows.concat(extra)
+  return joined.length === 0 ? null : joined
+}
+
+function rawOf(cursor: ProbeCursor | undefined): RawCursor | undefined {
+  if (!cursor) return undefined
+  return {
+    concealed: cursor.concealed ?? null,
+    concealmentEvents: cursor.concealmentEvents ?? null,
+    nack: cursor.nack ?? null,
+    fec: cursor.fec ?? null,
+    retransmitted: cursor.retransmitted ?? null,
+    inserted: cursor.inserted ?? null,
+    removed: cursor.removed ?? null,
+  }
+}
+
+function jitterMs(seconds: number | null): number | null {
+  if (seconds === null) return null
+  return seconds * 1000
 }
 
 function captureRows(settings: CaptureSettings): ProbeMetric[] {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { limiterCurve, nextLevelerGain, preSliderRms, softLimitSample } from './micGain'
+import { limiterAttenuation, limiterCurve, nextLevelerGain, peakSample, preSliderRms, softLimitSample } from './micGain'
 
 describe('micGain', () => {
   it('100% do limiter é a reta: o sample do meio sai igual', () => {
@@ -10,6 +10,11 @@ describe('micGain', () => {
     expect(softLimitSample(0.95)).toBeGreaterThan(0.85)
     expect(softLimitSample(1)).toBeLessThan(1)
     expect(softLimitSample(Number.NaN)).toBe(0)
+    expect(limiterAttenuation(0.5), 'abaixo do joelho não atenua').toBe(0)
+    expect(limiterAttenuation(1), 'o pico é segurado sem zerar').toBeGreaterThan(0)
+    expect(limiterAttenuation(1)).toBeLessThan(1)
+    expect(peakSample(new Uint8Array([128])), '128 é silêncio').toBe(0)
+    expect(peakSample(new Uint8Array([255, 128]))).toBeCloseTo(127 / 128)
   })
 
   it('a curva do shaper é identidade no meio e limitada na ponta', () => {

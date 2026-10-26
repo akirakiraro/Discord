@@ -22,6 +22,8 @@ A versão 0.1.121 põe um volume em cada pessoa da call, de 0% a 200%, lembrado 
 
 A versão 0.1.122 mostra, só para o usuário `akira`, um painel com perda, jitter, bitrate, codec e o que o Chromium aplicou no microfone. Serve para medir a call antes de mudar o tratamento da voz. O detalhe está em [docs/diagnostico-audio.md](docs/diagnostico-audio.md).
 
+A versão 0.1.123 completa esse painel: contadores crus do `getStats`, captura original, cadeia do microfone, volume por pessoa, gráfico de 60 s, log e um JSON para copiar ou salvar neste PC. Outra conta continua sem o botão.
+
 ## Pré-requisitos
 
 - Node.js com npm.

@@ -140,6 +140,7 @@ function sender(bytes: number, lost: number, sent: number): import('./collectCal
   return {
     key: 'enviado:me',
     name: 'Akira',
+    identity: 'u-akira',
     direction: 'enviado',
     capture: true,
     track: track(outboundStats(bytes, lost, sent), {

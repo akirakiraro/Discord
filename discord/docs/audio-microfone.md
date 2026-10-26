@@ -109,4 +109,4 @@ A partir da **0.1.113** os dois botões usam um estado só, em `lib/voice/micDea
 
 ## Medir a call
 
-O usuário `akira` tem, na barra de voz, o botão **Áudio**. Aberto, ele mostra perda, jitter, bitrate, transporte e o `getSettings()` da captura. Outra conta não vê esse botão. O painel não muda o áudio e não manda número para o servidor. O que cada valor indica está em [diagnostico-audio.md](diagnostico-audio.md).
+O usuário `akira` tem, na barra de voz, o botão **Áudio**. Aberto, ele mostra o `getStats` de cada pessoa, a captura original, a cadeia do microfone, o volume por pessoa neste PC, os últimos 60 s e um log. **Copiar JSON** ou **Salvar arquivo** fica neste aparelho. Outra conta não vê esse botão. O painel não muda o áudio e não manda número para o servidor. O que cada valor indica está em [diagnostico-audio.md](diagnostico-audio.md).

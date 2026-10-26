@@ -25,6 +25,26 @@ export interface RtcStat {
   candidateType?: string
   relayProtocol?: string
   remoteId?: string
+  iceState?: string
+  dtlsState?: string
+  jitterBufferDelay?: number
+  jitterBufferEmittedCount?: number
+  concealedSamples?: number
+  concealmentEvents?: number
+  insertedSamplesForDeceleration?: number
+  removedSamplesForAcceleration?: number
+  nackCount?: number
+  fecPacketsReceived?: number
+  fecPacketsDiscarded?: number
+  retransmittedPacketsSent?: number
+  retransmittedPacketsReceived?: number
+  audioLevel?: number
+  totalAudioEnergy?: number
+}
+
+export interface CandidateEnd {
+  protocol: 'udp' | 'tcp' | null
+  kind: string | null
 }
 
 export interface AudioLegNumbers {
@@ -38,6 +58,24 @@ export interface AudioLegNumbers {
   rttSec: number | null
   protocol: 'udp' | 'tcp' | null
   path: string | null
+  packetsReceived: number | null
+  packetsSent: number | null
+  jitterBufferDelay: number | null
+  jitterBufferEmittedCount: number | null
+  concealedSamples: number | null
+  concealmentEvents: number | null
+  insertedSamples: number | null
+  removedSamples: number | null
+  nackCount: number | null
+  fecPacketsReceived: number | null
+  fecPacketsDiscarded: number | null
+  retransmittedPackets: number | null
+  audioLevel: number | null
+  totalAudioEnergy: number | null
+  localEnd: CandidateEnd | null
+  remoteEnd: CandidateEnd | null
+  iceState: string | null
+  dtlsState: string | null
 }
 
 interface CodecFacts {
@@ -50,6 +88,10 @@ interface IcePath {
   protocol: 'udp' | 'tcp' | null
   kind: string | null
   rttSec: number | null
+  localEnd: CandidateEnd | null
+  remoteEnd: CandidateEnd | null
+  iceState: string | null
+  dtlsState: string | null
 }
 
 const COPY_KEYS = [
@@ -57,7 +99,11 @@ const COPY_KEYS = [
   'packetsReceived', 'packetsSent', 'packetsLost', 'bytesReceived', 'bytesSent',
   'jitter', 'roundTripTime', 'currentRoundTripTime', 'codecId', 'selectedCandidatePairId',
   'localCandidateId', 'remoteCandidateId', 'nominated', 'state', 'protocol',
-  'candidateType', 'relayProtocol', 'remoteId',
+  'candidateType', 'relayProtocol', 'remoteId', 'iceState', 'dtlsState',
+  'jitterBufferDelay', 'jitterBufferEmittedCount', 'concealedSamples', 'concealmentEvents',
+  'insertedSamplesForDeceleration', 'removedSamplesForAcceleration', 'nackCount',
+  'fecPacketsReceived', 'fecPacketsDiscarded', 'retransmittedPacketsSent',
+  'retransmittedPacketsReceived', 'audioLevel', 'totalAudioEnergy',
 ] as const
 
 /**
@@ -81,6 +127,16 @@ export function readLegNumbers(stats: RtcStat[]): AudioLegNumbers | null {
   const inbound = findRtp(stats, 'inbound-rtp')
   if (!inbound) return null
   return fromInbound(stats, inbound)
+}
+
+/**
+ * Atraso médio do jitter buffer. O WebRTC soma o atraso e conta as emissões.
+ * Exemplo: `averageJitterBufferSec(0.4, 10)` devolve `0.04`.
+ */
+export function averageJitterBufferSec(delay: number | null, count: number | null): number | null {
+  if (delay === null || count === null || count <= 0) return null
+  if (!Number.isFinite(delay) || !Number.isFinite(count)) return null
+  return delay / count
 }
 
 function flattenStat(stat: object, id: string): RtcStat {
@@ -108,38 +164,75 @@ function isAudio(stat: RtcStat): boolean {
 function fromOutbound(stats: RtcStat[], outbound: RtcStat): AudioLegNumbers {
   const remote = remoteInbound(stats, outbound)
   const path = icePath(stats)
-  const codec = codecOf(stats, outbound.codecId)
-  return legNumbers(codec, path, {
+  return {
+    ...legBase(codecOf(stats, outbound.codecId), path),
+    ...rtpDetail(outbound),
     lost: firstNumber(remote?.packetsLost, outbound.packetsLost),
     packets: count(outbound.packetsSent),
     jitterSec: finite(remote?.jitter),
     bytes: count(outbound.bytesSent),
     rttSec: path.rttSec ?? finite(remote?.roundTripTime),
-  })
+  }
 }
 
 function fromInbound(stats: RtcStat[], inbound: RtcStat): AudioLegNumbers {
   const path = icePath(stats)
-  const codec = codecOf(stats, inbound.codecId)
-  return legNumbers(codec, path, {
+  return {
+    ...legBase(codecOf(stats, inbound.codecId), path),
+    ...rtpDetail(inbound),
     lost: count(inbound.packetsLost),
     packets: count(inbound.packetsReceived),
     jitterSec: finite(inbound.jitter),
     bytes: count(inbound.bytesReceived),
     rttSec: path.rttSec,
-  })
+  }
 }
 
-interface LegCounts {
-  lost: number
-  packets: number
-  jitterSec: number | null
-  bytes: number
-  rttSec: number | null
+function legBase(codec: CodecFacts, path: IcePath): Omit<AudioLegNumbers, 'lost' | 'packets' | 'jitterSec' | 'bytes' | 'rttSec'> {
+  return {
+    codec: codec.name,
+    clockHz: codec.clockHz,
+    channels: codec.channels,
+    protocol: path.protocol,
+    path: path.kind,
+    packetsReceived: null,
+    packetsSent: null,
+    jitterBufferDelay: null,
+    jitterBufferEmittedCount: null,
+    concealedSamples: null,
+    concealmentEvents: null,
+    insertedSamples: null,
+    removedSamples: null,
+    nackCount: null,
+    fecPacketsReceived: null,
+    fecPacketsDiscarded: null,
+    retransmittedPackets: null,
+    audioLevel: null,
+    totalAudioEnergy: null,
+    localEnd: path.localEnd,
+    remoteEnd: path.remoteEnd,
+    iceState: path.iceState,
+    dtlsState: path.dtlsState,
+  }
 }
 
-function legNumbers(codec: CodecFacts, path: IcePath, counts: LegCounts): AudioLegNumbers {
-  return { ...counts, codec: codec.name, clockHz: codec.clockHz, channels: codec.channels, protocol: path.protocol, path: path.kind }
+function rtpDetail(stat: RtcStat): Partial<AudioLegNumbers> {
+  return {
+    packetsReceived: finite(stat.packetsReceived),
+    packetsSent: finite(stat.packetsSent),
+    jitterBufferDelay: finite(stat.jitterBufferDelay),
+    jitterBufferEmittedCount: finite(stat.jitterBufferEmittedCount),
+    concealedSamples: finite(stat.concealedSamples),
+    concealmentEvents: finite(stat.concealmentEvents),
+    insertedSamples: finite(stat.insertedSamplesForDeceleration),
+    removedSamples: finite(stat.removedSamplesForAcceleration),
+    nackCount: finite(stat.nackCount),
+    fecPacketsReceived: finite(stat.fecPacketsReceived),
+    fecPacketsDiscarded: finite(stat.fecPacketsDiscarded),
+    retransmittedPackets: finite(stat.retransmittedPacketsReceived) ?? finite(stat.retransmittedPacketsSent),
+    audioLevel: finite(stat.audioLevel),
+    totalAudioEnergy: finite(stat.totalAudioEnergy),
+  }
 }
 
 function remoteInbound(stats: RtcStat[], outbound: RtcStat): RtcStat | undefined {
@@ -150,7 +243,17 @@ function remoteInbound(stats: RtcStat[], outbound: RtcStat): RtcStat | undefined
 function icePath(stats: RtcStat[]): IcePath {
   const pair = selectedPair(stats)
   const local = pair ? stats.find((stat) => stat.id === pair.localCandidateId) : undefined
-  return { protocol: protocolOf(local), kind: textOrNull(local?.candidateType), rttSec: finite(pair?.currentRoundTripTime) }
+  const remote = pair ? stats.find((stat) => stat.id === pair.remoteCandidateId) : undefined
+  const transport = stats.find((stat) => stat.type === 'transport')
+  return {
+    protocol: protocolOf(local),
+    kind: textOrNull(local?.candidateType),
+    rttSec: finite(pair?.currentRoundTripTime),
+    localEnd: candidateEnd(local),
+    remoteEnd: candidateEnd(remote),
+    iceState: textOrNull(transport?.iceState),
+    dtlsState: textOrNull(transport?.dtlsState),
+  }
 }
 
 function selectedPair(stats: RtcStat[]): RtcStat | undefined {
@@ -164,6 +267,11 @@ function pairByTransport(stats: RtcStat[]): RtcStat | undefined {
   const transport = stats.find((stat) => stat.type === 'transport' && stat.selectedCandidatePairId)
   if (!transport?.selectedCandidatePairId) return undefined
   return stats.find((stat) => stat.id === transport.selectedCandidatePairId)
+}
+
+function candidateEnd(stat: RtcStat | undefined): CandidateEnd | null {
+  if (!stat) return null
+  return { protocol: protocolOf(stat), kind: textOrNull(stat.candidateType) }
 }
 
 function protocolOf(local: RtcStat | undefined): 'udp' | 'tcp' | null {
@@ -193,8 +301,7 @@ function asProtocol(value: unknown): 'udp' | 'tcp' | null {
 
 function firstNumber(...values: Array<number | undefined>): number {
   for (const value of values) {
-    const counted = count(value)
-    if (typeof value === 'number') return counted
+    if (typeof value === 'number') return count(value)
   }
   return 0
 }

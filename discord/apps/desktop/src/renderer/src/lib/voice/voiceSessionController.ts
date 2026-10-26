@@ -5,6 +5,7 @@ import { isMicrophoneLive, type VoiceStore } from '../../stores/voiceStore'
 import type { MicPrefsStore } from '../../stores/micPrefsStore'
 import { describeVoiceDisconnect } from './describeVoiceDisconnect'
 import { SensitivityGate } from './sensitivityGate'
+import type { MicChainReading } from './probeChain'
 import { captureOptions, type MicPreferences } from './micPreferences'
 import type { MicrophonePort } from './liveKitMicrophone'
 import { reportAppError } from '../report/reportAppError'
@@ -140,6 +141,11 @@ export class VoiceSessionController {
   inputLevelDb(): number | undefined {
     if (!this.gate.listening) return undefined
     return this.gate.levelDb
+  }
+
+  /** Cadeia do microfone neste aparelho. O painel de debug lê isto e não envia. */
+  micDebug(): MicChainReading | null {
+    return this.gate.debugSnapshot()
   }
 
   private onPrefsChange(state: MicPreferences, previous: MicPreferences): void {

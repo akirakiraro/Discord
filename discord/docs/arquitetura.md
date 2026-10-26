@@ -79,3 +79,5 @@ Na 0.1.120 o microfone, com as três opções desligadas, não pede processament
 Na 0.1.121 o volume de cada pessoa fica no app de quem ajusta, de 0% a 200%. 100% não altera a faixa recebida. O Me ouvir deixa de recapturar o microfone: ligar a escuta não muda o que os outros ouvem. O detalhe está em [volume-por-pessoa.md](volume-por-pessoa.md) e em [escuta-propria.md](escuta-propria.md).
 
 Na 0.1.122 o usuário `akira` vê um diagnóstico da call na barra de voz. Os números ficam neste PC. O detalhe está em [diagnostico-audio.md](diagnostico-audio.md).
+
+Na 0.1.123 esse painel mostra o `getStats` cru, a captura original, a cadeia do microfone, o volume por pessoa, os últimos 60 s e um log. Copiar ou salvar o JSON continua neste PC.

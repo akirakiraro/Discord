@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.1.123
+
+O painel **Áudio** do usuário `akira` passa a ser o debug completo da call, ainda só neste PC.
+
+- Cada faixa mostra os contadores crus do `getStats`: pacotes, bytes, jitter buffer médio, ocultação, amostras inseridas e removidas, NACK, FEC, retransmissão, nível, energia, RTT e as duas pontas ICE (UDP/TCP, direto ou relay).
+- A captura mostra `getSettings`, `getConstraints` e `getCapabilities` da faixa original, o dispositivo em uso, e a taxa e as latências do `AudioContext` do microfone.
+- A cadeia mostra o slider, o leveler, a atenuação do limiter, o portão, e o volume por pessoa deste aparelho.
+- Um gráfico guarda os últimos 60 s de perda, jitter e bitrate. Um log marca entrada, saída, reconexão, troca de transporte e troca de microfone, com hora.
+- **Copiar JSON** e **Salvar arquivo** ficam neste PC. Nada vai ao servidor. O detalhe está em [diagnostico-audio.md](diagnostico-audio.md).
+
 ## 0.1.122
 
 Painel de diagnóstico de áudio da call, só para o usuário `akira`.

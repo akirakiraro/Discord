@@ -62,6 +62,27 @@ export function softLimitSample(sample: number): number {
 }
 
 /**
+ * Quanto o limiter segura um pico. 0 é a reta, sem mudança de timbre.
+ * Exemplo: `limiterAttenuation(0.5)` devolve `0`.
+ */
+export function limiterAttenuation(sample: number): number {
+  const magnitude = Math.abs(sample)
+  if (!Number.isFinite(magnitude) || magnitude <= LIMIT_KNEE) return 0
+  const limited = Math.abs(softLimitSample(magnitude))
+  return 1 - limited / magnitude
+}
+
+/** Pico 0–1 de um buffer do analyser. 255 é o teto do byte, quase 1. Exemplo: `peakSample(new Uint8Array([255, 128]))`. */
+export function peakSample(samples: ArrayLike<number>): number {
+  let peak = 0
+  for (let index = 0; index < samples.length; index += 1) {
+    const centered = Math.abs(((samples[index] ?? 128) - 128) / 128)
+    if (centered > peak) peak = centered
+  }
+  return peak
+}
+
+/**
  * Curva do WaveShaper. O meio é a reta identidade: 100% não muda o timbre.
  * Exemplo: `shaper.curve = limiterCurve()`.
  */
