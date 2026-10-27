@@ -45,4 +45,11 @@ describe('loadServerConfig', () => {
   ] as const)('falha quando %j', (patch, pattern) => {
     expect(() => loadServerConfig({ ...VALID_ENV, ...patch })).toThrow(pattern)
   })
+
+  it('a rota do bot de teste só liga com RADCORD_DEV_TOOLS=1', () => {
+    expect(loadServerConfig(VALID_ENV).devTools).toBe(false)
+    expect(loadServerConfig({ ...VALID_ENV, RADCORD_DEV_TOOLS: '1' }).devTools).toBe(true)
+    expect(loadServerConfig({ ...VALID_ENV, RADCORD_DEV_TOOLS: 'true' }).devTools).toBe(false)
+    expect(loadServerConfig({ ...VALID_ENV, RADCORD_DEV_TOOLS: '0' }).devTools).toBe(false)
+  })
 })

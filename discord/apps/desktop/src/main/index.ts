@@ -289,6 +289,8 @@ app.whenReady().then(() => {
     appPath: app.getAppPath(),
     cwd: process.cwd(),
     envPath: process.env.RADCORD_HOST_MODULE,
+    // Host ligado pelo `npm run desktop` aceita o bot de teste. No instalador vira `{}`.
+    extraApiEnv: import.meta.env.DEV ? { RADCORD_DEV_TOOLS: '1' } : {},
   })
   const updates = exposeDesktopUpdate(() => hostBlocksInstall(host.view()))
   const onHostOff = (): void => updates.reconsiderInstall()
@@ -308,6 +310,8 @@ app.whenReady().then(() => {
   exposeScreenAudioIpc()
   exposeScreenAudioLog()
   bindClientReports(window, join(app.getPath('userData'), 'pending-reports.json'))
+  // Área de testes só no `npm run desktop`. No instalador este bloco e o import somem.
+  if (import.meta.env.DEV) void import('./dev/devTools').then((devTools) => devTools.bindDevTools())
   void host.refresh()
 })
 

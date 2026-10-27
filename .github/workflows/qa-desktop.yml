@@ -56,6 +56,10 @@ jobs:
         working-directory: discord
         run: npm run build -w @radcord/desktop
 
+      - name: Área de testes fora do instalador
+        working-directory: discord
+        run: node scripts/check-no-dev-tools.mjs apps/desktop/out
+
       - name: Gerar instalador
         working-directory: discord/apps/desktop
         env:

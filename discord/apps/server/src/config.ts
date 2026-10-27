@@ -12,6 +12,7 @@ type ServerEnvKey =
   | 'LIVEKIT_PUBLIC_URL'
   | 'UPDATES_DIR'
   | 'RELEASE_POLL_MS'
+  | 'RADCORD_DEV_TOOLS'
 
 export type ServerEnv = Readonly<Partial<Record<ServerEnvKey, string>>>
 
@@ -24,6 +25,8 @@ export interface ServerConfig {
   livekitPublicUrl: string
   updatesDir: string
   releasePollMs: number
+  /** Rota do bot de teste. Só `RADCORD_DEV_TOOLS=1` liga. */
+  devTools: boolean
 }
 
 const DEFAULT_DATABASE_PATH = 'data/radcord.db'
@@ -48,6 +51,7 @@ export function loadServerConfig(env: ServerEnv): ServerConfig {
     livekitPublicUrl: requireWebSocketUrl(env),
     updatesDir: env.UPDATES_DIR?.trim() || DEFAULT_UPDATES_DIR,
     releasePollMs: parseReleasePoll(env.RELEASE_POLL_MS),
+    devTools: env.RADCORD_DEV_TOOLS?.trim() === '1',
   }
 }
 

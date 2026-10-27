@@ -36,7 +36,15 @@ export class HostController {
   private releaseOperation = (): void => undefined
   private listener: ((snapshot: HostSnapshot) => void) | null = null
 
-  constructor(private readonly options: { candidates: readonly string[]; effects: HostEffects; clock: HostClock }) {}
+  constructor(
+    private readonly options: {
+      candidates: readonly string[]
+      effects: HostEffects
+      clock: HostClock
+      /** Variáveis a mais para a API. O `npm run desktop` liga a rota do bot de teste aqui. */
+      extraApiEnv?: Readonly<Record<string, string>>
+    },
+  ) {}
 
   view(): HostSnapshot {
     return this.snapshot
@@ -224,7 +232,7 @@ export class HostController {
 
   private spawnBoth(module: HostModule, ip: string): string | null {
     const secret = this.options.effects.readText(liveKitSecretPath(module))?.trim() ?? ''
-    const env = apiEnvironment(ip, secret, module.databasePath)
+    const env = { ...apiEnvironment(ip, secret, module.databasePath), ...this.options.extraApiEnv }
     const logs = hostLogPaths(module)
     try {
       this.options.effects.appendLog(logs.livekit, `ligando LiveKit em ${ip}\n`)

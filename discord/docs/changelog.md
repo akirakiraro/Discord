@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.136
+
+Área de testes para simular gente na call, só no `npm run desktop`.
+
+- O botão **Testes**, na barra de voz, põe bots no canal ("Bot de teste N") e faz eles tocarem um sinal parecido com fala ou um WAV seu, em loop.
+- O bot é `apps/test-bot`, um processo Node com o `@livekit/rtc-node`. Também roda pelo terminal: `npm run bot -- --api ... --sessao ... --canal geral --tocar tom`.
+- A API só tem a rota do bot (`POST /dev/bot-token`) com `RADCORD_DEV_TOOLS=1`. O "Ligar host" do `npm run desktop` liga isso; o app instalado e o `npm run host` não.
+- O instalador não leva a área. O `qa-desktop.yml` confere o build e para a release se achar algum pedaço dela. O detalhe está em [area-de-testes.md](area-de-testes.md).
+
 ## 0.1.135
 
 O portão do microfone deixa de cortar palavra e de abrir e fechar com o ruído.
