@@ -13,8 +13,11 @@ export class FakeAudioParam {
     this.scheduled.push({ value, time })
   }
 
-  setTargetAtTime(value: number): void {
+  readonly targets: Array<{ value: number; time: number; timeConstant: number }> = []
+
+  setTargetAtTime(value: number, time = 0, timeConstant = 0): void {
     this.value = value
+    this.targets.push({ value, time, timeConstant })
   }
 }
 
@@ -50,6 +53,11 @@ export class FakeAnalyser extends FakeAudioNode {
 
   getByteTimeDomainData(buffer: Uint8Array): void {
     buffer.fill(this.fill)
+  }
+
+  /** Mesmo nível de `fill`, em float: 128 é silêncio, 200 é 0,5625. */
+  getFloatTimeDomainData(buffer: Float32Array): void {
+    buffer.fill((this.fill - 128) / 128)
   }
 }
 
