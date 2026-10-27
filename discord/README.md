@@ -42,6 +42,8 @@ A versão 0.1.131 corrige o "Ligar host neste PC" no Windows: o `--import` do ts
 
 A versão 0.1.132 tira o botão branco. Ligar, firewall, desligar e o resto usam azul, cinza escuro ou vermelho, com texto legível também desabilitado. O detalhe está em [docs/botoes.md](docs/botoes.md).
 
+A versão 0.1.133 minimiza o app na bandeja, como o Discord. O X da janela esconde o SoundRoom, a call continua e um aviso diz que ele está minimizado. O ícone da bandeja reabre a janela, e "Sair" fecha de verdade. O detalhe está em [docs/minimizar-na-bandeja.md](docs/minimizar-na-bandeja.md).
+
 ## Pré-requisitos
 
 - Node.js 22.23.4 no CI (o `.nvmrc` da raiz). `engines` aceita `>=22.23.0`, inclusive o 24 do PC do host. O servidor usa `node:sqlite`, que não carrega no Node 20 nem no 22.12.
