@@ -7,7 +7,16 @@ const LEVELER_MAX_GAIN = 4
 const LEVELER_MIN_GAIN = 0.25
 const LEVELER_SILENCE_RMS = 0.008
 const LEVELER_BLEND = 0.08
-const METER_FFT = 512
+/**
+ * Janela do analyser. O portão lê a cada 32 ms; 2048 amostras cobrem 42 ms a 48 kHz
+ * (46 ms a 44,1 kHz), então nenhuma sílaba cai entre duas leituras. Com 512 o portão
+ * via só 11 ms de cada 32.
+ */
+const METER_FFT = 2048
+/** Abrir é rápido para não comer a largada da sílaba. */
+const GATE_ATTACK_SEC = 0.005
+/** Fechar desce em ~150 ms. Fechar em 10 ms cortava o fim da palavra e ligava e desligava o ruído. */
+const GATE_RELEASE_SEC = 0.03
 
 export interface ScheduledGain {
   value: number
@@ -23,7 +32,7 @@ export interface MicChain {
   shaper: WaveShaperNode
   gate: GainNode
   analyser: AnalyserNode
-  samples: Uint8Array<ArrayBuffer>
+  samples: Float32Array<ArrayBuffer>
   levelerGain: number
   sliderGain: number
 }
@@ -41,13 +50,13 @@ export function aimGain(param: ScheduledGain, value: number, now: number): void 
 }
 
 /**
- * Abre ou fecha o portão com uma rampa curta, para o corte não estalar.
+ * Abre rápido e fecha com rampa, para não estalar nem cortar o fim da palavra.
  * Exemplo: `aimGateOpen(gate.gain, true, context.currentTime)`.
  */
 export function aimGateOpen(param: GateParam, open: boolean, now: number): void {
   const target = open ? 1 : 0
   param.cancelScheduledValues(now)
-  param.setTargetAtTime(target, now, 0.01)
+  param.setTargetAtTime(target, now, open ? GATE_ATTACK_SEC : GATE_RELEASE_SEC)
 }
 
 /**
@@ -72,14 +81,37 @@ export function limiterAttenuation(sample: number): number {
   return 1 - limited / magnitude
 }
 
-/** Pico 0–1 de um buffer do analyser. 255 é o teto do byte, quase 1. Exemplo: `peakSample(new Uint8Array([255, 128]))`. */
+/** Pico 0–1 de amostras em float. Exemplo: `peakSample(new Float32Array([-0.5, 0.25]))` devolve `0.5`. */
 export function peakSample(samples: ArrayLike<number>): number {
   let peak = 0
   for (let index = 0; index < samples.length; index += 1) {
-    const centered = Math.abs(((samples[index] ?? 128) - 128) / 128)
-    if (centered > peak) peak = centered
+    const magnitude = Math.abs(samples[index] ?? 0)
+    if (magnitude > peak) peak = magnitude
   }
   return peak
+}
+
+/**
+ * RMS 0–1 de amostras em float. Exemplo: `floatRms(new Float32Array([0.5, -0.5]))` devolve `0.5`.
+ */
+export function floatRms(samples: ArrayLike<number>): number {
+  if (samples.length === 0) return 0
+  let sum = 0
+  for (let index = 0; index < samples.length; index += 1) {
+    const sample = samples[index] ?? 0
+    sum += sample * sample
+  }
+  return Math.sqrt(sum / samples.length)
+}
+
+/**
+ * Lê o nível depois do slider, em float. O byte do `getByteTimeDomainData` tem
+ * degrau de 1/128: tudo entre −90 e −50 dB virava −45 dB, em cima do traço padrão.
+ * Exemplo: `rmsToDb(readChainRms(chain))`.
+ */
+export function readChainRms(chain: MicChain): number {
+  chain.analyser.getFloatTimeDomainData(chain.samples)
+  return floatRms(chain.samples)
 }
 
 /**
@@ -180,7 +212,7 @@ function buildMicChain(context: AudioContext, track: MediaStreamTrack): MicChain
     shaper: context.createWaveShaper(),
     gate: context.createGain(),
     analyser,
-    samples: new Uint8Array(new ArrayBuffer(analyser.fftSize)),
+    samples: new Float32Array(new ArrayBuffer(analyser.fftSize * 4)),
     levelerGain: 1,
     sliderGain: 1,
   }

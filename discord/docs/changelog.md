@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.1.135
+
+O portão do microfone deixa de cortar palavra e de abrir e fechar com o ruído.
+
+- O nível é lido em float (`getFloatTimeDomainData`). O byte tinha degrau de 1/128: qualquer som entre −90 e −50 dB era lido como −45 dB, em cima do traço padrão. Voz baixa, fim de palavra e respiração sumiam; traço abaixo de −45 deixava o portão sempre aberto.
+- O analyser lê 2048 amostras por vez, mais que os 32 ms entre leituras. Com 512 o portão via só 11 ms de cada 32 e podia perder a largada da sílaba.
+- O portão abre em 5 ms e fecha numa rampa de 30 ms (cerca de 150 ms até o silêncio), em vez de cortar em 10 ms.
+- A janela tem `backgroundThrottling: false`. Na bandeja ou atrás do jogo, o Chromium freava o timer do portão e ele abria tarde.
+- O medidor de Configurações → Voz e o Me ouvir fora da call usam a mesma leitura. O detalhe está em [audio-microfone.md](audio-microfone.md).
+
 ## 0.1.134
 
 O app minimiza na bandeja, como o Discord.

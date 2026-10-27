@@ -1,6 +1,6 @@
 {
   "name": "@radcord/server",
-  "version": "0.1.134",
+  "version": "0.1.135",
   "private": true,
   "engines": {
     "node": ">=22.23.0"

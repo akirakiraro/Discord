@@ -68,6 +68,9 @@ function mainWindowOptions(saved: WindowPlacement | null): BrowserWindowConstruc
       preload: join(__dirname, '../preload/index.js'),
       contextIsolation: true,
       sandbox: true,
+      // O portão do microfone roda em timer. Na bandeja ou atrás do jogo o Chromium
+      // freava o timer e o portão abria tarde, comendo o começo da frase.
+      backgroundThrottling: false,
     },
   }
 }

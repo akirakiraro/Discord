@@ -96,6 +96,18 @@ Nos dois PCs, reabra o app (`npm run desktop` a partir de `discord/`). A nitidez
 4. Ligue só o ganho automático, com o slider em 100%. A voz baixa sobe. Não pode voltar abafada. Desligar devolve o nível, sem recapturar.
 5. Ligue a supressão de propósito. Aí o abafado pode voltar: é o APM do navegador, e a tela diz isso.
 
+## Portão que cortava palavra (0.1.135)
+
+Com o mesmo microfone, a voz no SoundRoom soava "tratada" e diferente do Discord: fim de palavra cortado, consoante baixa sumindo e ruído de fundo ligando e desligando. A causa era o portão, não o Opus nem o LiveKit.
+
+- O nível vinha do `getByteTimeDomainData`, que guarda cada amostra em 8 bits (`floor(128 × (1 + x))`). O degrau é 1/128, cerca de −42 dBFS. Um ruído minúsculo já virava −1/128 em metade das amostras, e tudo entre −90 e −50 dB era lido como −45,4 dB. O traço padrão é −45 dB: o portão ficava em cima do próprio erro de medida.
+- Agora a leitura é `getFloatTimeDomainData`, com `floatRms` e `readChainRms` em `micGain.ts`. O portão, o nivelador, o medidor das configurações e o Me ouvir fora da call usam a mesma função.
+- O analyser tem 2048 amostras. A leitura acontece a cada 32 ms; com 512 amostras (11 ms) o resto ficava sem ser visto.
+- `aimGateOpen` abre com constante de 5 ms e fecha com 30 ms. Depois do `GATE_HOLD_MS` (200 ms), o som desce em rampa até sumir em cerca de 150 ms.
+- O portão roda num `setInterval`. A janela principal passa `backgroundThrottling: false`, para o timer não ser freado com o app na bandeja, minimizado ou coberto pelo jogo.
+
+O anel verde de quem fala (`useSpeaking.ts`) ainda lê em byte. Ele não decide o que vai para a call.
+
 ## Mutar e ensurdecer
 
 A partir da **0.1.113** os dois botões usam um estado só, em `lib/voice/micDeafen.ts`. O store chama esse estado. Não há atalho de teclado.
