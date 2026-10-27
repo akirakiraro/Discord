@@ -102,4 +102,4 @@ Na 0.1.131 o `--import` do tsx vira URL `file:///`. No Windows o caminho `C:\` d
 
 Na 0.1.132 os botões de ação usam `<Button variant>`. Fundo branco com letra branca não entra. O detalhe está em [botoes.md](botoes.md).
 
-Na 0.1.133 o X da janela esconde o app na bandeja e avisa. O host do app e a call continuam no ar. Sair de verdade (menu do ícone, atualização) segue o fluxo de [host-no-app.md](host-no-app.md). O detalhe está em [minimizar-na-bandeja.md](minimizar-na-bandeja.md).
+Na 0.1.134 o X da janela esconde o app na bandeja e avisa. O host do app e a call continuam no ar. Sair de verdade (menu do ícone, atualização) segue o fluxo de [host-no-app.md](host-no-app.md). O detalhe está em [minimizar-na-bandeja.md](minimizar-na-bandeja.md).

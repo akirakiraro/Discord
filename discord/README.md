@@ -42,7 +42,7 @@ A versão 0.1.131 corrige o "Ligar host neste PC" no Windows: o `--import` do ts
 
 A versão 0.1.132 tira o botão branco. Ligar, firewall, desligar e o resto usam azul, cinza escuro ou vermelho, com texto legível também desabilitado. O detalhe está em [docs/botoes.md](docs/botoes.md).
 
-A versão 0.1.133 minimiza o app na bandeja, como o Discord. O X da janela esconde o SoundRoom, a call continua e um aviso diz que ele está minimizado. O ícone da bandeja reabre a janela, e "Sair" fecha de verdade. O detalhe está em [docs/minimizar-na-bandeja.md](docs/minimizar-na-bandeja.md).
+A versão 0.1.134 minimiza o app na bandeja, como o Discord. O X da janela esconde o SoundRoom, a call continua e um aviso diz que ele está minimizado. O ícone da bandeja reabre a janela, e "Sair" fecha de verdade. O detalhe está em [docs/minimizar-na-bandeja.md](docs/minimizar-na-bandeja.md).
 
 ## Pré-requisitos
 
