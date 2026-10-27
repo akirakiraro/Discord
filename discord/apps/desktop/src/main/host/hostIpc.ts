@@ -1,5 +1,6 @@
 import { BrowserWindow, ipcMain } from 'electron'
 import { parseConfirmedFlag, type HostQuitPrompt, type HostSnapshot } from '../../shared/hostSnapshot'
+import type { CloseGate } from '../closeToTray'
 import type { AppClosePlan } from './hostClose'
 import type { HostController } from './hostController'
 
@@ -18,19 +19,21 @@ export function bindHostIpc(controller: HostController, publish: (snapshot: Host
 }
 
 /**
- * Fechar a janela desliga o host que este app subiu. Com gente na call, a tela confirma.
- * Exemplo: `bindHostWindow(window, controller, publish, onHostOff)`.
+ * Sair de verdade desliga o host que este app subiu. Com gente na call, a tela confirma.
+ * O X da janela só esconde (bandeja) e não passa por aqui: vale quando `quit.quitting()`.
+ * Exemplo: `bindHostWindow(window, controller, publish, onHostOff, gate)`.
  */
 export function bindHostWindow(
   window: BrowserWindow,
   controller: HostController,
   publish: (snapshot: HostSnapshot) => void,
   onHostOff: () => void,
+  quit: CloseGate,
 ): void {
   let allowClose = false
   let deciding = false
   window.on('close', (event) => {
-    if (allowClose || !controller.ownsRunning()) return
+    if (!quit.quitting() || allowClose || !controller.ownsRunning()) return
     event.preventDefault()
     if (deciding) return
     deciding = true
@@ -38,7 +41,7 @@ export function bindHostWindow(
       allowClose = true
     }, () => {
       deciding = false
-    })
+    }, () => quit.cancelQuit())
   })
   ipcMain.handle('radcord:host-confirm-quit', async () => {
     const snapshot = await controller.stop()
@@ -46,12 +49,14 @@ export function bindHostWindow(
     if (snapshot.phase === 'off') onHostOff()
     if (snapshot.phase === 'off' && !window.isDestroyed()) {
       allowClose = true
+      quit.requestQuit()
       window.close()
     }
     return snapshot
   })
   ipcMain.handle('radcord:host-dismiss-quit', () => {
     deciding = false
+    quit.cancelQuit()
   })
 }
 
@@ -75,6 +80,7 @@ async function decideClose(
   onHostOff: () => void,
   allow: () => void,
   release: () => void,
+  cancelQuit: () => void,
 ): Promise<void> {
   const plan = await controller.prepareClose()
   if (plan.kind === 'quit') {
@@ -92,6 +98,7 @@ async function decideClose(
       return
     }
     release()
+    cancelQuit()
     return
   }
   release()

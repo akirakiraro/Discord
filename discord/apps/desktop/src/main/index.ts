@@ -2,7 +2,9 @@ import { networkInterfaces } from 'node:os'
 import { join } from 'node:path'
 import { app, BrowserWindow, ipcMain, screen, shell, type BrowserWindowConstructorOptions } from 'electron'
 import { autoUpdater, type UpdateCheckResult } from 'electron-updater'
+import { bindCloseToTray, bindQuitIntent, createAppTray, showMainWindow } from './appTray'
 import { bindClientReports } from './clientReportBridge'
+import { createCloseGate } from './closeToTray'
 import { DesktopUpdateMachine, armQuitAndInstall, type BlockUpdateClient } from './desktopUpdate'
 import { hostBlocksInstall } from './host/hostClose'
 import { bindHostIpc, bindHostWindow, publishHostSnapshot } from './host/hostIpc'
@@ -289,7 +291,16 @@ app.whenReady().then(() => {
   const onHostOff = (): void => updates.reconsiderInstall()
   bindHostIpc(host, publishHostSnapshot, onHostOff)
   const window = createMainWindow()
-  bindHostWindow(window, host, publishHostSnapshot, onHostOff)
+  const tray = createAppTray(
+    windowIconFile(process.resourcesPath, app.getAppPath(), app.isPackaged),
+    () => showMainWindow(window),
+    () => app.quit(),
+  )
+  const gate = createCloseGate(() => tray.available)
+  bindQuitIntent(gate)
+  // Antes do host: o X só esconde; o host decide só quando a saída é de verdade.
+  bindCloseToTray(window, gate, tray)
+  bindHostWindow(window, host, publishHostSnapshot, onHostOff, gate)
   exposeScreenShareIpc()
   exposeScreenAudioIpc()
   exposeScreenAudioLog()

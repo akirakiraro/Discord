@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.133
+
+O app minimiza na bandeja, como o Discord.
+
+- O X da janela esconde o SoundRoom em vez de fechar. A call segue ativa e o ícone fica na bandeja do Windows.
+- Ao esconder, aparece o aviso "O SoundRoom continua aberto", dizendo que o app foi minimizado e que o Sair fecha de vez.
+- Clicar no ícone ou em "Abrir o SoundRoom" traz a janela de volta. "Sair do SoundRoom" fecha de verdade, com a confirmação do host de sempre. Atualização instalada e desligar o Windows também saem de verdade.
+- Sem o ícone da bandeja, o X fecha o app como antes. O detalhe está em [minimizar-na-bandeja.md](minimizar-na-bandeja.md).
+
 ## 0.1.132
 
 Nenhum botão do app fica branco ou com texto ilegível.
