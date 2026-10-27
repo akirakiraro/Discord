@@ -1,5 +1,6 @@
 import { app, BrowserWindow, Menu, nativeImage, Notification, Tray } from 'electron'
 import { TRAY_MENU, TRAY_NOTICE, type CloseGate } from './closeToTray'
+import { hasSeenTrayNotice, markTrayNoticeSeen } from './trayNoticeMemory'
 
 export interface AppTray {
   available: boolean
@@ -33,15 +34,19 @@ function showNotice(tray: Tray, image: Electron.NativeImage): void {
 }
 
 /**
- * X esconde a janela e avisa. Saída pedida deixa o close seguir.
- * Exemplo: `bindCloseToTray(window, gate, tray)`
+ * X esconde a janela e avisa só na primeira vez. Saída pedida deixa o close seguir.
+ * Exemplo: `bindCloseToTray(window, gate, tray, join(userData, 'tray-notice-seen'))`
  */
-export function bindCloseToTray(window: BrowserWindow, gate: CloseGate, tray: AppTray): void {
+export function bindCloseToTray(window: BrowserWindow, gate: CloseGate, tray: AppTray, noticeFile: string): void {
+  let noticed = hasSeenTrayNotice(noticeFile)
   window.on('close', (event) => {
     if (!gate.shouldHideOnClose()) return
     event.preventDefault()
     window.hide()
+    if (noticed) return
+    noticed = true
     tray.notifyMinimized()
+    markTrayNoticeSeen(noticeFile)
   })
   window.on('session-end', () => gate.requestQuit())
 }

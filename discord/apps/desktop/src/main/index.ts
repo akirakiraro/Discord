@@ -299,7 +299,7 @@ app.whenReady().then(() => {
   const gate = createCloseGate(() => tray.available)
   bindQuitIntent(gate)
   // Antes do host: o X só esconde; o host decide só quando a saída é de verdade.
-  bindCloseToTray(window, gate, tray)
+  bindCloseToTray(window, gate, tray, join(app.getPath('userData'), 'tray-notice-seen'))
   bindHostWindow(window, host, publishHostSnapshot, onHostOff, gate)
   exposeScreenShareIpc()
   exposeScreenAudioIpc()
