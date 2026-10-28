@@ -50,6 +50,8 @@ A versão 0.1.136 traz a área de testes do `npm run desktop`: o botão **Testes
 
 A versão 0.1.137 conserta o "Sair do SoundRoom" da bandeja com o host ligado: a janela volta para mostrar a confirmação, em vez de abri-la escondida.
 
+A versão 0.1.138 abre a tela de entrar sem erro quando o host está desligado; o aviso tratado só aparece ao clicar em **Entrar**. O "Ligar host" responde no primeiro clique e já mostra "Iniciando…".
+
 ## Pré-requisitos
 
 - Node.js 22.23.4 no CI (o `.nvmrc` da raiz). `engines` aceita `>=22.23.0`, inclusive o 24 do PC do host. O servidor usa `node:sqlite`, que não carrega no Node 20 nem no 22.12.

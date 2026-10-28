@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.138
+
+A tela de entrar não mostra erro cru e o "Ligar host" responde no primeiro clique.
+
+- Abrir o app com o host desligado não mostra erro. A sessão salva fica guardada e a tela de entrar abre limpa. Antes aparecia o texto cru do `fetch` (`TypeError: Failed to fetch`).
+- Clicar em **Entrar** sem host no ar mostra uma frase só: "Não encontramos o host em 26.x. Confira se o host está ligado e se o Radmin VPN está conectado." Erro do host (500) vira "O host respondeu com erro". Nome inválido continua com a frase da validação.
+- A tela consulta o status do host a cada 2 s, e cada consulta testa as portas por até 0,8 s. Um clique em **Ligar host** no meio dela era descartado em silêncio, e por isso às vezes precisava clicar várias vezes. Agora o clique espera a consulta acabar e liga.
+- O botão vira "Iniciando…" na hora do clique, na tela de entrar e em Configurações → Host. Outro clique enquanto liga não pede de novo. A subida em si (LiveKit e API com `tsx`) ainda leva alguns segundos. O detalhe está em [host-no-app.md](host-no-app.md).
+
 ## 0.1.137
 
 "Sair do SoundRoom", no menu da bandeja, volta a fechar o app com o host ligado.

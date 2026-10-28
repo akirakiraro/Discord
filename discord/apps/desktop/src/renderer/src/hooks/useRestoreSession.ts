@@ -32,8 +32,9 @@ function restoreSavedSession(setSettled: (settled: boolean) => void): () => void
       if (session) useSessionStore.getState().signIn(session)
       else forgetLoginToken(window.localStorage)
     })
-    .catch((error: unknown) => {
-      if (!cancelled) useSessionStore.getState().signOut(error instanceof Error ? error.message : String(error))
+    .catch(() => {
+      // Host fora do ar na abertura não é erro de quem abriu o app: a tela de entrar abre limpa
+      // e o token fica salvo para a próxima vez. O erro tratado aparece só ao clicar em Entrar.
     })
     .finally(() => {
       if (!cancelled) setSettled(true)

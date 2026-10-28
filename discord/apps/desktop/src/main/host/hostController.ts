@@ -31,6 +31,7 @@ export class HostController {
   private livekitExit: (() => { code: number } | null) | null = null
   private apiExit: (() => { code: number } | null) | null = null
   private busy = false
+  private refreshing: Promise<HostSnapshot> | null = null
   private cancelled = false
   private operation: Promise<void> = Promise.resolve()
   private releaseOperation = (): void => undefined
@@ -62,14 +63,22 @@ export class HostController {
   async refresh(): Promise<HostSnapshot> {
     if (this.busy) return this.snapshot
     this.busy = true
-    try {
-      return await this.refreshLocked()
-    } finally {
-      this.busy = false
-    }
+    const run = (async () => {
+      try {
+        return await this.refreshLocked()
+      } finally {
+        this.busy = false
+        this.refreshing = null
+      }
+    })()
+    this.refreshing = run
+    return run
   }
 
   async start(): Promise<HostSnapshot> {
+    // A tela consulta o status a cada 2 s e cada consulta testa as portas por até 0,8 s.
+    // Um clique em Ligar no meio dela era descartado em silêncio; agora espera a consulta acabar.
+    if (this.refreshing) await this.refreshing
     if (this.busy) return this.snapshot
     if (this.snapshot.phase === 'on' || this.snapshot.phase === 'starting' || this.snapshot.phase === 'external') return this.snapshot
     this.busy = true
