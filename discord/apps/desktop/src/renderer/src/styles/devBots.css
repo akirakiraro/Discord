@@ -1,0 +1,62 @@
+/* Área de testes. Só carregada pelo DevBotsPanel, que o instalador não leva. */
+.dev-bots {
+  position: fixed;
+  z-index: 41;
+  left: 252px;
+  bottom: 12px;
+  width: min(420px, calc(100vw - 268px));
+  max-height: min(70vh, 520px);
+  overflow: auto;
+  padding: 12px;
+  border: 1px dashed #f0b232;
+  border-radius: 8px;
+  background: var(--bg-panel);
+  color: var(--text-normal);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 35%);
+}
+
+.dev-bots__head,
+.dev-bots__row,
+.dev-bots__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dev-bots__head {
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.dev-bots__hint,
+.dev-bots__detail {
+  margin: 4px 0;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.dev-bots__error {
+  margin: 6px 0;
+  font-size: 12px;
+  color: #f38688;
+}
+
+.dev-bots__list {
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dev-bots__bot {
+  padding: 8px 0;
+  border-top: 1px solid var(--bg-dark);
+}
+
+.dev-bots__row {
+  justify-content: space-between;
+}
+
+.dev-bots__actions {
+  flex-wrap: wrap;
+  margin-top: 6px;
+}

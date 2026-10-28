@@ -1,6 +1,7 @@
 import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron'
 import type { ClientReportRequest } from '@radcord/shared'
 import { parseUpdateSnapshot, type UpdateSnapshot } from '../shared/desktopUpdateSnapshot'
+import type { DevBotAction, DevBotAddRequest, DevBotView } from '../shared/devBots'
 import { parseHostQuitPrompt, parseHostSnapshot, type HostQuitPrompt, type HostSnapshot, type HostStopPreview } from '../shared/hostSnapshot'
 
 contextBridge.exposeInMainWorld('radcord', {
@@ -70,4 +71,19 @@ interface ScreenSourceOption {
   name: string
   kind: 'screen' | 'window'
   thumbnailUrl: string
+}
+
+// Área de testes só no `npm run desktop`. No instalador este bloco some do preload.
+if (import.meta.env.DEV) {
+  contextBridge.exposeInMainWorld('radcordDev', {
+    bots: (): Promise<DevBotView[]> => ipcRenderer.invoke('radcord:dev-bots'),
+    addBot: (request: DevBotAddRequest): Promise<DevBotView[]> => ipcRenderer.invoke('radcord:dev-bot-add', request),
+    actOnBot: (number: number, action: DevBotAction): Promise<DevBotView[]> => ipcRenderer.invoke('radcord:dev-bot-act', number, action),
+    pickWav: (): Promise<string | null> => ipcRenderer.invoke('radcord:dev-bot-pick-wav'),
+    onBots: (listener: (bots: DevBotView[]) => void): (() => void) => {
+      const wrapped = (_event: IpcRendererEvent, bots: DevBotView[]): void => listener(bots)
+      ipcRenderer.on('radcord:dev-bots-state', wrapped)
+      return () => ipcRenderer.removeListener('radcord:dev-bots-state', wrapped)
+    },
+  })
 }

@@ -46,6 +46,8 @@ A versão 0.1.134 minimiza o app na bandeja, como o Discord. O X da janela escon
 
 A versão 0.1.135 conserta o portão do microfone. O nível é lido em float: em byte, tudo entre −90 e −50 dB virava −45 dB e o portão cortava fim de palavra ou abria com o ruído. Ele fecha em rampa e não é freado com o app na bandeja ou atrás do jogo. O detalhe está em [docs/audio-microfone.md](docs/audio-microfone.md).
 
+A versão 0.1.136 traz a área de testes do `npm run desktop`: o botão **Testes** põe bots na call que tocam um sinal de fala ou um WAV. O instalador não leva nada disso. O detalhe está em [docs/area-de-testes.md](docs/area-de-testes.md).
+
 ## Pré-requisitos
 
 - Node.js 22.23.4 no CI (o `.nvmrc` da raiz). `engines` aceita `>=22.23.0`, inclusive o 24 do PC do host. O servidor usa `node:sqlite`, que não carrega no Node 20 nem no 22.12.

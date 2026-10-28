@@ -105,6 +105,10 @@ Não há job `windows-latest`. O `npm ci` do monorepo nesse runner é lento, o d
 
 `buttonTheme.test.ts` exige contraste de pelo menos 4,5:1 em cada par das variantes (descanso, hover e desabilitado), inclusive o verde com texto escuro e o vermelho com texto branco. O mesmo teste lê o CSS do renderer e falha se um botão tiver fundo claro, texto branco sem fundo escuro ou opacidade que esconda a letra. Ele também lê cada `<button>` do renderer: sem `button--primary`, `button--secondary`, `button--danger`, `button--ghost`, `button--success` ou outra classe do tema listada em `buttonTheme.ts`, o teste falha. Um `<button className="button">` sozinho é o caso que quebra.
 
+## Área de testes fora do instalador
+
+`scripts/check-no-dev-tools.mjs` procura no `apps/desktop/out` os textos que só existem na área de testes (`radcordDev`, `radcord:dev-`, `RADCORD_DEV_TOOLS`, `Bot de teste` e outros). O `qa-desktop.yml` roda o script depois de compilar; se achar algum, a release não sai. `devToolsLeak.test.ts` prova que o script falha com vazamento e com pasta vazia. O bot (`apps/test-bot`) tem testes do WAV, do sinal, dos comandos e das chamadas ao host; a rota `POST /dev/bot-token` tem teste com e sem `RADCORD_DEV_TOOLS`. O detalhe está em [area-de-testes.md](area-de-testes.md).
+
 ## Typecheck do desktop
 
 O `tsc` do desktop tinha erros antigos em tipos do Electron, do volume da tela e do PCM. A 0.1.124 corrige esses pontos para o comando fechar com sucesso. O app em si não muda de comportamento.

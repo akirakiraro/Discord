@@ -34,11 +34,18 @@ const disk: LogFiles = {
  * Efeitos de verdade: disco, portas, `node` e `taskkill`. Os testes usam um fake.
  * Exemplo: `createHostController({ userDataDir, appPath, cwd, envPath })`.
  */
-export function createHostController(input: { userDataDir: string; appPath: string; cwd: string; envPath: string | undefined }): HostController {
+export function createHostController(input: {
+  userDataDir: string
+  appPath: string
+  cwd: string
+  envPath: string | undefined
+  extraApiEnv?: Readonly<Record<string, string>>
+}): HostController {
   return new HostController({
     candidates: hostModuleCandidates({ envPath: input.envPath, userDataDir: input.userDataDir, startDirs: [input.appPath, input.cwd] }),
     effects: realHostEffects(),
     clock: { now: () => Date.now(), sleep: (ms) => new Promise((resolve) => setTimeout(resolve, ms)) },
+    extraApiEnv: input.extraApiEnv,
   })
 }
 

@@ -1,0 +1,22 @@
+{
+  "name": "@radcord/test-bot",
+  "version": "0.1.136",
+  "private": true,
+  "engines": {
+    "node": ">=22.23.0"
+  },
+  "type": "module",
+  "description": "Bot de teste da call: entra no canal e toca áudio. Só para desenvolvimento, fora do instalador.",
+  "scripts": {
+    "start": "tsx src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@livekit/rtc-node": "^1.2.1",
+    "@radcord/shared": "*"
+  },
+  "devDependencies": {
+    "tsx": "^4.23.15"
+  }
+}

@@ -20,7 +20,8 @@ async function startServer(env: ServerEnv): Promise<void> {
     clientReportsPath: clientReportsBeside(config.databasePath),
   })
   const releases = watchReleases(config, context.broadcaster)
-  const app = await buildApp(context, { logger: true, updatesDir: config.updatesDir })
+  const app = await buildApp(context, { logger: true, updatesDir: config.updatesDir, devTools: config.devTools })
+  if (config.devTools) app.log.warn({ event: 'dev_tools_enabled' }, 'RADCORD_DEV_TOOLS=1: rota do bot de teste ligada')
   const gateway = attachRealtimeGateway(app.server, {
     ...context,
     knownRelease: () => releases.currentVersion(),

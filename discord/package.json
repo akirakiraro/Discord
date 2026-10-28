@@ -16,6 +16,7 @@
     "host": "powershell -ExecutionPolicy Bypass -File infra/host/start-host.ps1",
     "server": "npm run start -w @radcord/server",
     "desktop": "npm run dev -w @radcord/desktop",
+    "bot": "npm run start -w @radcord/test-bot --",
     "desktop:dist": "npm run dist -w @radcord/desktop",
     "desktop:publish": "npm run desktop:dist && powershell -ExecutionPolicy Bypass -File infra/host/publish-desktop.ps1",
     "typecheck": "npm run typecheck --workspaces --if-present",

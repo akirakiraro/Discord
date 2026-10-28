@@ -3,6 +3,7 @@ import cors from '@fastify/cors'
 import type { ApiErrorResponse, HostHealthResponse } from '@radcord/shared'
 import { registerAuthRoutes } from './auth/authRoutes'
 import { registerChannelRoutes } from './channels/channelRoutes'
+import { registerDevBotRoutes } from './devtools/devBotRoutes'
 import { HttpError } from './http/httpError'
 import { registerMessageRoutes } from './messages/messageRoutes'
 import type { ServerContext } from './serverContext'
@@ -15,7 +16,10 @@ import { registerVoiceRoutes } from './voice/voiceRoutes'
  * Monta a API HTTP do host com todas as rotas.
  * Exemplo: `const app = await buildApp(createServerContext(inputs), { logger: true })`
  */
-export async function buildApp(context: ServerContext, options: { logger: boolean; updatesDir?: string }): Promise<FastifyInstance> {
+export async function buildApp(
+  context: ServerContext,
+  options: { logger: boolean; updatesDir?: string; devTools?: boolean },
+): Promise<FastifyInstance> {
   const app = Fastify({ logger: options.logger })
   // O renderer do Electron empacotado roda em file://, que manda Origin "null".
   await app.register(cors, { origin: true, methods: ['GET', 'POST', 'PATCH', 'DELETE'] })
@@ -32,6 +36,8 @@ export async function buildApp(context: ServerContext, options: { logger: boolea
   registerMessageRoutes(app, context.auth, context.messages)
   registerMemberRoutes(app, context.auth, context.users, context.presence)
   registerVoiceRoutes(app, context)
+  // Bot de teste: só no host de desenvolvimento. O `npm run host` normal não liga isto.
+  if (options.devTools === true) registerDevBotRoutes(app, context)
   registerClientReportRoutes(app, context.auth, context.clientReportsPath, context.clock)
   await registerUpdateStatic(app, options.updatesDir ?? '')
   return app
