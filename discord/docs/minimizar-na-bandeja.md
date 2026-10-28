@@ -12,7 +12,7 @@ O que o SoundRoom faz quando alguém clica no X da janela. O código que vale é
 - Atualização instalada pelo app e desligar o Windows também saem de verdade. Todo `app.quit()` liga o pedido de saída (`before-quit`) e `session-end` faz o mesmo.
 - Se o ícone da bandeja não puder ser criado (arquivo do ícone faltando ou vazio), o X fecha o app como antes. Esconder sem ícone deixaria o app invisível e sem como reabrir.
 - Esconder não mexe no host. O host que o app ligou continua no ar até a saída de verdade.
-- Na saída de verdade, tudo continua como em [host-no-app.md](host-no-app.md): com o host do app ligado, "Sair" pede a confirmação com quantas pessoas estão online e na call. Se a pessoa cancelar, a saída é desfeita e o próximo X volta a esconder.
+- Na saída de verdade, tudo continua como em [host-no-app.md](host-no-app.md): com o host do app ligado, "Sair" pede a confirmação com quantas pessoas estão online e na call. Se a pessoa cancelar, a saída é desfeita e o próximo X volta a esconder. Desde a 0.1.137, se o app estava na bandeja, a janela volta antes da confirmação; sem isso o aviso abria escondido e o Sair parecia não funcionar. Se o host não desligar, a janela também volta, com o erro em Configurações → Host.
 - `npm run desktop` também esconde na bandeja. Fechar de verdade é pelo menu do ícone.
 
 ## Onde está

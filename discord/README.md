@@ -48,6 +48,8 @@ A versão 0.1.135 conserta o portão do microfone. O nível é lido em float: em
 
 A versão 0.1.136 traz a área de testes do `npm run desktop`: o botão **Testes** põe bots na call que tocam um sinal de fala ou um WAV. O instalador não leva nada disso. O detalhe está em [docs/area-de-testes.md](docs/area-de-testes.md).
 
+A versão 0.1.137 conserta o "Sair do SoundRoom" da bandeja com o host ligado: a janela volta para mostrar a confirmação, em vez de abri-la escondida.
+
 ## Pré-requisitos
 
 - Node.js 22.23.4 no CI (o `.nvmrc` da raiz). `engines` aceita `>=22.23.0`, inclusive o 24 do PC do host. O servidor usa `node:sqlite`, que não carrega no Node 20 nem no 22.12.

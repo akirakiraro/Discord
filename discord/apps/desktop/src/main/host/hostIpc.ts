@@ -1,5 +1,6 @@
 import { BrowserWindow, ipcMain } from 'electron'
 import { parseConfirmedFlag, type HostQuitPrompt, type HostSnapshot } from '../../shared/hostSnapshot'
+import { showMainWindow } from '../appTray'
 import type { CloseGate } from '../closeToTray'
 import type { AppClosePlan } from './hostClose'
 import type { HostController } from './hostController'
@@ -99,10 +100,15 @@ async function decideClose(
     }
     release()
     cancelQuit()
+    // O host não desligou: a frase do erro fica em Configurações → Host, então a janela tem de aparecer.
+    if (!window.isDestroyed()) showMainWindow(window)
     return
   }
   release()
-  if (!window.isDestroyed()) window.webContents.send('radcord:host-quit-prompt', quitPrompt(plan))
+  if (window.isDestroyed()) return
+  // O Sair da bandeja chega com a janela escondida: sem mostrar, a confirmação abre invisível e o app não fecha.
+  showMainWindow(window)
+  window.webContents.send('radcord:host-quit-prompt', quitPrompt(plan))
 }
 
 function quitPrompt(plan: Extract<AppClosePlan, { kind: 'confirm' }>): HostQuitPrompt {

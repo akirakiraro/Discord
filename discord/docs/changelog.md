@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.137
+
+"Sair do SoundRoom", no menu da bandeja, volta a fechar o app com o host ligado.
+
+- Com o host ligado pelo app, sair pede confirmação, e quem está logado já conta como online. A confirmação abria na janela escondida na bandeja: nada aparecia e o app continuava aberto. Agora a janela volta antes da confirmação.
+- Se o host não desligar na saída, a janela também volta, com o erro em Configurações → Host. O detalhe está em [minimizar-na-bandeja.md](minimizar-na-bandeja.md).
+
 ## 0.1.136
 
 Área de testes para simular gente na call, só no `npm run desktop`.
