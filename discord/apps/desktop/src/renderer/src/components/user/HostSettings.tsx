@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { hostOccupancyLine, hostPhaseLabel, type HostSnapshot, type HostStopPreview } from '../../../../shared/hostSnapshot'
-import { useHostPower } from '../../hooks/useHostPower'
+import { startHost, useHostPower } from '../../hooks/useHostPower'
 import { Button } from '../ui/Button'
 
 /**
@@ -20,7 +20,7 @@ export function HostSettings(): React.JSX.Element {
     <HostSettingsPanel
       snapshot={snapshot}
       preview={preview}
-      onStart={() => void window.radcord?.hostStart()}
+      onStart={() => void startHost()}
       onAskStop={() => void askStop()}
       onConfirmStop={() => {
         setPreview(null)

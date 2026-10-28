@@ -147,6 +147,33 @@ describe('HostController', () => {
     expect(effects.randomCalls).toBe(1)
   })
 
+  it('clique em Ligar durante a consulta de status espera e liga, em vez de ser ignorado', async () => {
+    const effects = new FakeEffects()
+    effects.upAfterSpawn = true
+    let releaseProbe: () => void = () => undefined
+    const slowProbe = new Promise<void>((resolve) => {
+      releaseProbe = resolve
+    })
+    let first = true
+    effects.probe = async () => {
+      if (first) {
+        first = false
+        await slowProbe
+      }
+      return effects.probeState
+    }
+    const host = controller(effects)
+
+    const refreshing = host.refresh()
+    const starting = host.start()
+    releaseProbe()
+    await refreshing
+    const snapshot = await starting
+
+    expect(snapshot.phase).toBe('on')
+    expect(effects.spawned).toHaveLength(2)
+  })
+
   it('sem IP 26.x não cria processo', async () => {
     const effects = new FakeEffects()
     effects.ip = null

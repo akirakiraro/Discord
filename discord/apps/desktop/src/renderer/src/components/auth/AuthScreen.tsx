@@ -1,9 +1,9 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { PRODUCT_DISPLAY_NAME } from '../../../../shared/appIdentity'
-import { authenticate } from '../../lib/auth/authenticate'
+import { authenticate, describeLoginFailure } from '../../lib/auth/authenticate'
 import { loadSavedLogin, saveLogin } from '../../lib/savedLogin'
 import { useSessionStore } from '../../stores/sessionStore'
-import { useHostPower } from '../../hooks/useHostPower'
+import { startHost, useHostPower } from '../../hooks/useHostPower'
 import { AuthFields } from './AuthFields'
 import { HostAddressControl } from './HostAddressControl'
 import { HostLaunchControl } from './HostLaunchControl'
@@ -43,7 +43,7 @@ export function AuthScreen(): React.JSX.Element {
       saveLogin(window.localStorage, { hostAddress, username: session.user.username, token: session.token })
       useSessionStore.getState().signIn(session)
     } catch (failure) {
-      setError(failure instanceof Error ? failure.message : String(failure))
+      setError(describeLoginFailure(failure, hostAddress))
       setSubmitting(false)
     }
   }
@@ -60,7 +60,7 @@ export function AuthScreen(): React.JSX.Element {
         </Button>
       </form>
       <HostAddressControl value={hostAddress} onChange={setHostAddress} />
-      <HostLaunchControl snapshot={host} onStart={() => void window.radcord?.hostStart()} onUseAddress={applyHostAddress} />
+      <HostLaunchControl snapshot={host} onStart={() => void startHost()} onUseAddress={applyHostAddress} />
     </div>
   )
 }

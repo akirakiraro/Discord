@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { FakeHostFetch, OfflineHostFetch } from '../testing/fakeHostFetch'
-import { authenticate, restoreSession } from './authenticate'
+import { ApiRequestError } from '../api/apiClient'
+import { authenticate, describeLoginFailure, restoreSession } from './authenticate'
 
 const USER = { id: 'u-1', username: 'akira', displayName: 'akira', createdAt: 'x' }
 
@@ -37,7 +38,24 @@ describe('restoreSession', () => {
     expect(await restoreSession('26.186.21.58', 'velho', host.fetch)).toBeNull()
   })
 
-  it('propaga falha de rede para o app mostrar o erro', async () => {
+  it('propaga falha de rede; quem abre o app decide calar', async () => {
     await expect(restoreSession('26.186.21.58', 'tok', new OfflineHostFetch().fetch)).rejects.toThrow(/Radmin/)
+  })
+})
+
+describe('describeLoginFailure', () => {
+  it('host fora do ar vira uma frase só, sem o erro cru do fetch', async () => {
+    const failure = await authenticate('26.186.21.58', 'akira', new OfflineHostFetch().fetch).catch((error: unknown) => error)
+
+    expect(describeLoginFailure(failure, ' 26.186.21.58 ')).toBe(
+      'Não encontramos o host em 26.186.21.58. Confira se o host está ligado e se o Radmin VPN está conectado.',
+    )
+  })
+
+  it('erro da API e da validação local passam com a frase deles; 500 vira frase curta', () => {
+    expect(describeLoginFailure(new ApiRequestError(400, 'bad_request', 'Nome em uso'), 'x')).toBe('Nome em uso')
+    expect(describeLoginFailure(new ApiRequestError(500, 'internal_error', 'Erro inesperado no host'), 'x')).toBe('O host respondeu com erro. Tente de novo em instantes.')
+    expect(describeLoginFailure(new Error('Usuário: curto demais'), 'x')).toBe('Usuário: curto demais')
+    expect(describeLoginFailure('???', 'x')).toBe('Não foi possível entrar agora. Tente de novo em instantes.')
   })
 })
