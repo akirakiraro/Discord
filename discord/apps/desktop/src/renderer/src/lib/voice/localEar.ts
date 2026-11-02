@@ -1,8 +1,7 @@
 import type { MicPreferences } from './micPreferences'
 import { monitorCapture } from './micPreferences'
 import { CLOSED_GATE, rmsToDb, stepGate, type GateState } from './micLevel'
-import { aimGateOpen, createMicChain, followLeveler, setSliderGain, type MicChain } from './micGain'
-import { rmsLevel } from './speakingLevel'
+import { aimGateOpen, createMicChain, followLeveler, readChainRms, setSliderGain, type MicChain } from './micGain'
 
 const TICK_MS = 32
 
@@ -50,8 +49,7 @@ function playTrack(track: MediaStreamTrack, readPrefs: () => LocalEarPrefs): () 
 
 function tickLocalEar(prefs: LocalEarPrefs, chain: MicChain, state: GateState): GateState {
   if (chain.sliderGain !== prefs.inputGain) setSliderGain(chain, prefs.inputGain)
-  chain.analyser.getByteTimeDomainData(chain.samples)
-  const post = rmsLevel(chain.samples)
+  const post = readChainRms(chain)
   followLeveler(chain, post, prefs.autoGainControl)
   return stepLocalGate(chain, state, rmsToDb(post), prefs.gateDb)
 }

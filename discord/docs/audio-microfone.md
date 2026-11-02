@@ -9,8 +9,8 @@ Na 0.1.112 esta captura entra junto com a lista de quem está no canal, em [arqu
 - O portão de sensibilidade só abre e fecha o volume. Não filtra frequência.
 - O slider de volume muda o ganho antes do portão. 100% é ganho 1. Não é um segundo controle automático.
 - O ganho automático da tela sobe o nível no Web Audio. Não pede `autoGainControl` ao Chromium.
-- Quem escuta a própria voz fica sem cancelamento de eco enquanto a escuta durar. O Chromium trata o retorno do servidor como eco. A escuta não liga isolamento nem o AGC do navegador.
-- A reprodução de quem ouve não processa a voz. O `RoomAudioRenderer` entrega a faixa do LiveKit num elemento de áudio.
+- Quem escuta a própria voz não recaptura o microfone e não troca o eco. O retorno assina a faixa que já está publicada. Fora da call, o teste local ainda abre uma captura à parte. O detalhe está em [escuta-propria.md](escuta-propria.md).
+- Em 100%, quem ouve outra pessoa não processa a voz: um elemento de áudio toca a faixa com volume 1. Acima de 100% o ganho é só neste aparelho, num elemento mudo cujo `srcObject` alimenta o contexto da sala. O detalhe está em [volume-por-pessoa.md](volume-por-pessoa.md).
 
 ## Por que saía abafada
 
@@ -96,6 +96,18 @@ Nos dois PCs, reabra o app (`npm run desktop` a partir de `discord/`). A nitidez
 4. Ligue só o ganho automático, com o slider em 100%. A voz baixa sobe. Não pode voltar abafada. Desligar devolve o nível, sem recapturar.
 5. Ligue a supressão de propósito. Aí o abafado pode voltar: é o APM do navegador, e a tela diz isso.
 
+## Portão que cortava palavra (0.1.135)
+
+Com o mesmo microfone, a voz no SoundRoom soava "tratada" e diferente do Discord: fim de palavra cortado, consoante baixa sumindo e ruído de fundo ligando e desligando. A causa era o portão, não o Opus nem o LiveKit.
+
+- O nível vinha do `getByteTimeDomainData`, que guarda cada amostra em 8 bits (`floor(128 × (1 + x))`). O degrau é 1/128, cerca de −42 dBFS. Um ruído minúsculo já virava −1/128 em metade das amostras, e tudo entre −90 e −50 dB era lido como −45,4 dB. O traço padrão é −45 dB: o portão ficava em cima do próprio erro de medida.
+- Agora a leitura é `getFloatTimeDomainData`, com `floatRms` e `readChainRms` em `micGain.ts`. O portão, o nivelador, o medidor das configurações e o Me ouvir fora da call usam a mesma função.
+- O analyser tem 2048 amostras. A leitura acontece a cada 32 ms; com 512 amostras (11 ms) o resto ficava sem ser visto.
+- `aimGateOpen` abre com constante de 5 ms e fecha com 30 ms. Depois do `GATE_HOLD_MS` (200 ms), o som desce em rampa até sumir em cerca de 150 ms.
+- O portão roda num `setInterval`. A janela principal passa `backgroundThrottling: false`, para o timer não ser freado com o app na bandeja, minimizado ou coberto pelo jogo.
+
+O anel verde de quem fala (`useSpeaking.ts`) ainda lê em byte. Ele não decide o que vai para a call.
+
 ## Mutar e ensurdecer
 
 A partir da **0.1.113** os dois botões usam um estado só, em `lib/voice/micDeafen.ts`. O store chama esse estado. Não há atalho de teclado.
@@ -106,3 +118,7 @@ A partir da **0.1.113** os dois botões usam um estado só, em `lib/voice/micDea
 - Clicar em mutar enquanto surdo não fica travado. Esse clique sai do surdo: microfone e áudio voltam juntos, mesmo que o microfone estivesse mutado antes.
 - Clicar em ensurdecer de novo devolve o mute guardado. Se já estava mutado, continua mutado. Se não estava, volta a falar. O áudio dos outros volta nos dois casos.
 - Mutado ou surdo, o Me ouvir não abre. Se já estava aberto, para. O botão de microfone continua clicável; o texto passa a **Desmutar e ouvir**.
+
+## Medir a call
+
+O usuário `akira` tem, na barra de voz, o botão **Áudio**. Aberto, ele mostra o `getStats` de cada pessoa, a captura original, a cadeia do microfone, o volume por pessoa neste PC, os últimos 60 s e um log. **Copiar JSON** ou **Salvar arquivo** fica neste aparelho. Outra conta não vê esse botão. O painel não muda o áudio e não manda número para o servidor. O que cada valor indica está em [diagnostico-audio.md](diagnostico-audio.md).

@@ -44,8 +44,8 @@
   padding: 8px 12px;
   border: none;
   border-radius: 6px;
-  background: rgba(0, 0, 0, 0.35);
-  color: #fff;
+  background: #1e1f22;
+  color: #f2f3f5;
   font-size: 13px;
   cursor: pointer;
 }
@@ -59,12 +59,24 @@
   color: var(--text-normal);
 }
 
-.host-switch button {
-  border: none;
-  background: transparent;
-  color: #fff;
-  cursor: pointer;
-  font-weight: 700;
+.host-launch {
+  position: fixed;
+  left: 16px;
+  bottom: 64px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 320px;
+}
+
+.host-launch__state,
+.host-launch__error {
+  margin: 0;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background: #1e1f22;
+  color: #f2f3f5;
+  font-size: 13px;
 }
 
 .field {

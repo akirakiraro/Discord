@@ -1,6 +1,9 @@
 {
   "name": "radcord",
   "private": true,
+  "engines": {
+    "node": ">=22.23.0"
+  },
   "description": "SoundRoom, Discord caseiro para jogar com os amigos pela rede do Radmin VPN",
   "workspaces": [
     "packages/*",
@@ -8,16 +11,21 @@
   ],
   "scripts": {
     "host:install": "powershell -ExecutionPolicy Bypass -File infra/host/install-livekit.ps1",
+    "host:setup": "node scripts/write-host-module.mjs",
     "host:firewall": "powershell -ExecutionPolicy Bypass -File infra/host/open-firewall.ps1",
     "host": "powershell -ExecutionPolicy Bypass -File infra/host/start-host.ps1",
     "server": "npm run start -w @radcord/server",
     "desktop": "npm run dev -w @radcord/desktop",
+    "bot": "npm run start -w @radcord/test-bot --",
     "desktop:dist": "npm run dist -w @radcord/desktop",
     "desktop:publish": "npm run desktop:dist && powershell -ExecutionPolicy Bypass -File infra/host/publish-desktop.ps1",
     "typecheck": "npm run typecheck --workspaces --if-present",
-    "test": "npm run test --workspaces --if-present"
+    "test": "npm run test --workspaces --if-present",
+    "test:mutation": "node scripts/test-mutation.mjs"
   },
   "devDependencies": {
+    "@stryker-mutator/core": "^10.1.1",
+    "@stryker-mutator/vitest-runner": "^10.1.1",
     "@types/node": "^26.6.5",
     "typescript": "^7.0.2",
     "vitest": "^5.0.5"

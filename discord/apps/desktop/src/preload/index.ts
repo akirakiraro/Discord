@@ -1,6 +1,8 @@
 import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron'
 import type { ClientReportRequest } from '@radcord/shared'
 import { parseUpdateSnapshot, type UpdateSnapshot } from '../shared/desktopUpdateSnapshot'
+import type { DevBotAction, DevBotAddRequest, DevBotView } from '../shared/devBots'
+import { parseHostQuitPrompt, parseHostSnapshot, type HostQuitPrompt, type HostSnapshot, type HostStopPreview } from '../shared/hostSnapshot'
 
 contextBridge.exposeInMainWorld('radcord', {
   radminIp: (): Promise<string | null> => ipcRenderer.invoke('radcord:radmin-ip'),
@@ -30,6 +32,27 @@ contextBridge.exposeInMainWorld('radcord', {
       if (typeof message === 'string') listener(message)
     })
   },
+  hostStatus: (): Promise<HostSnapshot> => ipcRenderer.invoke('radcord:host-status').then(parseHostSnapshot),
+  hostStart: (): Promise<HostSnapshot> => ipcRenderer.invoke('radcord:host-start').then(parseHostSnapshot),
+  hostPreviewStop: (): Promise<HostStopPreview> => ipcRenderer.invoke('radcord:host-preview-stop'),
+  hostStop: (): Promise<HostSnapshot> => ipcRenderer.invoke('radcord:host-stop', { confirmed: true }).then(parseHostSnapshot),
+  hostFirewall: (): Promise<HostSnapshot> => ipcRenderer.invoke('radcord:host-firewall').then(parseHostSnapshot),
+  hostOpenFirewall: (): Promise<HostSnapshot> => ipcRenderer.invoke('radcord:host-firewall-open').then(parseHostSnapshot),
+  confirmHostQuit: (): Promise<HostSnapshot> => ipcRenderer.invoke('radcord:host-confirm-quit').then(parseHostSnapshot),
+  dismissHostQuit: (): Promise<void> => ipcRenderer.invoke('radcord:host-dismiss-quit'),
+  onHostState: (listener: (snapshot: HostSnapshot) => void): (() => void) => {
+    const wrapped = (_event: IpcRendererEvent, snapshot: unknown): void => listener(parseHostSnapshot(snapshot))
+    ipcRenderer.on('radcord:host-state', wrapped)
+    return () => ipcRenderer.removeListener('radcord:host-state', wrapped)
+  },
+  onHostQuitPrompt: (listener: (prompt: HostQuitPrompt) => void): (() => void) => {
+    const wrapped = (_event: IpcRendererEvent, payload: unknown): void => {
+      const prompt = parseHostQuitPrompt(payload)
+      if (prompt) listener(prompt)
+    }
+    ipcRenderer.on('radcord:host-quit-prompt', wrapped)
+    return () => ipcRenderer.removeListener('radcord:host-quit-prompt', wrapped)
+  },
 })
 
 function subscribeUpdateState(listener: (snapshot: UpdateSnapshot) => void): () => void {
@@ -48,4 +71,19 @@ interface ScreenSourceOption {
   name: string
   kind: 'screen' | 'window'
   thumbnailUrl: string
+}
+
+// Área de testes só no `npm run desktop`. No instalador este bloco some do preload.
+if (import.meta.env.DEV) {
+  contextBridge.exposeInMainWorld('radcordDev', {
+    bots: (): Promise<DevBotView[]> => ipcRenderer.invoke('radcord:dev-bots'),
+    addBot: (request: DevBotAddRequest): Promise<DevBotView[]> => ipcRenderer.invoke('radcord:dev-bot-add', request),
+    actOnBot: (number: number, action: DevBotAction): Promise<DevBotView[]> => ipcRenderer.invoke('radcord:dev-bot-act', number, action),
+    pickWav: (): Promise<string | null> => ipcRenderer.invoke('radcord:dev-bot-pick-wav'),
+    onBots: (listener: (bots: DevBotView[]) => void): (() => void) => {
+      const wrapped = (_event: IpcRendererEvent, bots: DevBotView[]): void => listener(bots)
+      ipcRenderer.on('radcord:dev-bots-state', wrapped)
+      return () => ipcRenderer.removeListener('radcord:dev-bots-state', wrapped)
+    },
+  })
 }

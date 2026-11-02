@@ -1,6 +1,6 @@
 # Atualização do app
 
-O que o SoundRoom instalado faz quando existe uma release mais nova no GitHub. A checagem que vale é a da versão **0.1.117**. O nome e o ícone são da **0.1.118**. A instalação silenciosa é da **0.1.119**. O `npm run desktop` não entra nisso: o app de desenvolvimento não está empacotado, a checagem é pulada e o login abre normal.
+O que o SoundRoom instalado faz quando existe uma release mais nova no GitHub. A checagem que vale é a da versão **0.1.117**. O nome e o ícone são da **0.1.118**. A instalação silenciosa é da **0.1.119**. A partir da **0.1.130**, se o host foi ligado por este app, o OK não fecha o processo: a fase fica `deferred` e o canto oferece "Instalar depois de desligar o host". O login não fica bloqueado nessa fase. Quando o host desliga, a fase volta a `ready`. Host aberto pelo terminal não adia. O `npm run desktop` não entra nisso: o app de desenvolvimento não está empacotado, a checagem é pulada e o login abre normal.
 
 ## O que tem que continuar verdade
 

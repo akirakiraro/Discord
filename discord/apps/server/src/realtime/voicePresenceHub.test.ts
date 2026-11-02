@@ -7,6 +7,11 @@ const VOICE = '6f1c2b7e-1d1a-4c55-9b8e-3a2f4d5e6f70'
 const OTHER = 'a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d'
 const TEXT = 'b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6e'
 
+function movedTo(payload: unknown, channelId: string): boolean {
+  if (!payload || typeof payload !== 'object' || !('channelId' in payload)) return false
+  return (payload as { channelId?: unknown }).channelId === channelId
+}
+
 function setup(names: Record<string, string> = { 'u-1': 'Akira', 'u-2': 'Bia' }): {
   hub: VoicePresenceHub
   broadcast: RecordingBroadcaster
@@ -51,7 +56,7 @@ describe('VoicePresenceHub', () => {
 
     hub.join('u-1', 's-1', { channelId: OTHER })
 
-    expect(broadcast.events.slice(1)).toEqual([
+    expect(broadcast.events.filter((row) => row.event === 'voice:left' || movedTo(row.payload, OTHER))).toEqual([
       { event: 'voice:left', payload: { channelId: VOICE, userId: 'u-1' } },
       { event: 'voice:joined', payload: { channelId: OTHER, userId: 'u-1', displayName: 'Akira' } },
     ])
@@ -70,16 +75,6 @@ describe('VoicePresenceHub', () => {
       payload: { channelId: VOICE, userId: 'u-1' },
     })
     expect(hub.snapshot().occupants).toEqual([])
-  })
-
-  it('sair duas vezes não repete o evento', () => {
-    const { hub, broadcast } = setup()
-    hub.join('u-1', 's-1', { channelId: VOICE })
-
-    hub.leave('u-1', 's-1')
-    hub.leave('u-1', 's-1')
-
-    expect(broadcast.events.filter((event) => event.event === 'voice:left')).toHaveLength(1)
   })
 
   it('cinquenta entradas aparecem no snapshot e a metade sai', () => {

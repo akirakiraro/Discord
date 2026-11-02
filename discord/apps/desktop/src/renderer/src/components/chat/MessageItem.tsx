@@ -44,8 +44,8 @@ export function MessageItem({ message, compact }: MessageItemProps): React.JSX.E
       </div>
       {isOwn && !editing && (
         <div className="message__actions">
-          <button title="Editar" onClick={() => setEditing(true)}>✏️</button>
-          <button title="Apagar" onClick={() => void deleteMessage()}>🗑️</button>
+          <button type="button" className="message__action" title="Editar" onClick={() => setEditing(true)}>✏️</button>
+          <button type="button" className="message__action" title="Apagar" onClick={() => void deleteMessage()}>🗑️</button>
         </div>
       )}
     </article>

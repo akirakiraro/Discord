@@ -1,0 +1,100 @@
+/* Variantes de botão. Fundo e texto em todo estado. Contraste mínimo 4.5:1. */
+
+button.button {
+  border-radius: 4px;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+button.button--primary,
+button.button--primary:focus-visible {
+  background: #5865f2;
+  color: #ffffff;
+}
+
+button.button--primary:hover:not(:disabled),
+button.button--primary:active:not(:disabled) {
+  background: #4752c4;
+  color: #ffffff;
+}
+
+button.button--primary:disabled,
+button.button--primary:disabled:hover {
+  background: #3c45a5;
+  color: #ffffff;
+}
+
+button.button--secondary,
+button.button--secondary:focus-visible {
+  background: #2b2d31;
+  color: #f2f3f5;
+}
+
+button.button--secondary:hover:not(:disabled),
+button.button--secondary:active:not(:disabled) {
+  background: #404249;
+  color: #f2f3f5;
+}
+
+button.button--secondary:disabled,
+button.button--secondary:disabled:hover {
+  background: #1e1f22;
+  color: #dbdee1;
+}
+
+button.button--danger,
+button.button--danger:focus-visible {
+  background: #c43135;
+  color: #ffffff;
+}
+
+button.button--danger:hover:not(:disabled),
+button.button--danger:active:not(:disabled) {
+  background: #a61e28;
+  color: #ffffff;
+}
+
+button.button--danger:disabled,
+button.button--danger:disabled:hover {
+  background: #8e2429;
+  color: #ffffff;
+}
+
+button.button--success,
+button.button--success:focus-visible {
+  background: #23a55a;
+  color: #1e1f22;
+}
+
+button.button--success:hover:not(:disabled),
+button.button--success:active:not(:disabled) {
+  background: #2dcc6e;
+  color: #1e1f22;
+}
+
+button.button--success:disabled,
+button.button--success:disabled:hover {
+  background: #146b38;
+  color: #f2f3f5;
+}
+
+button.button--ghost,
+button.button--ghost:focus-visible,
+button.button--ghost:disabled,
+button.button--ghost:disabled:hover {
+  background: transparent;
+  color: #f2f3f5;
+}
+
+button.button--ghost:hover:not(:disabled),
+button.button--ghost:active:not(:disabled) {
+  background: #35373c;
+  color: #f2f3f5;
+}
+
+button.button--ghost:disabled,
+button.button--ghost:disabled:hover {
+  color: #dbdee1;
+}

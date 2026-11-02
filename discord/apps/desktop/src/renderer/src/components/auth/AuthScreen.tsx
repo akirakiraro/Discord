@@ -1,10 +1,13 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { PRODUCT_DISPLAY_NAME } from '../../../../shared/appIdentity'
-import { authenticate } from '../../lib/auth/authenticate'
+import { authenticate, describeLoginFailure } from '../../lib/auth/authenticate'
 import { loadSavedLogin, saveLogin } from '../../lib/savedLogin'
 import { useSessionStore } from '../../stores/sessionStore'
+import { startHost, useHostPower } from '../../hooks/useHostPower'
 import { AuthFields } from './AuthFields'
 import { HostAddressControl } from './HostAddressControl'
+import { HostLaunchControl } from './HostLaunchControl'
+import { Button } from '../ui/Button'
 
 export function AuthScreen(): React.JSX.Element {
   const signOutReason = useSessionStore((store) => store.signOutReason)
@@ -12,6 +15,7 @@ export function AuthScreen(): React.JSX.Element {
   const [hostAddress, setHostAddress] = useState(() => loadSavedLogin(window.localStorage).hostAddress)
   const [error, setError] = useState<string | null>(signOutReason)
   const [submitting, setSubmitting] = useState(false)
+  const host = useHostPower()
 
   useEffect(() => {
     if (hostAddress) return
@@ -19,6 +23,12 @@ export function AuthScreen(): React.JSX.Element {
       if (ip) setHostAddress(ip)
     })
   }, [hostAddress])
+
+  function applyHostAddress(ip: string): void {
+    const saved = loadSavedLogin(window.localStorage)
+    saveLogin(window.localStorage, { ...saved, hostAddress: ip })
+    setHostAddress(ip)
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault()
@@ -33,7 +43,7 @@ export function AuthScreen(): React.JSX.Element {
       saveLogin(window.localStorage, { hostAddress, username: session.user.username, token: session.token })
       useSessionStore.getState().signIn(session)
     } catch (failure) {
-      setError(failure instanceof Error ? failure.message : String(failure))
+      setError(describeLoginFailure(failure, hostAddress))
       setSubmitting(false)
     }
   }
@@ -45,11 +55,12 @@ export function AuthScreen(): React.JSX.Element {
         <p className="auth-card__subtitle">{PRODUCT_DISPLAY_NAME} · a call da galera pela rede do Radmin</p>
         <AuthFields username={username} onChange={setUsername} />
         {error && <p className="auth-card__error">{error}</p>}
-        <button type="submit" className="button button--primary" disabled={submitting}>
+        <Button type="submit" variant="primary" disabled={submitting}>
           {submitting ? 'Conectando…' : 'Entrar'}
-        </button>
+        </Button>
       </form>
       <HostAddressControl value={hostAddress} onChange={setHostAddress} />
+      <HostLaunchControl snapshot={host} onStart={() => void startHost()} onUseAddress={applyHostAddress} />
     </div>
   )
 }

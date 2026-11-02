@@ -19,7 +19,7 @@ export interface DisplayBounds {
  */
 export function windowHandle(sourceId: string): string | null {
   const [kind, handle] = sourceId.split(':')
-  if (kind !== 'window' || !/^\d+$/.test(handle ?? '')) return null
+  if (kind !== 'window' || handle === undefined || !/^\d+$/.test(handle)) return null
   return handle
 }
 
@@ -67,7 +67,9 @@ export function mixPcm(chunks: readonly Buffer[]): Buffer {
 }
 
 function parseWindowLine(line: string): DesktopWindow[] {
-  const [pid, left, top, right, bottom] = line.trim().split(' ').map(Number)
+  const parts = line.trim().split(' ').map(Number)
+  const [pid, left, top, right, bottom] = parts
+  if (pid === undefined || left === undefined || top === undefined || right === undefined || bottom === undefined) return []
   if (![pid, left, top, right, bottom].every(Number.isFinite)) return []
   return [{ pid, left, top, right, bottom }]
 }

@@ -1,0 +1,36 @@
+name: Testes da dev
+
+# Push e pull request na dev. Não publica instalador: o Release continua só no push da qa.
+on:
+  push:
+    branches:
+      - dev
+  pull_request:
+    branches:
+      - dev
+
+# Sem job windows-latest: npm ci do monorepo nesse runner é lento e o desktop puxa o Electron.
+# O C:\ no --import é coberto no ubuntu (file:///C:/Users/... e um node de verdade). Ver docs/testes.md.
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: discord/package-lock.json
+
+      - name: Instalar dependências
+        working-directory: discord
+        run: npm ci
+
+      - name: Rodar os testes
+        working-directory: discord
+        run: npm test
+
+      - name: Typecheck
+        working-directory: discord
+        run: npm run typecheck

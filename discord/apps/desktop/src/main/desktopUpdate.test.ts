@@ -6,6 +6,7 @@ import {
   DesktopUpdateMachine,
   armQuitAndInstall,
   describeUpdateFailure,
+  hostDefersUpdateMessage,
   type BlockUpdateClient,
 } from './desktopUpdate'
 
@@ -245,6 +246,51 @@ describe('DesktopUpdateMachine', () => {
     expect(client.checks).toBe(1)
     finish()
     await pending
+  })
+})
+
+describe('atualização com o host ligado', () => {
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('não fecha o app e volta a instalar quando o host desliga', async () => {
+    vi.useFakeTimers()
+    const client = new FakeBlockUpdateClient()
+    let hostOn = true
+    const machine = new DesktopUpdateMachine({
+      packaged: true,
+      installedVersion: '0.1.129',
+      client,
+      blocksInstall: () => hostOn,
+    })
+
+    await machine.start()
+    machine.install()
+
+    expect(client.downloads).toBe(1)
+    expect(client.installed).toBe(0)
+    expect(machine.view()).toEqual({
+      phase: 'deferred',
+      version: '0.1.117',
+      progress: null,
+      message: hostDefersUpdateMessage('0.1.117'),
+    })
+    expect(updateBlocksLogin(machine.view())).toBe(false)
+    expect(hostDefersUpdateMessage('0.1.117')).toBe(
+      'O host ligado por este app adia a instalação da versão 0.1.117. Desligue o host para instalar. Instalar agora fecharia o app e derrubaria a call.',
+    )
+
+    await machine.requestCheck()
+    expect(client.checks, 'não baixa de novo enquanto espera').toBe(1)
+
+    hostOn = false
+    machine.reconsiderInstall()
+    expect(machine.view().phase).toBe('ready')
+    machine.install()
+    expect(machine.view().phase).toBe('installing')
+    await vi.advanceTimersByTimeAsync(INSTALL_PAUSE_MS)
+    expect(client.installed).toBe(1)
   })
 })
 

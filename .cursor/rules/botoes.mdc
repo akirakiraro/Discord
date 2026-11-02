@@ -1,0 +1,17 @@
+---
+description: Botões do app nunca brancos e sempre com a variante do tema
+alwaysApply: true
+---
+
+# Botões
+
+Pedido permanente do dono: vale em qualquer chat deste projeto.
+
+Nenhum botão do SoundRoom pode ficar branco, cinza claríssimo ou com texto ilegível. Isso vale no descanso, hover, foco, desabilitado e carregando.
+
+- Ação de texto usa `<Button variant="primary" | "secondary" | "danger" | "ghost" | "success">` em `apps/desktop/src/renderer/src/components/ui/Button.tsx`.
+- Não use `<button className="button">` sem a variante. Essa forma pinta a letra de branco e deixa o fundo do sistema.
+- Ícone, canal, membro e botão redondo usam a classe do tema já listada em `THEME_BUTTON_CLASSES`. Fundo e texto têm de estar no CSS do próprio estado.
+- Desabilitado escurece a cor. Não use opacidade no botão e não deixe o cinza padrão do navegador.
+- Contraste mínimo entre fundo e texto: 4,5:1, inclusive desabilitado. O teste é `buttonTheme.test.ts`.
+- Ao criar ou mudar um botão, confira todos os estados e o doc `discord/docs/botoes.md`.

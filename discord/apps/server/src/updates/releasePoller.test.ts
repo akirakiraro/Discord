@@ -1,7 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
 import {
-  GITHUB_LATEST_RELEASE_URL,
-  GITHUB_USER_AGENT,
   ReleasePoller,
   createGithubReleaseLookup,
   startReleasePoller,
@@ -58,17 +56,22 @@ class CapturingFetch {
 
 class FakeScheduler implements IntervalScheduler {
   ms = 0
-  ticks = 0
   stopped = false
+  private tick: (() => void) | null = null
 
   every(ms: number, tick: () => void): IntervalHandle {
     this.ms = ms
+    this.tick = tick
     return {
       stop: () => {
         this.stopped = true
-        void tick
+        this.tick = null
       },
     }
+  }
+
+  fire(): void {
+    this.tick?.()
   }
 }
 
@@ -136,26 +139,30 @@ describe('createGithubReleaseLookup', () => {
 
     await expect(createGithubReleaseLookup(http.fetch).latestTag()).resolves.toBe('v0.1.10')
 
-    expect(http.url).toBe(GITHUB_LATEST_RELEASE_URL)
-    expect(http.headers['User-Agent']).toBe(GITHUB_USER_AGENT)
+    expect(http.url).toBe('https://api.github.com/repos/akirakiraro/Discord/releases/latest')
+    expect(http.headers['User-Agent']).toBe('radcord-host')
     expect(http.headers.Authorization, 'consulta pública').toBeUndefined()
   })
 
   it('trata limite e resposta ruim como falha', async () => {
     const limited = new CapturingFetch()
     limited.status = 403
-    await expect(createGithubReleaseLookup(limited.fetch).latestTag()).rejects.toThrow(/HTTP 403/)
+    await expect(createGithubReleaseLookup(limited.fetch).latestTag()).rejects.toThrow(/limitou a consulta: HTTP 403/)
+
+    const tooMany = new CapturingFetch()
+    tooMany.status = 429
+    await expect(createGithubReleaseLookup(tooMany.fetch).latestTag()).rejects.toThrow(/limitou a consulta: HTTP 429/)
 
     const missing = new CapturingFetch()
     missing.status = 500
-    await expect(createGithubReleaseLookup(missing.fetch).latestTag()).rejects.toThrow(/HTTP 500/)
+    await expect(createGithubReleaseLookup(missing.fetch).latestTag()).rejects.toThrow(/respondeu HTTP 500/)
   })
 
   it('recusa JSON sem tag_name', async () => {
     const http = new CapturingFetch()
     http.body = { name: 'SoundRoom 0.1.9' }
 
-    await expect(createGithubReleaseLookup(http.fetch).latestTag()).rejects.toThrow(/tag_name/)
+    await expect(createGithubReleaseLookup(http.fetch).latestTag()).rejects.toThrow(/sem tag_name: recebido \{"name":"SoundRoom 0\.1\.9"\}/)
   })
 
   it('estoura o prazo sem pendurar o host', async () => {
@@ -179,5 +186,22 @@ describe('startReleasePoller', () => {
     expect(scheduler.ms).toBe(120_000)
     handle.stop()
     expect(scheduler.stopped).toBe(true)
+  })
+
+  it('o intervalo seguinte consulta de novo e para depois do stop', async () => {
+    const lookup = new ScriptedReleaseLookup(['v0.1.2', 'v0.1.3'])
+    const sink = new RecordingReleaseSink()
+    const poller = new ReleasePoller(lookup, sink, new RecordingPollLogger())
+    const scheduler = new FakeScheduler()
+
+    const handle = startReleasePoller(poller, 120_000, scheduler)
+    await vi.waitFor(() => expect(sink.versions).toEqual(['0.1.2']))
+
+    scheduler.fire()
+    await vi.waitFor(() => expect(sink.versions).toEqual(['0.1.2', '0.1.3']))
+
+    handle.stop()
+    scheduler.fire()
+    expect(sink.versions).toEqual(['0.1.2', '0.1.3'])
   })
 })

@@ -26,6 +26,8 @@ O script não mistura mídia. Ele não encaminha áudio nem vídeo.
 
 `npm run host:firewall` libera no Firewall do Windows as mesmas portas, e a TCP `3000` da API, apenas para `26.0.0.0/8`.
 
+A partir da 0.1.130 o app também liga esse par de processos, no PC em que o repositório foi clonado e o `npm run host:setup` gravou o manifesto. O processo principal chama o `node` e o `livekit-server.exe` direto, sem `npm run`. O `--import` do tsx é uma URL `file:///` (0.1.131); o JSON do manifesto continua com o caminho do arquivo. Sem o manifesto, o botão não existe. O que a tela faz, a trava do username `akira` e como tirá-la estão em [host-no-app.md](host-no-app.md). O `GET /health` passa a incluir `online` e `inVoice`, para a confirmação de desligar.
+
 ## API
 
 [apps/server/src/index.ts](../apps/server/src/index.ts) sobe um Fastify. A porta padrão é `3000` (`SERVER_DEFAULT_PORT`). `npm run host` define o endereço de escuta; sem `BIND_HOST`, a API escuta em `0.0.0.0`.
@@ -75,3 +77,31 @@ Na 0.1.117 a atualização mora no app e no host. O app instalado bloqueia o log
 Na 0.1.119 o OK não abre a janela do NSIS. A tela avisa que o SoundRoom vai fechar e reabrir, e o instalador roda em silêncio. O detalhe está em [atualizacao-do-app.md](atualizacao-do-app.md).
 
 Na 0.1.120 o microfone, com as três opções desligadas, não pede processamento ao Chromium. O que a call recebe ainda passa pelo volume e pelo portão, sem filtro. O ganho automático da tela não liga o AGC do navegador. O detalhe está em [audio-microfone.md](audio-microfone.md).
+
+Na 0.1.121 o volume de cada pessoa fica no app de quem ajusta, de 0% a 200%. 100% não altera a faixa recebida. O Me ouvir deixa de recapturar o microfone: ligar a escuta não muda o que os outros ouvem. O detalhe está em [volume-por-pessoa.md](volume-por-pessoa.md) e em [escuta-propria.md](escuta-propria.md).
+
+Na 0.1.122 o usuário `akira` vê um diagnóstico da call na barra de voz. Os números ficam neste PC. O detalhe está em [diagnostico-audio.md](diagnostico-audio.md).
+
+Na 0.1.123 esse painel mostra o `getStats` cru, a captura original, a cadeia do microfone, o volume por pessoa, os últimos 60 s e um log. Copiar ou salvar o JSON continua neste PC.
+
+Na 0.1.124 o GitHub roda os testes e o typecheck em todo push na `dev`. O instalador continua saindo só do push na `qa`, e só se essa checagem passar. O Node é o 22.23.4 do `.nvmrc`. O detalhe está em [testes.md](testes.md).
+
+Na 0.1.125 o socket tem um teste com cliente de verdade. Sem token a conexão é recusada. O detalhe está em [testes.md](testes.md).
+
+Na 0.1.126 um teste abre e fecha o Me ouvir e exige que a faixa publicada não seja recapturada.
+
+Na 0.1.127 os testes de áudio checam o valor exato e propriedades do limiter, do portão e do volume. O detalhe está em [testes.md](testes.md).
+
+Na 0.1.128 a suíte tira o teste repetido. Mute, volume da tela e a lista de 50 pessoas ficam num arquivo só. A contagem vai de 448 para 427. O detalhe está em [testes.md](testes.md).
+
+Na 0.1.129 a mutação roda na máquina local, fora do CI. Os testes de áudio, mensagem e sessão matam mais mutantes. O detalhe está em [testes.md](testes.md).
+
+Na 0.1.130 o desktop liga e desliga o host quando o módulo está neste PC. Reabra o `npm run desktop`. Quem já tinha o LiveKit roda `npm run host:setup` uma vez para o botão aparecer. O detalhe está em [host-no-app.md](host-no-app.md).
+
+Na 0.1.131 o `--import` do tsx vira URL `file:///`. No Windows o caminho `C:\` do manifesto quebrava com protocolo `c:`. O Node 24 serve. Se a API cair antes de ficar pronta, a frase traz a linha do log. Reabra o `npm run desktop`. Não precisa rodar `host:setup` de novo.
+
+Na 0.1.132 os botões de ação usam `<Button variant>`. Fundo branco com letra branca não entra. O detalhe está em [botoes.md](botoes.md).
+
+Na 0.1.134 o X da janela esconde o app na bandeja e avisa. O host do app e a call continuam no ar. Sair de verdade (menu do ícone, atualização) segue o fluxo de [host-no-app.md](host-no-app.md). O detalhe está em [minimizar-na-bandeja.md](minimizar-na-bandeja.md).
+
+Na 0.1.136 o `npm run desktop` ganha a área de testes. Um processo Node à parte (`apps/test-bot`) entra no LiveKit como "Bot de teste N" e toca áudio. A API só assina o token dele com `RADCORD_DEV_TOOLS=1`. O instalador não leva nada disso. O detalhe está em [area-de-testes.md](area-de-testes.md).

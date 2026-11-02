@@ -28,8 +28,13 @@ function ParticipantTile({ participant }: { participant: Participant }): React.J
 }
 
 function asVolumeTrack(track: Track | undefined): VolumeTrack | undefined {
-  if (track && 'setVolume' in track) return track
-  return undefined
+  if (!track || !hasSetVolume(track)) return undefined
+  return track
+}
+
+function hasSetVolume(track: Track): track is Track & VolumeTrack {
+  const setVolume = (track as { setVolume?: unknown }).setVolume
+  return typeof setVolume === 'function'
 }
 
 function useScreenListenLevel(target: ScreenVolumeTarget): number {

@@ -25,7 +25,7 @@ export function exposeScreenAudioIpc(): void {
 
 export async function stopScreenAudio(): Promise<void> {
   const running = captures.splice(0)
-  if (running.length > 0) screenAudioLog('capture_stopped', meter)
+  if (running.length > 0) screenAudioLog('capture_stopped', { ...meter })
   pending = []
   sender = null
   meter = emptyMeter()

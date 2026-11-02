@@ -37,7 +37,7 @@
 }
 
 .member--offline {
-  opacity: 0.4;
+  color: #949ba4;
 }
 
 .member__name {

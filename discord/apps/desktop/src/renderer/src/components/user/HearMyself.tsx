@@ -8,6 +8,7 @@ import { useMicPrefsStore } from '../../stores/micPrefsStore'
 import { useSessionStore, type AuthSession } from '../../stores/sessionStore'
 import { blockedEarReason } from '../../lib/voice/micDeafen'
 import { useVoiceStore } from '../../stores/voiceStore'
+import { Button } from '../ui/Button'
 
 /**
  * Liga e desliga a escuta da própria voz. Fora da chamada toca o microfone neste PC.
@@ -26,9 +27,8 @@ export function HearMyself(): React.JSX.Element {
 
   return (
     <div className="settings-modal__field">
-      <button
-        type="button"
-        className={hearing ? 'button button--success' : 'button button--primary'}
+      <Button
+        variant={hearing ? 'success' : 'primary'}
         onClick={() => {
           setError(null)
           if (!hearing) unlockEarOutput()
@@ -36,7 +36,7 @@ export function HearMyself(): React.JSX.Element {
         }}
       >
         {hearing ? 'Parar de me ouvir' : 'Me ouvir'}
-      </button>
+      </Button>
       <p className="settings-modal__hint">{hint(channelId !== null, hearing)}</p>
       {error && <p className="settings-modal__error">{error}</p>}
     </div>
@@ -46,7 +46,7 @@ export function HearMyself(): React.JSX.Element {
 function hint(inCall: boolean, hearing: boolean): string {
   if (!inCall && hearing) return 'Você está se ouvindo neste PC, sem chamada. O portão de sensibilidade vale para esse retorno.'
   if (!inCall) return 'Ouve o microfone neste PC, sem entrar num canal. Na chamada, o som volta pelo servidor.'
-  if (hearing) return 'Você está se ouvindo pelo servidor. O eco fica pausado. Fale acima do traço da sensibilidade: abaixo dele o retorno também fica mudo.'
+  if (hearing) return 'Você está se ouvindo pelo servidor, com o atraso da call. A faixa que os outros ouvem não muda. Fale acima do traço: abaixo dele o retorno também fica mudo.'
   return 'O som da sua voz volta pelo servidor para você conferir como os outros escutam. O portão de sensibilidade vale para esse retorno.'
 }
 

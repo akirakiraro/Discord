@@ -25,6 +25,23 @@ export async function authenticate(hostAddress: string, username: string, fetchF
 }
 
 /**
+ * Frase para a tela de entrar. Host fora do ar vira uma frase só, sem o erro cru do fetch.
+ * Erro da API (nome inválido, por exemplo) e da validação local já vêm em português.
+ * Exemplo: `describeLoginFailure(new ApiRequestError(0, 'host_unreachable', '...'), '26.1.2.3')`.
+ */
+export function describeLoginFailure(failure: unknown, hostAddress: string): string {
+  if (failure instanceof ApiRequestError) {
+    if (failure.status === 0) {
+      return `Não encontramos o host em ${hostAddress.trim()}. Confira se o host está ligado e se o Radmin VPN está conectado.`
+    }
+    if (failure.status >= 500 || failure.code === 'unexpected_response') return 'O host respondeu com erro. Tente de novo em instantes.'
+    return failure.message
+  }
+  if (failure instanceof Error && failure.message) return failure.message
+  return 'Não foi possível entrar agora. Tente de novo em instantes.'
+}
+
+/**
  * Reabre a sessão salva; devolve `null` se o token não vale mais.
  * Exemplo: `const session = await restoreSession('26.186.21.58', token)`
  */

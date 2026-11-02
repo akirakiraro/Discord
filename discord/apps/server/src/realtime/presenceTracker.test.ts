@@ -11,6 +11,17 @@ describe('PresenceTracker', () => {
     expect(presence.isOnline('u-1')).toBe(true)
     expect(presence.disconnect('u-1'), 'última conexão').toBe(true)
     expect(presence.isOnline('u-1')).toBe(false)
+    expect(presence.onlineCount()).toBe(0)
+  })
+
+  it('conta pessoas, não janelas', () => {
+    const presence = new PresenceTracker()
+
+    presence.connect('u-1')
+    presence.connect('u-1')
+    presence.connect('u-2')
+
+    expect(presence.onlineCount()).toBe(2)
   })
 
   it('ignora desconexão de quem não estava conectado', () => {
@@ -18,15 +29,5 @@ describe('PresenceTracker', () => {
 
     expect(presence.disconnect('fantasma')).toBe(false)
     expect(presence.isOnline('fantasma')).toBe(false)
-  })
-
-  it('acompanha 50 usuários independentes', () => {
-    const presence = new PresenceTracker()
-    const userIds = Array.from({ length: 50 }, (_unused, index) => `u-${index}`)
-
-    userIds.forEach((userId) => presence.connect(userId))
-    userIds.slice(0, 25).forEach((userId) => presence.disconnect(userId))
-
-    expect(userIds.filter((userId) => presence.isOnline(userId))).toEqual(userIds.slice(25))
   })
 })

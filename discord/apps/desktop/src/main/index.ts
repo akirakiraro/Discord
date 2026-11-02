@@ -2,8 +2,13 @@ import { networkInterfaces } from 'node:os'
 import { join } from 'node:path'
 import { app, BrowserWindow, ipcMain, screen, shell, type BrowserWindowConstructorOptions } from 'electron'
 import { autoUpdater, type UpdateCheckResult } from 'electron-updater'
+import { bindCloseToTray, bindQuitIntent, createAppTray, showMainWindow } from './appTray'
 import { bindClientReports } from './clientReportBridge'
+import { createCloseGate } from './closeToTray'
 import { DesktopUpdateMachine, armQuitAndInstall, type BlockUpdateClient } from './desktopUpdate'
+import { hostBlocksInstall } from './host/hostClose'
+import { bindHostIpc, bindHostWindow, publishHostSnapshot } from './host/hostIpc'
+import { createHostController } from './host/hostRuntime'
 import { cleanProgress, type UpdateProgress, type UpdateSnapshot } from '../shared/desktopUpdateSnapshot'
 import { allowMediaPermissions, handleScreenShareRequests } from './mediaPermissions'
 import { findRadminIpv4 } from './radminAddress'
@@ -63,6 +68,9 @@ function mainWindowOptions(saved: WindowPlacement | null): BrowserWindowConstruc
       preload: join(__dirname, '../preload/index.js'),
       contextIsolation: true,
       sandbox: true,
+      // O portão do microfone roda em timer. Na bandeja ou atrás do jogo o Chromium
+      // freava o timer e o portão abria tarde, comendo o começo da frase.
+      backgroundThrottling: false,
     },
   }
 }
@@ -129,11 +137,13 @@ function fillsWorkArea(window: BrowserWindow): boolean {
 }
 
 function deferUntilAlive(window: BrowserWindow, event: 'unmaximize' | 'leave-full-screen', apply: () => void): void {
-  window.on(event, () => {
+  const run = (): void => {
     setTimeout(() => {
       if (!window.isDestroyed()) apply()
     }, 100)
-  })
+  }
+  if (event === 'unmaximize') window.on('unmaximize', run)
+  else window.on('leave-full-screen', run)
 }
 
 function bindPlacementBounds(window: BrowserWindow, memory: PlacementMemory, save: () => void): void {
@@ -181,15 +191,17 @@ function exposeRadminIp(): void {
   ipcMain.handle('radcord:radmin-ip', () => findRadminIpv4(networkInterfaces()))
 }
 
-function exposeDesktopUpdate(): void {
+function exposeDesktopUpdate(blocksInstall: () => boolean): DesktopUpdateMachine {
   const machine = new DesktopUpdateMachine({
     packaged: app.isPackaged,
     installedVersion: app.getVersion(),
     client: blockUpdateClient(),
     onChange: publishUpdateSnapshot,
+    blocksInstall,
   })
   registerUpdateIpc(machine)
   void machine.start()
+  return machine
 }
 
 function publishUpdateSnapshot(snapshot: UpdateSnapshot): void {
@@ -272,11 +284,35 @@ app.whenReady().then(() => {
   allowMediaPermissions()
   handleScreenShareRequests()
   exposeRadminIp()
-  exposeDesktopUpdate()
+  const host = createHostController({
+    userDataDir: app.getPath('userData'),
+    appPath: app.getAppPath(),
+    cwd: process.cwd(),
+    envPath: process.env.RADCORD_HOST_MODULE,
+    // Host ligado pelo `npm run desktop` aceita o bot de teste. No instalador vira `{}`.
+    extraApiEnv: import.meta.env.DEV ? { RADCORD_DEV_TOOLS: '1' } : {},
+  })
+  const updates = exposeDesktopUpdate(() => hostBlocksInstall(host.view()))
+  const onHostOff = (): void => updates.reconsiderInstall()
+  bindHostIpc(host, publishHostSnapshot, onHostOff)
+  const window = createMainWindow()
+  const tray = createAppTray(
+    windowIconFile(process.resourcesPath, app.getAppPath(), app.isPackaged),
+    () => showMainWindow(window),
+    () => app.quit(),
+  )
+  const gate = createCloseGate(() => tray.available)
+  bindQuitIntent(gate)
+  // Antes do host: o X só esconde; o host decide só quando a saída é de verdade.
+  bindCloseToTray(window, gate, tray, join(app.getPath('userData'), 'tray-notice-seen'))
+  bindHostWindow(window, host, publishHostSnapshot, onHostOff, gate)
   exposeScreenShareIpc()
   exposeScreenAudioIpc()
   exposeScreenAudioLog()
-  bindClientReports(createMainWindow(), join(app.getPath('userData'), 'pending-reports.json'))
+  bindClientReports(window, join(app.getPath('userData'), 'pending-reports.json'))
+  // Área de testes só no `npm run desktop`. No instalador este bloco e o import somem.
+  if (import.meta.env.DEV) void import('./dev/devTools').then((devTools) => devTools.bindDevTools())
+  void host.refresh()
 })
 
 app.on('window-all-closed', () => app.quit())

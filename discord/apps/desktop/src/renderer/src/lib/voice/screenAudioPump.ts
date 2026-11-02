@@ -25,7 +25,9 @@ export class ScreenAudioPump {
   private readonly playing = new Set<AudioBufferSourceNode>()
 
   constructor() {
-    this.track = this.destination.stream.getAudioTracks()[0]
+    const track = this.destination.stream.getAudioTracks()[0]
+    if (!track) throw new Error('destino de áudio da tela sem faixa; esperado um MediaStreamTrack')
+    this.track = track
     void this.context.resume()
   }
 
@@ -96,8 +98,8 @@ function scheduleStereo(
   return source
 }
 
-function concat(left: Uint8Array, right: Uint8Array): Uint8Array {
-  const joined = new Uint8Array(left.length + right.length)
+function concat(left: Uint8Array, right: Uint8Array): Uint8Array<ArrayBuffer> {
+  const joined = new Uint8Array(new ArrayBuffer(left.length + right.length))
   joined.set(left)
   joined.set(right, left.length)
   return joined

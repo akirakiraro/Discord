@@ -8,6 +8,7 @@ export function updateCardTitle(snapshot: UpdateSnapshot): string {
   if (snapshot.phase === 'checking') return 'Verificando atualização'
   if (snapshot.phase === 'downloading') return snapshot.version ? `Baixando ${snapshot.version}` : 'Baixando atualização'
   if (snapshot.phase === 'ready') return 'Pronto para instalar'
+  if (snapshot.phase === 'deferred') return 'Atualização adiada'
   if (snapshot.phase === 'installing') return 'Instalando...'
   return 'Atualização pendente'
 }
@@ -17,6 +18,7 @@ export function updateCardDetail(snapshot: UpdateSnapshot): string | null {
   if (snapshot.phase === 'checking') return 'Consultando os releases do GitHub…'
   if (snapshot.phase === 'downloading') return formatUpdateProgress(snapshot.progress)
   if (snapshot.phase === 'ready') return '100%'
+  if (snapshot.phase === 'deferred') return snapshot.message
   if (snapshot.phase === 'installing') return installingDetail()
   if (snapshot.phase === 'error') return snapshot.message
   return null

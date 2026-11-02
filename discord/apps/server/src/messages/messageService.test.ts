@@ -50,19 +50,31 @@ describe('MessageService', () => {
     const older = service.history(textChannelId, { limit: 50, before: latest.messages[0]?.id })
 
     expect(latest.messages).toHaveLength(50)
+    expect(latest.messages[0]?.id).toBe('msg-11')
+    expect(latest.messages.at(-1)?.id).toBe('msg-60')
     expect(latest.hasMore, 'ainda restam 10').toBe(true)
-    expect(older.messages).toHaveLength(10)
+    expect(older.messages.map((message) => message.id)).toEqual(['msg-1', 'msg-2', 'msg-3', 'msg-4', 'msg-5', 'msg-6', 'msg-7', 'msg-8', 'msg-9', 'msg-10'])
     expect(older.hasMore, 'chegou no começo').toBe(false)
+
+    const exact = service.history(textChannelId, { limit: 60 })
+    expect(exact.hasMore, 'a página cheia não finge que há mais').toBe(false)
+    expect(exact.messages[0]?.id).toBe('msg-1')
+    expect(exact.messages).toHaveLength(60)
   })
 
   it('autor edita e apaga a própria mensagem, avisando os outros', () => {
     const message = service.send('u-1', textChannelId, 'oi', null)
 
     const edited = service.edit('u-1', message.id, 'olá')
-    service.remove('u-1', message.id)
 
     expect(edited).toMatchObject({ content: 'olá', editedAt: '2026-10-19T12:00:00.000Z' })
+    expect(service.history(textChannelId, { limit: 10 }).messages[0]?.content).toBe('olá')
+    service.remove('u-1', message.id)
     expect(broadcaster.events.map((recorded) => recorded.event)).toEqual(['message:created', 'message:updated', 'message:deleted'])
+    expect(broadcaster.events.at(-1)).toEqual({
+      event: 'message:deleted',
+      payload: { id: message.id, channelId: textChannelId },
+    })
     expect(service.history(textChannelId, { limit: 50 }).messages).toHaveLength(0)
   })
 
@@ -83,5 +95,15 @@ describe('MessageService', () => {
 
   it('responde 404 para mensagem inexistente', () => {
     expect(() => service.edit('u-1', 'nada', 'x')).toThrow(/"nada" não existe/)
+  })
+
+  it('não apaga o texto se a edição vier vazia e não houver print', () => {
+    const text = service.send('u-1', textChannelId, 'oi', null)
+    const image = 'data:image/jpeg;base64,YQ=='
+    const print = service.send('u-1', textChannelId, '', image)
+
+    expect(() => service.edit('u-1', text.id, '')).toThrow(/vazia/)
+    expect(service.edit('u-1', print.id, '').content).toBe('')
+    expect(service.edit('u-1', print.id, '').imageUrl).toBe(image)
   })
 })

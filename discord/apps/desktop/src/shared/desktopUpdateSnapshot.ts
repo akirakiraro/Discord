@@ -1,4 +1,4 @@
-export type UpdatePhase = 'checking' | 'downloading' | 'ready' | 'installing' | 'error' | 'current' | 'skipped'
+export type UpdatePhase = 'checking' | 'downloading' | 'ready' | 'installing' | 'deferred' | 'error' | 'current' | 'skipped'
 
 export interface UpdateProgress {
   percent: number
@@ -14,7 +14,7 @@ export interface UpdateSnapshot {
   message: string | null
 }
 
-const PHASES: readonly UpdatePhase[] = ['checking', 'downloading', 'ready', 'installing', 'error', 'current', 'skipped']
+const PHASES: readonly UpdatePhase[] = ['checking', 'downloading', 'ready', 'installing', 'deferred', 'error', 'current', 'skipped']
 
 /** App de desenvolvimento: a checagem não roda e o login abre. */
 export const SKIPPED_UPDATE: UpdateSnapshot = {

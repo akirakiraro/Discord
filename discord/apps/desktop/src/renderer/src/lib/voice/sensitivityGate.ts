@@ -1,8 +1,8 @@
 import { Track, type AudioProcessorOptions, type TrackProcessor } from 'livekit-client'
 import { clampInputGain } from './micPreferences'
 import { CLOSED_GATE, clampGateDb, rmsToDb, stepGate, type GateState } from './micLevel'
-import { aimGain, aimGateOpen, createMicChain, followLeveler, setSliderGain, type MicChain } from './micGain'
-import { rmsLevel } from './speakingLevel'
+import { aimGain, aimGateOpen, createMicChain, followLeveler, limiterAttenuation, peakSample, readChainRms, setSliderGain, type MicChain } from './micGain'
+import type { MicChainReading } from './probeChain'
 
 const TICK_MS = 32
 
@@ -40,6 +40,16 @@ export class SensitivityGate implements TrackProcessor<Track.Kind.Audio, AudioPr
 
   get listening(): boolean {
     return this.nodes !== undefined
+  }
+
+  /**
+   * Leitura local da cadeia, para o painel de debug. Não publica nada.
+   * Exemplo: `gate.debugSnapshot()?.gateOpen`.
+   */
+  debugSnapshot(): MicChainReading | null {
+    const nodes = this.nodes
+    if (!nodes) return null
+    return readingOf(this, nodes)
   }
 
   async init(opts: AudioProcessorOptions): Promise<void> {
@@ -103,7 +113,7 @@ export class SensitivityGate implements TrackProcessor<Track.Kind.Audio, AudioPr
   private tick(): void {
     const nodes = this.nodes
     if (!nodes) return
-    const post = readPostGain(nodes.chain)
+    const post = readChainRms(nodes.chain)
     this.levelDb = rmsToDb(post)
     followLeveler(nodes.chain, post, nodes.autoGain)
     this.followGate(nodes)
@@ -116,9 +126,21 @@ export class SensitivityGate implements TrackProcessor<Track.Kind.Audio, AudioPr
   }
 }
 
-function readPostGain(chain: MicChain): number {
-  chain.analyser.getByteTimeDomainData(chain.samples)
-  return rmsLevel(chain.samples)
+function readingOf(gate: SensitivityGate, nodes: GateNodes): MicChainReading {
+  const chain = nodes.chain
+  chain.analyser.getFloatTimeDomainData(chain.samples)
+  return {
+    sliderGain: chain.sliderGain,
+    levelerGain: chain.levelerGain,
+    limiterAttenuation: limiterAttenuation(peakSample(chain.samples)),
+    gateOpen: nodes.state.open,
+    levelDb: gate.levelDb,
+    thresholdDb: gate.thresholdDb,
+    autoGain: nodes.autoGain,
+    sampleRate: chain.context.sampleRate,
+    baseLatencySec: chain.context.baseLatency,
+    outputLatencySec: chain.context.outputLatency,
+  }
 }
 
 function audioContextOf(opts: AudioProcessorOptions): AudioContext {

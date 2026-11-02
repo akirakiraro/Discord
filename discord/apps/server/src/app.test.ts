@@ -21,10 +21,11 @@ const LIVEKIT_URL = 'ws://26.186.21.58:7880'
 describe('API do host', () => {
   let app: FastifyInstance
   let issuer: FakeVoiceTokenIssuer
+  let context: ReturnType<typeof createServerContext>
 
   beforeEach(async () => {
     issuer = new FakeVoiceTokenIssuer()
-    const context = createServerContext({
+    context = createServerContext({
       db: openDatabase(IN_MEMORY_DATABASE),
       tokenIssuer: issuer,
       livekitPublicUrl: LIVEKIT_URL,
@@ -55,7 +56,18 @@ describe('API do host', () => {
   it('GET /health responde sem login', async () => {
     const response = await app.inject({ method: 'GET', url: '/health' })
 
-    expect(response.json()).toEqual({ status: 'ok', livekitUrl: LIVEKIT_URL })
+    expect(response.json()).toEqual({ status: 'ok', livekitUrl: LIVEKIT_URL, online: 0, inVoice: 0 })
+  })
+
+  it('GET /health conta duas contas online e um assento de voz', async () => {
+    context.presence.connect('u-1')
+    context.presence.connect('u-1')
+    context.presence.connect('u-2')
+    context.voiceRoster.join({ userId: 'u-1', socketId: 's-1', channelId: 'canal-1', displayName: 'Akira' })
+
+    const response = await app.inject({ method: 'GET', url: '/health' })
+
+    expect(response.json()).toEqual({ status: 'ok', livekitUrl: LIVEKIT_URL, online: 2, inVoice: 1 })
   })
 
   it('rotas protegidas respondem 401 sem token', async () => {

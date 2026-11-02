@@ -37,6 +37,10 @@ class FakeMicrophone implements MicrophonePort {
   }
 }
 
+function eventsOf(log: readonly string[], prefix: string): string[] {
+  return log.filter((entry) => entry.startsWith(prefix))
+}
+
 function captureFlag(value: AudioCaptureOptions['noiseSuppression']): string {
   if (value === true) return 'true'
   if (value === false || (typeof value === 'object' && value.exact === false)) return 'false'
@@ -173,7 +177,9 @@ describe('VoiceSessionController', () => {
     await controller.join(new FakeVoiceTokens(), 'v1')
     await controller.join(new FakeVoiceTokens(), 'v2')
 
-    expect(room.log.slice(3)).toEqual(['disconnect', 'connect:ws://host:7880:tok-v2', 'mic:true', 'gain'])
+    expect(eventsOf(room.log, 'connect')).toEqual(['connect:ws://host:7880:tok-v1', 'connect:ws://host:7880:tok-v2'])
+    expect(room.log.indexOf('disconnect')).toBeGreaterThan(room.log.indexOf('connect:ws://host:7880:tok-v1'))
+    expect(room.log.indexOf('disconnect')).toBeLessThan(room.log.lastIndexOf('connect:ws://host:7880:tok-v2'))
     expect(useVoiceStore.getState()).toMatchObject({ connection: { channelId: 'v2' }, lastError: null })
   })
 
@@ -192,7 +198,13 @@ describe('VoiceSessionController', () => {
     useVoiceStore.getState().toggleMic()
     await Promise.resolve()
 
-    expect(room.log.slice(3), 'o clique no microfone surdo desmuta os dois').toEqual(['mic:false', 'mic:true', 'gain'])
+    expect(room.log.filter((entry) => entry.startsWith('mic') || entry === 'gain'), 'o clique no microfone surdo desmuta os dois').toEqual([
+      'mic:true',
+      'gain',
+      'mic:false',
+      'mic:true',
+      'gain',
+    ])
     expect(useVoiceStore.getState()).toMatchObject({ micMuted: false, deafened: false })
   })
 
@@ -209,15 +221,9 @@ describe('VoiceSessionController', () => {
     expect(useVoiceStore.getState()).toMatchObject({ micMuted: true, deafened: false })
   })
 
-  it('surdo não republica o microfone ao trocar a entrada', async () => {
-    await controller.join(new FakeVoiceTokens(), 'v1')
-    useVoiceStore.getState().toggleDeafen()
-    await Promise.resolve()
-
-    useMicPrefsStore.getState().setDeviceId('headset')
-    await Promise.resolve()
-
-    expect(room.log.filter((entry) => entry.startsWith('restart'))).toEqual([])
+  it('surdo ou mutado não republica o microfone ao trocar a entrada', async () => {
+    await expectNoRepublish(room, controller, () => useVoiceStore.getState().toggleDeafen())
+    await expectNoRepublish(room, controller, () => useVoiceStore.getState().toggleMic())
   })
 
   it('queda pelo servidor registra o motivo', async () => {
@@ -237,10 +243,13 @@ describe('VoiceSessionController', () => {
   })
 
   it('sair desconecta sem mensagem de erro', async () => {
-    await controller.join(new FakeVoiceTokens(), 'v1')
+    await controller.leave()
+    expect(eventsOf(room.log, 'disconnect')).toEqual([])
 
+    await controller.join(new FakeVoiceTokens(), 'v1')
     await controller.leave()
 
+    expect(eventsOf(room.log, 'disconnect')).toEqual(['disconnect'])
     expect(useVoiceStore.getState()).toMatchObject({ connection: null, lastError: null })
   })
 
@@ -251,7 +260,13 @@ describe('VoiceSessionController', () => {
     useMicPrefsStore.getState().setNoiseSuppression(false)
     await Promise.resolve()
 
-    expect(room.log.slice(3)).toEqual(['restart:headset:true', 'restart:headset:false', 'gain', 'gain'])
+    expect(room.log.filter((entry) => entry.startsWith('restart') || entry === 'gain')).toEqual([
+      'gain',
+      'restart:headset:true',
+      'restart:headset:false',
+      'gain',
+      'gain',
+    ])
   })
 
   it('com a call fechada, a preferência fica salva e o microfone não é republicado', async () => {
@@ -304,6 +319,15 @@ describe('VoiceSessionController', () => {
     })
   })
 
+  it('trocar o eco republica com a preferência', async () => {
+    await controller.join(new FakeVoiceTokens(), 'v1')
+
+    useMicPrefsStore.getState().setEchoCancellation(false)
+    await Promise.resolve()
+
+    expect(room.microphone.lastRestart?.echoCancellation).toEqual({ exact: false })
+  })
+
   it('sensibilidade só move o portão, sem recapturar', async () => {
     await controller.join(new FakeVoiceTokens(), 'v1')
 
@@ -314,37 +338,35 @@ describe('VoiceSessionController', () => {
     expect(room.microphone.processor?.thresholdDb).toBe(-30)
   })
 
-  it('se ouvir tira o cancelamento de eco e devolve ao soltar', async () => {
-    useMicPrefsStore.setState({ echoCancellation: true })
+  it.each([
+    ['eco da preferência ligado', true, false, undefined, true],
+    ['eco já desligado', false, false, undefined, { exact: false }],
+    ['Chromium mantém o eco ligado', true, true, { echoCancellation: true, voiceIsolation: true }, true],
+  ] as const)('me ouvir não recaptura com %s', async (_label, echo, noise, probe, expectedEcho) => {
+    useMicPrefsStore.setState({ echoCancellation: echo, noiseSuppression: noise })
     await controller.join(new FakeVoiceTokens(), 'v1')
+    const published = room.microphone.lastOptions
+    if (probe) room.microphone.probe = probe
 
-    await controller.setSelfMonitor(true)
-    expect(room.microphone.lastRestart?.echoCancellation, 'eco pausado para o retorno não ser apagado').toEqual({ exact: false })
-    expect(room.microphone.lastRestart?.voiceIsolation, 'isolamento pausado enquanto se ouve').toEqual({ exact: false })
-
+    await expect(controller.setSelfMonitor(true)).resolves.toBeUndefined()
     await controller.setSelfMonitor(false)
-    expect(room.microphone.lastRestart?.echoCancellation, 'eco volta ao soltar').toBe(true)
-    expect(room.microphone.lastRestart?.voiceIsolation, 'isolamento continua desligado fora da escuta').toEqual({ exact: false })
+
+    expect(eventsOf(room.log, 'restart'), 'a escuta não pede o microfone de novo').toEqual([])
+    expect(room.microphone.lastRestart).toBeNull()
+    expect(room.microphone.lastOptions, 'as constraints publicadas ficam as mesmas').toBe(published)
+    expect(published?.echoCancellation).toEqual(expectedEcho)
   })
 
-  it('escuta republica mesmo com o eco já desligado', async () => {
-    useMicPrefsStore.setState({ echoCancellation: false })
+  it('trocar o microfone durante o me ouvir republica com a preferência', async () => {
+    useMicPrefsStore.setState({ echoCancellation: true, noiseSuppression: true })
     await controller.join(new FakeVoiceTokens(), 'v1')
-
     await controller.setSelfMonitor(true)
 
-    expect(room.microphone.lastRestart).toMatchObject({
-      echoCancellation: { exact: false },
-      voiceIsolation: { exact: false },
-    })
-  })
+    useMicPrefsStore.getState().setDeviceId('headset')
+    await Promise.resolve()
 
-  it('recusa a escuta se o Chromium mantém o eco ligado', async () => {
-    useMicPrefsStore.setState({ echoCancellation: true })
-    await controller.join(new FakeVoiceTokens(), 'v1')
-    room.microphone.probe = { echoCancellation: true }
-
-    await expect(controller.setSelfMonitor(true)).rejects.toThrow(/cancelamento de eco/)
+    expect(room.microphone.lastRestart?.deviceId).toBe('headset')
+    expect(room.microphone.lastRestart?.echoCancellation, 'a escuta não força o eco desligado').toBe(true)
   })
 
   it('entrar, trocar e sair avisam o sino com quem já está na sala', async () => {
@@ -384,14 +406,19 @@ describe('VoiceSessionController', () => {
     expect(chimes.log).toEqual(['prime', 'joined:', 'left'])
   })
 
-  it('microfone mutado não republica ao trocar a entrada', async () => {
-    await controller.join(new FakeVoiceTokens(), 'v1')
-    useVoiceStore.getState().toggleMic()
-    await Promise.resolve()
-
-    useMicPrefsStore.getState().setDeviceId('headset')
-    await Promise.resolve()
-
-    expect(room.log.filter((entry) => entry.startsWith('restart'))).toEqual([])
-  })
 })
+
+async function expectNoRepublish(room: FakeVoiceRoom, controller: VoiceSessionController, prepare: () => void): Promise<void> {
+  useMicPrefsStore.setState({ deviceId: 'default' })
+  useVoiceStore.setState({ micMuted: false, deafened: false, micMutedBeforeDeafen: false, lastError: null })
+  room.microphone.log.length = 0
+  await controller.leave()
+  await controller.join(new FakeVoiceTokens(), 'v1')
+  prepare()
+  await Promise.resolve()
+
+  useMicPrefsStore.getState().setDeviceId('headset')
+  await Promise.resolve()
+
+  expect(eventsOf(room.log, 'restart')).toEqual([])
+}

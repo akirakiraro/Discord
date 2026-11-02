@@ -1,10 +1,11 @@
-import { RoomAudioRenderer, RoomContext } from '@livekit/components-react'
+import { RoomContext } from '@livekit/components-react'
 import { useOpenFirstTextChannel } from '../../hooks/useOpenFirstTextChannel'
 import { useRealtimeConnection } from '../../hooks/useRealtimeConnection'
 import { voiceRoom } from '../../lib/voice/voiceSession'
 import type { AuthSession } from '../../stores/sessionStore'
 import { useMembersPanelStore } from '../../stores/membersPanelStore'
 import { useVoiceStore } from '../../stores/voiceStore'
+import { CallPlayback } from '../voice/CallPlayback'
 import { ChannelSidebar } from '../channels/ChannelSidebar'
 import { MemberList } from '../members/MemberList'
 import { RealtimeContext } from '../RealtimeContext'
@@ -29,7 +30,7 @@ export function AppShell({ session }: AppShellProps): React.JSX.Element {
           <MainPanel />
           {membersOpen && <MemberList />}
         </div>
-        {inVoice && <RoomAudioRenderer muted={deafened} />}
+        {inVoice && <CallPlayback deafened={deafened} />}
         {!connected && <div className="connection-banner">Reconectando ao host…</div>}
       </RoomContext.Provider>
     </RealtimeContext.Provider>

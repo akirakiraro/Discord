@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { captureOptions, type MicPreferences } from '../../lib/voice/micPreferences'
-import { createMicChain, followLeveler, setSliderGain, type MicChain } from '../../lib/voice/micGain'
+import { createMicChain, followLeveler, readChainRms, setSliderGain, type MicChain } from '../../lib/voice/micGain'
 import { METER_MIN_DB, rmsToDb } from '../../lib/voice/micLevel'
-import { rmsLevel } from '../../lib/voice/speakingLevel'
 import { voiceSession } from '../../lib/voice/voiceSession'
 
 const METER_MS = 32
@@ -76,8 +75,7 @@ function tapTrack(track: MediaStreamTrack, prefsRef: { current: MicPreferences }
 
 function readPreview(chain: MicChain, prefs: MicPreferences): number {
   if (chain.sliderGain !== prefs.inputGain) setSliderGain(chain, prefs.inputGain)
-  chain.analyser.getByteTimeDomainData(chain.samples)
-  const post = rmsLevel(chain.samples)
+  const post = readChainRms(chain)
   followLeveler(chain, post, prefs.autoGainControl)
   return rmsToDb(post)
 }

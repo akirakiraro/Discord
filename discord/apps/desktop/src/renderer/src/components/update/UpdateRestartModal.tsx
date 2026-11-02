@@ -1,4 +1,5 @@
 import { PRODUCT_DISPLAY_NAME } from '../../../../shared/appIdentity'
+import { Button } from '../ui/Button'
 
 interface UpdateRestartModalProps {
   version: string | null
@@ -13,9 +14,9 @@ export function UpdateRestartModal({ version, onInstall }: UpdateRestartModalPro
       <div className="profile-modal update-modal" role="dialog" aria-modal="true" aria-labelledby="update-restart-title">
         <h2 id="update-restart-title">Reiniciar o {PRODUCT_DISPLAY_NAME}</h2>
         <p>{downloaded} O app precisa reiniciar para instalar e abrir de novo.</p>
-        <button type="button" className="button button--primary" onClick={onInstall}>
+        <Button variant="primary" onClick={onInstall}>
           OK
-        </button>
+        </Button>
       </div>
     </div>
   )

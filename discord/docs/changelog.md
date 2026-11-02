@@ -1,5 +1,140 @@
 # Changelog
 
+## 0.1.138
+
+A tela de entrar não mostra erro cru e o "Ligar host" responde no primeiro clique.
+
+- Abrir o app com o host desligado não mostra erro. A sessão salva fica guardada e a tela de entrar abre limpa. Antes aparecia o texto cru do `fetch` (`TypeError: Failed to fetch`).
+- Clicar em **Entrar** sem host no ar mostra uma frase só: "Não encontramos o host em 26.x. Confira se o host está ligado e se o Radmin VPN está conectado." Erro do host (500) vira "O host respondeu com erro". Nome inválido continua com a frase da validação.
+- A tela consulta o status do host a cada 2 s, e cada consulta testa as portas por até 0,8 s. Um clique em **Ligar host** no meio dela era descartado em silêncio, e por isso às vezes precisava clicar várias vezes. Agora o clique espera a consulta acabar e liga.
+- O botão vira "Iniciando…" na hora do clique, na tela de entrar e em Configurações → Host. Outro clique enquanto liga não pede de novo. A subida em si (LiveKit e API com `tsx`) ainda leva alguns segundos. O detalhe está em [host-no-app.md](host-no-app.md).
+
+## 0.1.137
+
+"Sair do SoundRoom", no menu da bandeja, volta a fechar o app com o host ligado.
+
+- Com o host ligado pelo app, sair pede confirmação, e quem está logado já conta como online. A confirmação abria na janela escondida na bandeja: nada aparecia e o app continuava aberto. Agora a janela volta antes da confirmação.
+- Se o host não desligar na saída, a janela também volta, com o erro em Configurações → Host. O detalhe está em [minimizar-na-bandeja.md](minimizar-na-bandeja.md).
+
+## 0.1.136
+
+Área de testes para simular gente na call, só no `npm run desktop`.
+
+- O botão **Testes**, na barra de voz, põe bots no canal ("Bot de teste N") e faz eles tocarem um sinal parecido com fala ou um WAV seu, em loop.
+- O bot é `apps/test-bot`, um processo Node com o `@livekit/rtc-node`. Também roda pelo terminal: `npm run bot -- --api ... --sessao ... --canal geral --tocar tom`.
+- A API só tem a rota do bot (`POST /dev/bot-token`) com `RADCORD_DEV_TOOLS=1`. O "Ligar host" do `npm run desktop` liga isso; o app instalado e o `npm run host` não.
+- O instalador não leva a área. O `qa-desktop.yml` confere o build e para a release se achar algum pedaço dela. O detalhe está em [area-de-testes.md](area-de-testes.md).
+
+## 0.1.135
+
+O portão do microfone deixa de cortar palavra e de abrir e fechar com o ruído.
+
+- O nível é lido em float (`getFloatTimeDomainData`). O byte tinha degrau de 1/128: qualquer som entre −90 e −50 dB era lido como −45 dB, em cima do traço padrão. Voz baixa, fim de palavra e respiração sumiam; traço abaixo de −45 deixava o portão sempre aberto.
+- O analyser lê 2048 amostras por vez, mais que os 32 ms entre leituras. Com 512 o portão via só 11 ms de cada 32 e podia perder a largada da sílaba.
+- O portão abre em 5 ms e fecha numa rampa de 30 ms (cerca de 150 ms até o silêncio), em vez de cortar em 10 ms.
+- A janela tem `backgroundThrottling: false`. Na bandeja ou atrás do jogo, o Chromium freava o timer do portão e ele abria tarde.
+- O medidor de Configurações → Voz e o Me ouvir fora da call usam a mesma leitura. O detalhe está em [audio-microfone.md](audio-microfone.md).
+
+## 0.1.134
+
+O app minimiza na bandeja, como o Discord.
+
+- O X da janela esconde o SoundRoom em vez de fechar. A call segue ativa e o ícone fica na bandeja do Windows.
+- Na primeira vez que esconde, aparece o aviso "O SoundRoom continua aberto" (uma vez na vida, nunca mais), dizendo que o app foi minimizado e que o Sair fecha de vez.
+- Clicar no ícone ou em "Abrir o SoundRoom" traz a janela de volta. "Sair do SoundRoom" fecha de verdade, com a confirmação do host de sempre. Atualização instalada e desligar o Windows também saem de verdade.
+- Sem o ícone da bandeja, o X fecha o app como antes. O detalhe está em [minimizar-na-bandeja.md](minimizar-na-bandeja.md).
+
+## 0.1.132
+
+Nenhum botão do app fica branco ou com texto ilegível.
+
+- Configurações → Host usa o botão do tema: ligar azul, firewall cinza escuro, desligar vermelho. O mesmo vale na tela de entrar, nos modais, no login, na atualização e no painel de áudio.
+- A classe `.button` sozinha pintava a letra de branco e deixava o fundo cinza do Windows. Agora toda variante declara fundo e texto no descanso, hover, foco e desabilitado, com contraste de pelo menos 4,5:1. O detalhe está em [botoes.md](botoes.md).
+
+## 0.1.131
+
+O botão "Ligar host neste PC" no Windows sobe a API de verdade.
+
+- O `--import` do tsx passa a ser uma URL `file:///C:/...`. O manifesto continua com o caminho normal (`C:\...`). Sem isso o Node 24 lia a letra do disco como protocolo `c:` e a API saía com código 1.
+- Se a API ou o LiveKit cair antes de ficar pronto, a frase traz a causa em português e a linha de erro do log. O Node 24 entra no intervalo `>=22.23`. Não precisa rodar `host:setup` de novo. O detalhe está em [host-no-app.md](host-no-app.md).
+
+## 0.1.130
+
+O PC com o repositório clonado liga e desliga o host dentro do app.
+
+- `npm run host:setup` (e o `host:install`) grava `infra/host/host-module.json`. Sem esse módulo a opção não aparece.
+- A tela de entrar liga o host e preenche o IP `26.x`. Configurações → Host, por enquanto só para `akira`, mostra estado, log, confirmação antes de derrubar a call e o botão de firewall. Fechar o app desliga o host que ele subiu. Com o host ligado, a atualização espera. O detalhe está em [host-no-app.md](host-no-app.md).
+
+## 0.1.129
+
+Os testes fracos passam a pegar regressão de número. A mutação fica só na máquina local.
+
+- `npm run test:mutation` roda o Stryker. Não entra no CI. O desktop foi de 62,54% para 64,05%. O servidor foi de 83,02% para 85,83%.
+- Áudio, Me ouvir, página de mensagem, sessão e a consulta da release ganham asserts exatos. Mutante que não muda o resultado fica de fora. O detalhe está em [testes.md](testes.md).
+
+## 0.1.128
+
+A suíte perde o teste que só repetia outro arquivo. O que pega regressão de número continua.
+
+- Mute e ensurdecer ficam em `micDeafen.test.ts`. A store só liga os dois. O volume de 0% a 200% fica nos exemplos, com o teto literal `2`.
+- Os três "me ouvir" da sessão viram uma tabela. O vitest conta cada linha, então a suíte vai de 448 para 427 testes. O detalhe está em [testes.md](testes.md).
+
+## 0.1.127
+
+Os testes de áudio passam a pegar regressão de número, não só a direção.
+
+- fast-check cobre o joelho do limiter, o teto de 4× do nivelador, o portão em 0 ou 1, e o volume de 0% a 200% com 100% igual a ganho 1.
+- O fake de Web Audio fica num helper só. O agendador do poller de release executa o tick. Os testes deixam de depender da posição exata no log. O detalhe está em [testes.md](testes.md).
+
+## 0.1.126
+
+Teste de regressão do Me ouvir: abrir e fechar o monitor não recaptura a faixa publicada.
+
+- O microfone de mentira conta `restartTrack` e `setMicrophoneEnabled`. Os dois ficam parados quando `setSelfMonitor` liga e desliga.
+- O botão, na call, usa a escuta do servidor. Fora da call, a captura local não mexe na faixa da sala. O detalhe está em [testes.md](testes.md) e em [escuta-propria.md](escuta-propria.md).
+
+## 0.1.125
+
+O socket da API ganha um teste com servidor e cliente de verdade, numa porta livre.
+
+- Handshake sem token ou com token inválido recebe `unauthorized`. Tirar a autenticação faz o teste falhar.
+- Com sessão válida, o outro cliente vê presença, mensagem, digitação e a entrada e saída da call. O detalhe está em [testes.md](testes.md).
+
+## 0.1.124
+
+O GitHub passa a rodar `npm test` e o typecheck em todo push e pull request na `dev`. O Release continua só no push da `qa`, e agora só começa se esses dois comandos passarem.
+
+- O Node fica fixo em `.nvmrc` (`22.23.4`) e em `engines` (`>=22.23.0`). O `node:sqlite` do servidor não carrega no Node 20 nem no 22.12.
+- O typecheck do desktop volta a passar. O detalhe está em [testes.md](testes.md).
+
+## 0.1.123
+
+O painel **Áudio** do usuário `akira` passa a ser o debug completo da call, ainda só neste PC.
+
+- Cada faixa mostra os contadores crus do `getStats`: pacotes, bytes, jitter buffer médio, ocultação, amostras inseridas e removidas, NACK, FEC, retransmissão, nível, energia, RTT e as duas pontas ICE (UDP/TCP, direto ou relay).
+- A captura mostra `getSettings`, `getConstraints` e `getCapabilities` da faixa original, o dispositivo em uso, e a taxa e as latências do `AudioContext` do microfone.
+- A cadeia mostra o slider, o leveler, a atenuação do limiter, o portão, e o volume por pessoa deste aparelho.
+- Um gráfico guarda os últimos 60 s de perda, jitter e bitrate. Um log marca entrada, saída, reconexão, troca de transporte e troca de microfone, com hora.
+- **Copiar JSON** e **Salvar arquivo** ficam neste PC. Nada vai ao servidor. O detalhe está em [diagnostico-audio.md](diagnostico-audio.md).
+
+## 0.1.122
+
+Painel de diagnóstico de áudio da call, só para o usuário `akira`.
+
+- O botão **Áudio** fica na barra de voz, ao lado de sair da call. Outro usuário não vê o botão nem o painel.
+- Aberto, lê `getStats` a cada 1 s neste PC: perda, jitter, bitrate, codec, taxa, canais, RTT e se a mídia vai por UDP ou TCP. Fechado, não lê.
+- A captura mostra o que o Chromium aplicou de verdade (`getSettings`): supressão, eco, ganho automático, isolamento, taxa e canais.
+- Nada disso vai para o servidor nem para os outros clientes. O detalhe está em [diagnostico-audio.md](diagnostico-audio.md).
+
+## 0.1.121
+
+Volume de cada pessoa na call, e o Me ouvir deixa de recapturar o microfone.
+
+- Clicar numa pessoa do canal de voz abre o volume dela, de 0% a 200%. 100% toca a faixa como chegou, no elemento de áudio. Acima de 100% o ganho é neste aparelho, no contexto da sala, lendo o `srcObject` de um elemento mudo, com limitador só no pico. A preferência fica no `localStorage`, por quem está logado.
+- Não vale para a própria voz, para a escuta `:monitor` nem para o áudio da tela. Surdo continua calando o que chega.
+- Ligar ou desligar o Me ouvir não chama `restartTrack` e não troca o eco. A namorada do teste saía abafada e com ruído porque a escuta pedia o microfone de novo.
+- O detalhe está em [volume-por-pessoa.md](volume-por-pessoa.md) e em [escuta-propria.md](escuta-propria.md).
+
 ## 0.1.120
 
 Com as três opções de voz desligadas, o microfone deixa de passar pelo AGC do Chromium. O slider de volume passa a valer para quem ouve.

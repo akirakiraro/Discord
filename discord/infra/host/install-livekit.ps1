@@ -26,10 +26,21 @@ function Install-LiveKitBinary($asset) {
     Remove-Item $zipPath, $extractDir -Recurse -Force
 }
 
-if (Test-Path $exePath) {
-    Write-Host "LiveKit ja instalado em $exePath (apague o arquivo para baixar de novo)."
-    exit 0
+function Write-HostModule {
+    $repoRoot = Split-Path (Split-Path $PSScriptRoot)
+    $writer = Join-Path $repoRoot 'scripts\write-host-module.mjs'
+    if (-not (Get-Command node -ErrorAction SilentlyContinue)) {
+        throw 'Node nao encontrado. Instale o Node 22.23.4 e rode: npm run host:setup'
+    }
+    & node $writer
+    if ($LASTEXITCODE -ne 0) { throw 'Nao foi possivel gravar host-module.json. Rode: npm run host:setup' }
 }
 
-Install-LiveKitBinary (Get-LatestWindowsAsset)
-Write-Host "LiveKit instalado em $exePath" -ForegroundColor Green
+if (Test-Path $exePath) {
+    Write-Host "LiveKit ja instalado em $exePath (apague o arquivo para baixar de novo)."
+} else {
+    Install-LiveKitBinary (Get-LatestWindowsAsset)
+    Write-Host "LiveKit instalado em $exePath" -ForegroundColor Green
+}
+
+Write-HostModule

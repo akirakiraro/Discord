@@ -1,0 +1,140 @@
+.voice-status__actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.voice-status__probe {
+  border: 0;
+  background: transparent;
+  color: #dbdee1;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.voice-status__probe:hover {
+  background: #404249;
+  color: #f2f3f5;
+}
+
+.voice-status__probe[aria-pressed='true'] {
+  color: var(--text-strong);
+  background: var(--bg-active);
+}
+
+.audio-probe {
+  position: fixed;
+  z-index: 40;
+  left: 252px;
+  bottom: 12px;
+  width: min(440px, calc(100vw - 268px));
+  max-height: min(70vh, 520px);
+  overflow: auto;
+  padding: 12px;
+  border: 1px solid var(--bg-dark);
+  border-radius: 8px;
+  background: var(--bg-panel);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 35%);
+}
+
+.audio-probe__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.audio-probe__close,
+.audio-probe h3,
+.audio-probe p,
+.audio-probe dt,
+.audio-probe dd {
+  margin: 0;
+}
+
+.audio-probe__close {
+  border: 0;
+  background: transparent;
+  color: #dbdee1;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.audio-probe__close:hover {
+  background: #404249;
+  color: #f2f3f5;
+}
+
+.audio-probe__hint,
+.audio-probe__legend {
+  margin-top: 8px;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.audio-probe__block {
+  margin-top: 12px;
+}
+
+.audio-probe h3 {
+  font-size: 13px;
+}
+
+.audio-probe__row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 2px;
+  font-size: 12px;
+}
+
+.audio-probe__value--ok {
+  color: var(--green);
+}
+
+.audio-probe__value--warn {
+  color: var(--yellow);
+}
+
+.audio-probe__value--bad {
+  color: var(--red);
+  font-weight: 700;
+}
+
+.audio-probe__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  font-size: 12px;
+}
+
+.audio-probe__charts {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.audio-probe__spark {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+.audio-probe__spark figcaption {
+  font-size: 11px;
+}
+
+.audio-probe__log {
+  margin: 6px 0 0;
+  padding-left: 16px;
+  font-size: 12px;
+}
+
+.audio-probe dd {
+  word-break: break-word;
+  text-align: right;
+}
