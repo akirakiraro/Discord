@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.140
+
+Ícones do app não entram mais na seleção azul ao arrastar, como o microfone e o fone já faziam.
+
+- O microfone e o fone são desenho só de traço: o arraste não marca eles. Engrenagem, volume, pessoas, seta, clipe, emoji (canal, tela, sair, olho, mudo, editar, apagar, +), avatar e a miniatura de compartilhar ganhavam o realce.
+- A trava fica em `base.css` (`user-select: none`, sem arraste da imagem, e o SVG não recebe o clique). Mensagem, campo de texto e print continuam selecionáveis. O bip de mutar e a bandeja não mudam. O detalhe está em [botoes.md](botoes.md).
+
 ## 0.1.139
 
 Mutar e ensurdecer tocam um bip curto só para quem clicou.

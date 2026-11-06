@@ -20,7 +20,7 @@ function ParticipantTile({ participant }: { participant: Participant }): React.J
     <div className={speaking ? 'participant-tile participant-tile--speaking' : 'participant-tile'}>
       <Avatar name={face.name} seed={participant.identity} imageUrl={face.imageUrl} size={80} />
       <span className="participant-tile__name">
-        {!participant.isMicrophoneEnabled && '🔇 '}
+        {!participant.isMicrophoneEnabled && <span className="app-icon" aria-hidden="true">🔇 </span>}
         {face.name}
       </span>
     </div>

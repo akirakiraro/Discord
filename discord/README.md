@@ -54,6 +54,8 @@ A versão 0.1.138 abre a tela de entrar sem erro quando o host está desligado; 
 
 A versão 0.1.139 toca um bip curto ao mutar e ao ensurdecer. Só quem clicou ouve. O som não entra na call. O detalhe está em [docs/sons-da-call.md](docs/sons-da-call.md).
 
+A versão 0.1.140 impede selecionar os ícones ao arrastar, do mesmo jeito que o microfone e o fone. Emoji, engrenagem, avatar e os outros desenhos não ganham mais o realce azul. O texto da mensagem continua selecionável. O detalhe está em [docs/botoes.md](docs/botoes.md).
+
 ## Pré-requisitos
 
 - Node.js 22.23.4 no CI (o `.nvmrc` da raiz). `engines` aceita `>=22.23.0`, inclusive o 24 do PC do host. O servidor usa `node:sqlite`, que não carrega no Node 20 nem no 22.12.

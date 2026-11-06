@@ -37,3 +37,13 @@ Botão de ícone, canal, membro e a barra redonda da call não passam por esse c
 - um `<button>` do renderer não tem classe do tema
 
 Reabra o `npm run desktop` para ver a correção. O áudio não muda.
+
+## Ícones sem seleção
+
+O que a versão **0.1.140** exige. Arrastar o mouse em cima de um ícone não pode pintar o realce azul de texto, o mesmo que já acontecia com o microfone e o fone.
+
+O microfone e o fone são SVG só de traço (`fill="none"`). O Chromium não marca esse desenho. Emoji (🔊, #, 🖥️, 📞, 👁️, 🔇, ✏️, 🗑️, +), SVG preenchido (engrenagem, volume, clipe) e a foto do avatar marcavam.
+
+A regra está em `styles/base.css`, nas classes `.app-icon`, `.icon-button`, `.round-button` e nos outros controles de ícone, mais todo `svg`. Ela usa `user-select: none`, `-webkit-user-drag: none` e, no SVG, `pointer-events: none` para o clique cair no botão. A cor do botão não muda.
+
+Mensagem, caixa de texto e print da conversa continuam selecionáveis. `iconSelect.test.ts` falha se algum ícone sair dessa lista ou se a mensagem for travada junto.

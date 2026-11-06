@@ -15,7 +15,7 @@ function JoinPrompt({ channel }: { channel: ChannelDto }): React.JSX.Element {
 
   return (
     <div className="voice-join">
-      <h2>🔊 {channel.name}</h2>
+      <h2><span className="app-icon" aria-hidden="true">🔊</span> {channel.name}</h2>
       <p>Ninguém te ouve até você entrar.</p>
       {lastError && <p className="voice-join__error">{lastError}</p>}
       <Button variant="success" onClick={() => api && void voiceSession.join(api, channel.id)}>

@@ -277,3 +277,50 @@ a {
   font-size: 13px;
   font-weight: 600;
 }
+
+/*
+ * O microfone e o fone não entram no arraste azul: são SVG só de traço.
+ * Emoji, SVG preenchido (engrenagem, volume) e avatar ganhavam o realce.
+ * O texto de mensagem, o campo e o print continuam selecionáveis.
+ */
+.app-icon,
+.icon-button,
+.round-button,
+.composer__attach,
+.tile-collapse,
+.message__action,
+.channel-category__add,
+.settings-modal__close,
+.channel-item__icon,
+.panel-header__icon,
+.participant-row__muted,
+.avatar,
+.avatar__image,
+.window-caption img,
+.share-source img,
+svg {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.app-icon::selection,
+.icon-button::selection,
+.round-button::selection,
+.composer__attach::selection,
+.tile-collapse::selection,
+.message__action::selection,
+.channel-category__add::selection,
+.settings-modal__close::selection,
+.channel-item__icon::selection,
+.panel-header__icon::selection,
+.participant-row__muted::selection,
+.avatar::selection {
+  background: transparent;
+  color: inherit;
+}
+
+/* Clique e arraste caem no botão, como no microfone. O SVG deixa de ser alvo. */
+svg {
+  pointer-events: none;
+}
