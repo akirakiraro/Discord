@@ -109,6 +109,10 @@ Não há job `windows-latest`. O `npm ci` do monorepo nesse runner é lento, o d
 
 `scripts/check-no-dev-tools.mjs` procura no `apps/desktop/out` os textos que só existem na área de testes (`radcordDev`, `radcord:dev-`, `RADCORD_DEV_TOOLS`, `Bot de teste` e outros). O `qa-desktop.yml` roda o script depois de compilar; se achar algum, a release não sai. `devToolsLeak.test.ts` prova que o script falha com vazamento e com pasta vazia. O bot (`apps/test-bot`) tem testes do WAV, do sinal, dos comandos e das chamadas ao host; a rota `POST /dev/bot-token` tem teste com e sem `RADCORD_DEV_TOOLS`. O detalhe está em [area-de-testes.md](area-de-testes.md).
 
+## Bip de mutar e ensurdecer
+
+`micToggleSound.test.ts` confere as quatro sequências, a direção (desce ao cortar, sobe ao voltar) e a duração abaixo de 0,25 s. `micTogglePlayer.test.ts` exige duas notas ligadas só no `destination` local. `micToggleClick.test.ts` exige o bip antes de o estado mudar, a volta do surdo pelo botão do microfone e o botão que ainda alterna se o bip lançar. O detalhe do som está em [sons-da-call.md](sons-da-call.md).
+
 ## Typecheck do desktop
 
 O `tsc` do desktop tinha erros antigos em tipos do Electron, do volume da tela e do PCM. A 0.1.124 corrige esses pontos para o comando fechar com sucesso. O app em si não muda de comportamento.

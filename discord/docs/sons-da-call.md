@@ -53,3 +53,23 @@ O host não muda. Reabra o desktop nos dois (`npm run desktop` a partir de `disc
 4. Configurações → Voz: desligar "Sons de entrar e sair da call" cala os próximos. O volume muda o que ainda toca.
 5. Ensurdecer e pedir para alguém entrar: sem sino. Desensurdecer não toca o que já passou.
 6. Me ouvir não pode tocar um sino extra. A identidade é `…:monitor`.
+
+## Som de mutar e ensurdecer
+
+A partir da **0.1.139** o clique em mutar e o clique em ensurdecer tocam um bip curto só neste PC. Quem está na call não ouve. O bip não usa a sala do LiveKit, nem o `AudioContext` da voz, nem o da tela.
+
+- Mutar desce (392 Hz e 294 Hz). Desmutar sobe (330 Hz e 494 Hz).
+- Ensurdecer desce mais grave (247 Hz e 175 Hz). Desensurdecer sobe (220 Hz e 370 Hz). Cada um dura menos de 0,25 s. O pico do oscilador é 0,08.
+- O surdo cala o sino de entrar e sair. Não cala este bip: ele confirma o próprio clique, inclusive o de ensurdecer.
+- A chave "Sons de entrar e sair da call" e o volume dela não mudam este bip.
+- Clicar em mutar enquanto surdo toca a subida de desensurdecer, porque esse clique volta a ouvir e a falar. Desensurdecer com o microfone já mutado toca a mesma subida e deixa o mudo.
+- Falha ao tocar, ou autoplay bloqueado, não impede o botão.
+
+| Peça | Onde |
+| --- | --- |
+| Qual bip | `apps/desktop/src/renderer/src/lib/voice/micToggleSound.ts` |
+| Oscilador local | `apps/desktop/src/renderer/src/lib/voice/micTogglePlayer.ts` |
+| Clique, antes do estado | `apps/desktop/src/renderer/src/lib/voice/micToggleClick.ts` |
+| Botões | `components/user/UserPanel.tsx` e `components/voice/VoiceControlBar.tsx` |
+
+Para ouvir: reabra o desktop (`npm run desktop` a partir de `discord/`). Na barra de baixo, ou na call, clique em mutar e em ensurdecer. O outro PC não ouve esses bips. Ensurdecer e pedir para alguém entrar: o sino da call continua mudo, e o bip do clique ainda sai neste aparelho.

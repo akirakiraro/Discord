@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.139
+
+Mutar e ensurdecer tocam um bip curto só para quem clicou.
+
+- O clique no microfone e o clique em ensurdecer disparam um oscilador local, num `AudioContext` que não é o da call. Não há faixa, `MediaStream` nem publicação no LiveKit. A outra pessoa não ouve.
+- Mutar desce, desmutar sobe. Ensurdecer desce mais grave, desensurdecer sobe. Cada um dura menos de 0,25 s.
+- O surdo continua calando o sino de entrar e sair. O bip do próprio clique toca mesmo assim. A chave dos sons da call não mexe nele.
+- Se o áudio falhar, o botão ainda alterna. O detalhe está em [sons-da-call.md](sons-da-call.md).
+
 ## 0.1.138
 
 A tela de entrar não mostra erro cru e o "Ligar host" responde no primeiro clique.

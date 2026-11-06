@@ -5,6 +5,7 @@ import { HeadsetIcon, MicIcon } from '../common/AudioIcons'
 import { screenShareSettings } from '../../lib/voice/screenSharePresets'
 import { publishFilteredScreenAudio, stopFilteredScreenAudio } from '../../lib/voice/filteredScreenAudio'
 import { voiceSession } from '../../lib/voice/voiceSession'
+import { clickDeafen, clickMute } from '../../lib/voice/micToggleClick'
 import { deafenButtonTitle, micButtonTitle } from '../../lib/voice/micDeafen'
 import { useVoiceStore } from '../../stores/voiceStore'
 import { ScreenSharePicker, type ShareSelection } from './ScreenSharePicker'
@@ -13,7 +14,7 @@ import { ScreenVolumeSlider } from './ScreenVolumeSlider'
 export function VoiceControlBar(): React.JSX.Element {
   const { localParticipant, isScreenShareEnabled } = useLocalParticipant()
   const sharing = useTracks([Track.Source.ScreenShare]).length > 0
-  const { micMuted, deafened, toggleMic, toggleDeafen } = useVoiceStore()
+  const { micMuted, deafened } = useVoiceStore()
   const [pickerOpen, setPickerOpen] = useState(false)
 
   async function stopShare(): Promise<void> {
@@ -53,10 +54,10 @@ export function VoiceControlBar(): React.JSX.Element {
   return (
     <div className="voice-controls">
       <div className="voice-controls__row">
-        <button type="button" className={micMuted ? 'round-button round-button--off' : 'round-button'} title={micButtonTitle({ micMuted, deafened })} onClick={toggleMic}>
+        <button type="button" className={micMuted ? 'round-button round-button--off' : 'round-button'} title={micButtonTitle({ micMuted, deafened })} onClick={() => clickMute()}>
           <MicIcon off={micMuted} size={22} />
         </button>
-        <button type="button" className={deafened ? 'round-button round-button--off' : 'round-button'} title={deafenButtonTitle(deafened)} onClick={toggleDeafen}>
+        <button type="button" className={deafened ? 'round-button round-button--off' : 'round-button'} title={deafenButtonTitle(deafened)} onClick={() => clickDeafen()}>
           <HeadsetIcon off={deafened} size={22} />
         </button>
         <button

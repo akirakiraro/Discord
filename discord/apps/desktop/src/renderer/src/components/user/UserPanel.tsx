@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useSessionStore } from '../../stores/sessionStore'
+import { clickDeafen, clickMute } from '../../lib/voice/micToggleClick'
 import { deafenButtonTitle, micButtonTitle } from '../../lib/voice/micDeafen'
 import { useVoiceStore } from '../../stores/voiceStore'
 import { GearIcon, HeadsetIcon, MicIcon } from '../common/AudioIcons'
@@ -8,7 +9,7 @@ import { SettingsModal } from './SettingsModal'
 
 export function UserPanel(): React.JSX.Element | null {
   const session = useSessionStore((store) => store.session)
-  const { micMuted, deafened, toggleMic, toggleDeafen } = useVoiceStore()
+  const { micMuted, deafened } = useVoiceStore()
   const [settingsOpen, setSettingsOpen] = useState(false)
   if (!session) return null
   const { user } = session
@@ -19,10 +20,10 @@ export function UserPanel(): React.JSX.Element | null {
         <Avatar name={user.displayName} seed={user.id} imageUrl={user.avatarUrl} online />
         <span className="user-panel__name">{user.displayName}</span>
       </button>
-      <button type="button" className={micMuted ? 'icon-button icon-button--off' : 'icon-button'} title={micButtonTitle({ micMuted, deafened })} onClick={toggleMic}>
+      <button type="button" className={micMuted ? 'icon-button icon-button--off' : 'icon-button'} title={micButtonTitle({ micMuted, deafened })} onClick={() => clickMute()}>
         <MicIcon off={micMuted} />
       </button>
-      <button type="button" className={deafened ? 'icon-button icon-button--off' : 'icon-button'} title={deafenButtonTitle(deafened)} onClick={toggleDeafen}>
+      <button type="button" className={deafened ? 'icon-button icon-button--off' : 'icon-button'} title={deafenButtonTitle(deafened)} onClick={() => clickDeafen()}>
         <HeadsetIcon off={deafened} />
       </button>
       <button className="icon-button" title="Configurações" onClick={() => setSettingsOpen(true)}>

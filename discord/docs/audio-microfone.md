@@ -118,6 +118,7 @@ A partir da **0.1.113** os dois botões usam um estado só, em `lib/voice/micDea
 - Clicar em mutar enquanto surdo não fica travado. Esse clique sai do surdo: microfone e áudio voltam juntos, mesmo que o microfone estivesse mutado antes.
 - Clicar em ensurdecer de novo devolve o mute guardado. Se já estava mutado, continua mutado. Se não estava, volta a falar. O áudio dos outros volta nos dois casos.
 - Mutado ou surdo, o Me ouvir não abre. Se já estava aberto, para. O botão de microfone continua clicável; o texto passa a **Desmutar e ouvir**.
+- A partir da **0.1.139** cada clique nesses dois botões toca um bip curto só neste PC. O som não entra na sala. O detalhe está em [sons-da-call.md](sons-da-call.md).
 
 ## Medir a call
 

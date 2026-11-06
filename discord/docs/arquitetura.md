@@ -105,3 +105,5 @@ Na 0.1.132 os botões de ação usam `<Button variant>`. Fundo branco com letra 
 Na 0.1.134 o X da janela esconde o app na bandeja e avisa. O host do app e a call continuam no ar. Sair de verdade (menu do ícone, atualização) segue o fluxo de [host-no-app.md](host-no-app.md). O detalhe está em [minimizar-na-bandeja.md](minimizar-na-bandeja.md).
 
 Na 0.1.136 o `npm run desktop` ganha a área de testes. Um processo Node à parte (`apps/test-bot`) entra no LiveKit como "Bot de teste N" e toca áudio. A API só assina o token dele com `RADCORD_DEV_TOOLS=1`. O instalador não leva nada disso. O detalhe está em [area-de-testes.md](area-de-testes.md).
+
+Na 0.1.139 mutar e ensurdecer tocam um bip só neste PC, num `AudioContext` à parte. A sala do LiveKit não recebe esse som. O detalhe está em [sons-da-call.md](sons-da-call.md).
